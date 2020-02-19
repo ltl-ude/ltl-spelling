@@ -24,6 +24,8 @@ import java.util.List;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASException;
 import org.apache.uima.fit.component.ViewCreatorAnnotator;
+import org.apache.uima.fit.descriptor.ConfigurationParameter;
+import org.apache.uima.fit.descriptor.ExternalResource;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
 import org.apache.uima.fit.descriptor.TypeCapability;
 import org.apache.uima.fit.util.JCasUtil;
@@ -32,6 +34,7 @@ import org.dkpro.core.api.transform.JCasTransformerChangeBased_ImplBase;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.unidue.ltl.spelling.resources.LanguageModelResource;
 import eu.openminted.share.annotations.api.Component;
 import eu.openminted.share.annotations.api.DocumentationResource;
 import eu.openminted.share.annotations.api.constants.OperationType;
@@ -48,6 +51,11 @@ import eu.openminted.share.annotations.api.constants.OperationType;
 public class AnnotateChanges_SpellingNormalizer
     extends JCasTransformerChangeBased_ImplBase
 {
+	
+	public static final String PARAM_LANGUAGE_MODEL = "languageModel";
+	@ExternalResource(key=PARAM_LANGUAGE_MODEL)
+	private LanguageModelResource languageModel;
+	
     @Override
     public void process(JCas aInput, JCas aOutput)
         throws AnalysisEngineProcessException
@@ -56,6 +64,7 @@ public class AnnotateChanges_SpellingNormalizer
 	        for (SpellingAnomaly anomaly : select(aInput, SpellingAnomaly.class)) {
 	            replace(anomaly.getBegin(), anomaly.getEnd(), getBestSuggestion(anomaly));
 	        }
+	    
     	
     }
 
@@ -80,6 +89,7 @@ public class AnnotateChanges_SpellingNormalizer
 	        for (int i = 0; i < anomaly.getSuggestions().size(); i++) {
 	            Float currentCertainty = anomaly.getSuggestions(i).getCertainty();
 	            String currentReplacement = anomaly.getSuggestions(i).getReplacement();
+		        System.out.println("Frequency in LM: "+currentReplacement+"\t"+languageModel.getFrequency(currentReplacement));
 	
 	            if (currentCertainty > bestCertainty) {
 	                bestCertainty = currentCertainty;

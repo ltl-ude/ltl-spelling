@@ -9,7 +9,7 @@ import org.apache.uima.cas.Type;
 import org.apache.uima.jcas.tcas.Annotation_Type;
 
 /** 
- * Updated by JCasGen Mon Feb 03 22:23:16 CET 2020
+ * Updated by JCasGen Mon Feb 10 11:23:29 CET 2020
  * @generated */
 public class Punctuation_Type extends Annotation_Type {
   /** @generated */
