@@ -11,7 +11,7 @@ import org.apache.uima.jcas.tcas.Annotation;
 
 
 /** 
- * Updated by JCasGen Mon Feb 10 11:23:29 CET 2020
+ * Updated by JCasGen Mon Mar 09 15:22:40 CET 2020
  * XML source: /Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/desc/type/Spelling.xml
  * @generated */
 public class Punctuation extends Annotation {

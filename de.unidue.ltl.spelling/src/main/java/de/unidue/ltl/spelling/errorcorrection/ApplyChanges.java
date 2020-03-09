@@ -28,9 +28,12 @@ import org.dkpro.core.api.transform.alignment.AlignedString;
 import org.dkpro.core.castransformation.internal.AlignmentFactory;
 import org.dkpro.core.castransformation.internal.AlignmentStorage;
 
+import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
+import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.transform.type.SofaChangeAnnotation;
+import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 import eu.openminted.share.annotations.api.DocumentationResource;
 
 /**
@@ -68,8 +71,16 @@ public class ApplyChanges
             JCas targetView = aJCas.createView(VIEW_TARGET);
             DocumentMetaData.copy(sourceView, targetView);
             applyChanges(sourceView, targetView);
-            System.out.println("text after: "+targetView.getDocumentText());
-            System.out.println("token count: "+JCasUtil.select(targetView, Token.class).size());
+            
+//            for(Token token : JCasUtil.select(sourceView, Token.class)){
+//            	Token targetToken = new Token(targetView);
+//            	targetToken.setBegin(token.getBegin());
+//            	targetToken.setEnd(token.getEnd());
+//            	targetToken.addToIndexes();
+//            }
+            
+//            System.out.println(sourceView.);
+            System.out.println("anomaly count: "+JCasUtil.select(targetView, Token.class).size());
         }
         catch (CASException e) {
             throw new AnalysisEngineProcessException(e);

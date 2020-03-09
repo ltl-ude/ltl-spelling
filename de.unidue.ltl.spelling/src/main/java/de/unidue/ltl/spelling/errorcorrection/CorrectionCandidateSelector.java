@@ -33,23 +33,20 @@ import org.apache.uima.jcas.JCas;
 import org.dkpro.core.api.transform.JCasTransformerChangeBased_ImplBase;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
+import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.unidue.ltl.spelling.resources.LanguageModelResource;
+import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 import eu.openminted.share.annotations.api.Component;
 import eu.openminted.share.annotations.api.DocumentationResource;
 import eu.openminted.share.annotations.api.constants.OperationType;
 
 /**
- * Converts annotations of the type SpellingAnomaly into a SofaChangeAnnoatation.
+ * Converts annotations of the type SpellingAnomaly into SofaChangeAnnoatations.
  */
 @Component(OperationType.NORMALIZER)
-@ResourceMetaData(name = "Spelling Normalizer")
-@DocumentationResource("${docbase}/component-reference.html#engine-${shortClassName}")
-@TypeCapability(
-        inputs = { 
-                "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" })
-public class AnnotateChanges_SpellingNormalizer
-    extends JCasTransformerChangeBased_ImplBase
+
+public class CorrectionCandidateSelector extends JCasTransformerChangeBased_ImplBase
 {
 	
 	public static final String PARAM_LANGUAGE_MODEL = "languageModel";
@@ -57,25 +54,19 @@ public class AnnotateChanges_SpellingNormalizer
 	private LanguageModelResource languageModel;
 	
     @Override
-    public void process(JCas aInput, JCas aOutput)
-        throws AnalysisEngineProcessException
+    public void process(JCas aInput, JCas aOutput) throws AnalysisEngineProcessException
     {
-
+    		System.out.println(select(aInput,SpellingAnomaly.class).size());
 	        for (SpellingAnomaly anomaly : select(aInput, SpellingAnomaly.class)) {
 	            replace(anomaly.getBegin(), anomaly.getEnd(), getBestSuggestion(anomaly));
+//	            SpellingAnomalyTransfer exAn = new SpellingAnomalyTransfer(aOutput);
+//	            exAn.setBegin(anomaly.getBegin());
+//	            exAn.setEnd(anomaly.getEnd());
+////	            exAn.setSuggestions(anomaly.getSuggestions());
+//	            exAn.addToIndexes();
 	        }
-	    
-    	
     }
 
-    /**
-     * Just gets the Suggestion with the highest Certainty. In case there are more suggestions with
-     * certainty 100, it passes the first highest one.
-     * 
-     * @param anomaly
-     *            the anomaly.
-     * @return the best suggestion.
-     */
     private String getBestSuggestion(SpellingAnomaly anomaly)
     {
         Float bestCertainty = 0.0f;
@@ -89,19 +80,14 @@ public class AnnotateChanges_SpellingNormalizer
 	        for (int i = 0; i < anomaly.getSuggestions().size(); i++) {
 	            Float currentCertainty = anomaly.getSuggestions(i).getCertainty();
 	            String currentReplacement = anomaly.getSuggestions(i).getReplacement();
-		        System.out.println("Frequency in LM: "+currentReplacement+"\t"+languageModel.getFrequency(currentReplacement));
+//		        System.out.println("Frequency in LM: "+currentReplacement+"\t"+languageModel.getFrequency(currentReplacement));
 	
 	            if (currentCertainty > bestCertainty) {
 	                bestCertainty = currentCertainty;
 	                bestReplacement = currentReplacement;
 	            }
-	
-	            if (bestCertainty == 100) {
-	                break;
-	            }
 	        }
         }
-
         return bestReplacement;
     }
 }

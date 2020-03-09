@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.uima.UimaContext;
-import org.apache.uima.analysis_component.AnalysisComponent;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -20,7 +19,6 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
-import org.apache.uima.util.Logger;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -158,7 +156,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-
+		
 		boolean isCandidate = true;
 		Collection<Token> tokens = JCasUtil.select(aJCas, Token.class);
 		for (Token token : tokens) {

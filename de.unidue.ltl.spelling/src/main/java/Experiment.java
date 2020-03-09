@@ -21,22 +21,19 @@ public class Experiment {
 		
 	}
 	
-
-	
 	public static void runEnglish() throws UIMAException, IOException {
 		String[] dicts_en = new String[] {"dictionaries/en-testDict1.txt","dictionaries/en-testDict2.txt"};
 		String[] types_to_exclude = new String[] {};
 		
 		String languageModel = "/Volumes/Marie2/web1t/en/data"; //does not give unigram count
 				
-		
 		CollectionReader reader = getReader("en-testData","en");
 		AnalysisEngine engine = createEngine(SpellingCorrector.class,
 				SpellingCorrector.PARAM_LANGUAGE,"en",
 				SpellingCorrector.PARAM_SCORE_THRESHOLD,1,
 				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_en,
 				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE,types_to_exclude,
-				SpellingCorrector.PARAM_SELECTION_METHOD,CandidateSelectionMethod.LEVENSHTEIN_UNIFORM,
+				SpellingCorrector.PARAM_SELECTION_METHOD,CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
 				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH,languageModel);
 		SimplePipeline.runPipeline(reader, engine);	
 	}
@@ -54,7 +51,7 @@ public class Experiment {
 				SpellingCorrector.PARAM_SCORE_THRESHOLD,2,
 				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_de,
 				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE,types_to_exclude,
-				SpellingCorrector.PARAM_SELECTION_METHOD,CandidateSelectionMethod.LEVENSHTEIN_UNIFORM,
+				SpellingCorrector.PARAM_SELECTION_METHOD,CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
 				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH,languageModel);
 		SimplePipeline.runPipeline(reader, engine);
 		

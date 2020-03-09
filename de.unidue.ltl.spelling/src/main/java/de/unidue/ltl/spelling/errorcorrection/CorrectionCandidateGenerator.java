@@ -3,12 +3,10 @@ package de.unidue.ltl.spelling.errorcorrection;
 import static org.apache.uima.fit.util.JCasUtil.select;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +32,9 @@ import com.github.liblevenshtein.transducer.factory.TransducerBuilder;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
+import de.tudarmstadt.ukp.dkpro.core.api.parameter.AnnotationChecker;
 import de.tudarmstadt.ukp.dkpro.core.api.parameter.ComponentParameters;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 
 public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBase{
 	
@@ -55,16 +55,20 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	@ConfigurationParameter(name = PARAM_SCORE_THRESHOLD, mandatory = true, defaultValue = "1")
 	protected int scoreThreshold;
 	
+	public static final String PARAM_PHONETIC = "phonetic";
+	@ConfigurationParameter(name = PARAM_PHONETIC, mandatory = true, defaultValue = "false")
+	protected boolean phonetic;
+	
 	public static final String PARAM_METHOD = "candidateSelectionMethod";
 	@ConfigurationParameter(name = PARAM_METHOD, mandatory = false, defaultValue = "LEVENSHTEIN_UNIFORM")
 	protected CandidateSelectionMethod candidateSelectionMethod;
 	
 	public enum CandidateSelectionMethod {
-		LEVENSHTEIN_UNIFORM, KEYBOARD_DISTANCE, PHONETIC
+		LEVENSHTEIN_DISTANCE, KEYBOARD_DISTANCE, PHONETIC, LANGUAGE_MODEL_FREQUENCY, LANGUAGE_MODEL_PROBABILITY
 	}
 	
 	protected final String defaultDictEN = "src/main/resources/dictionaries/hunspell_en_US.txt";
-	protected final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE_unmunched.txt";
+	protected final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE.txt";
 	
 	ITransducer<Candidate>[] transducers;
 	SortedDawg dictionary = null;
@@ -148,12 +152,12 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 				br.close();
 			} catch (FileNotFoundException e1) {
 				getContext().getLogger().log(Level.WARNING,
-	                    "Custom dictionary not found.");
+	                    "Custom dictionary "+path+" not found.");
 				e1.printStackTrace();
 			}
 			catch (IOException e) {
 				getContext().getLogger().log(Level.WARNING,
-	                    "Unable to read custom dictionary.");
+	                    "Unable to read custom dictionary "+path);
 				e.printStackTrace();
 			}
 		}
@@ -161,6 +165,11 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
+		
+//		System.out.println("GERMANNY "+dictionary.contains("Germany"));
+		
+		AnnotationChecker.requireExists(this, aJCas, this.getLogger(), Token.class);
+		AnnotationChecker.requireExists(this, aJCas, this.getLogger(), SpellingAnomaly.class);
 		
 		for (SpellingAnomaly anomaly : select(aJCas, SpellingAnomaly.class)) {
 				
@@ -215,10 +224,11 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 				
 				
 				for (ITransducer<Candidate> it : transducers){	
-					for (Candidate candidate : it.transduce(tokenText.toLowerCase())){
+//					for (Candidate candidate : it.transduce(tokenText.toLowerCase())){
+					for (Candidate candidate : it.transduce(tokenText,scoreThreshold)){
 						String suggestionString = candidate.term();
 						int cost;
-						if(candidateSelectionMethod == CandidateSelectionMethod.LEVENSHTEIN_UNIFORM) {
+						if(candidateSelectionMethod == CandidateSelectionMethod.LEVENSHTEIN_DISTANCE) {
 							cost = candidate.distance();
 						}
 						else {
