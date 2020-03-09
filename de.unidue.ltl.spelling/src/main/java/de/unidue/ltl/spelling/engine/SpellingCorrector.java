@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.experiment;
+package de.unidue.ltl.spelling.engine;
 
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngine;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
@@ -14,7 +14,6 @@ import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
-import org.apache.uima.fit.descriptor.ExternalResource;
 import org.apache.uima.fit.factory.AnalysisEngineFactory;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ExternalResourceDescription;
@@ -22,15 +21,12 @@ import org.apache.uima.resource.ResourceInitializationException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.parameter.ComponentParameters;
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
-import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.errorcorrection.AnnotateChanges_SpellingNormalizer;
 import de.unidue.ltl.spelling.errorcorrection.ApplyChanges;
-import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.CandidateSelectionMethod;
 import de.unidue.ltl.spelling.errorcorrection.ErrorDetector;
 import de.unidue.ltl.spelling.errorcorrection.LevenshteinCorrectionCandidateGenerator;
-import de.unidue.ltl.spelling.errorcorrection.Levenshtein_CandidateGenerator;
 import de.unidue.ltl.spelling.preprocessing.NumericAnnotator;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
 import de.unidue.ltl.spelling.resources.LanguageModelResource;

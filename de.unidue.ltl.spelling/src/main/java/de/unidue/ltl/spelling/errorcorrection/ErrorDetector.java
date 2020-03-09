@@ -2,6 +2,7 @@ package de.unidue.ltl.spelling.errorcorrection;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,6 +24,7 @@ import org.apache.uima.util.Logger;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 
 public class ErrorDetector extends JCasAnnotator_ImplBase {
 
@@ -57,7 +59,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 	private Set<String> typesToExclude = new HashSet<String>();
  
 	private final String defaultDictEN = "src/main/resources/dictionaries/hunspell_en_US.txt";
-	private final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE_unmunched.txt";
+	private final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE.txt";
 	
 	private final String numericType = "de.unidue.ltl.spelling.types.Numeric";
 	private final String punctuationType = "de.unidue.ltl.spelling.types.Punctuation";
@@ -71,15 +73,13 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 		mergeTypesToExclude();
 		try {
 			readDefaultDictionary(language);
-			readAdditionalDictionaries();
 		} catch (IOException e) {
 			throw new ResourceInitializationException(e);
 		}
-
+		readAdditionalDictionaries();
 	};
 	
 	private void checkForConflictsInTypesToExclude() {
-		
 		if(additionalTypesToExclude != null) {
 			Set<String> excludeTypes = new HashSet<String>();
 			excludeTypes.addAll(Arrays.asList(additionalTypesToExclude));
@@ -101,8 +101,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
                         + "' was passed as type to exclude. Setting excludeNamedEntities to true.");
 				excludeNamedEntities = true;
 			}
-		}
-		
+		}	
 	}
 	
 	//Combine types that were set to be excluded via parameter with those passed by the user
@@ -133,21 +132,27 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
                     + "' was passed, defaulting to English dictionary.");
 			br = new BufferedReader(new FileReader(new File(defaultDictEN)));
 		}
-
 		while (br.ready()) {
 			dictionaryWords.add(br.readLine());
 		}
 		br.close();
 	}
 
-	private void readAdditionalDictionaries() throws IOException {
+	private void readAdditionalDictionaries() {
 		BufferedReader br = null;
 		for (String path : dictionaries) {
-			br = new BufferedReader(new FileReader(new File(path)));
-			while (br.ready()) {
-				dictionaryWords.add(br.readLine());
+			try {
+				br = new BufferedReader(new FileReader(new File(path)));
+				while (br.ready()) {
+					dictionaryWords.add(br.readLine());
+				}
+				br.close();
+			} catch (FileNotFoundException e) {
+				System.out.println("Could not find custom dictionary "+path);
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
-			br.close();
 		}
 	}
 
@@ -162,7 +167,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 			for (String type : typesToExclude) {
 				try {
 					if (JCasUtil.contains(aJCas, token, (Class<? extends Annotation>) Class.forName(type))) {
-						System.out.println("Marked as ignore: " + token.getCoveredText());
+						System.out.println("Ignoring: " + token.getCoveredText());
 						isCandidate = false;
 					}
 				} catch (ClassNotFoundException e) {
@@ -175,9 +180,10 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 			// Check if present in dictionaries
 			if (isCandidate) {
 				if (!dictionaryWords.contains(token.getCoveredText())) {
-					SpellingAnomaly spell = new SpellingAnomaly(aJCas);
+					ExtendedSpellingAnomaly spell = new ExtendedSpellingAnomaly(aJCas);
 					spell.setBegin(token.getBegin());
 					spell.setEnd(token.getEnd());
+					spell.setFixed(false);
 					spell.addToIndexes();
 					System.out.println("Found Anomaly: " + token.getCoveredText());
 				}

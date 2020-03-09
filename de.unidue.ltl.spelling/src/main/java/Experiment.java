@@ -8,15 +8,11 @@ import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.pipeline.SimplePipeline;
-import org.apache.uima.resource.ExternalResourceDescription;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.dkpro.core.frequency.tfidf.TfIdfAnnotator;
-import org.dkpro.core.frequency.tfidf.TfIdfAnnotator.WeightingModeTf;
 import org.dkpro.core.io.text.TextReader;
 
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.CandidateSelectionMethod;
-import de.unidue.ltl.spelling.experiment.SpellingCorrector;
-import de.unidue.ltl.spelling.resources.LanguageModelResource;
+import de.unidue.ltl.spelling.engine.SpellingCorrector;
 
 public class Experiment {
 	
