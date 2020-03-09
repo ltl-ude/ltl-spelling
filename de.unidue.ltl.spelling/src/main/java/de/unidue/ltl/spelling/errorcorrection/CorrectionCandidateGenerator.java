@@ -40,7 +40,7 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	
 	public static final String PARAM_LANGUAGE = "language";
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
-	private String language;
+	protected String language;
 	
 	public static final String PARAM_ADDITIONAL_DICTIONARIES = "dictionaries";
 	@ConfigurationParameter(name = PARAM_ADDITIONAL_DICTIONARIES,
@@ -55,10 +55,6 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	@ConfigurationParameter(name = PARAM_SCORE_THRESHOLD, mandatory = true, defaultValue = "1")
 	protected int scoreThreshold;
 	
-	public static final String PARAM_PHONETIC = "phonetic";
-	@ConfigurationParameter(name = PARAM_PHONETIC, mandatory = true, defaultValue = "false")
-	protected boolean phonetic;
-	
 	public static final String PARAM_METHOD = "candidateSelectionMethod";
 	@ConfigurationParameter(name = PARAM_METHOD, mandatory = false, defaultValue = "LEVENSHTEIN_UNIFORM")
 	protected CandidateSelectionMethod candidateSelectionMethod;
@@ -67,8 +63,8 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 		LEVENSHTEIN_DISTANCE, KEYBOARD_DISTANCE, PHONETIC, LANGUAGE_MODEL_FREQUENCY, LANGUAGE_MODEL_PROBABILITY
 	}
 	
-	protected final String defaultDictEN = "src/main/resources/dictionaries/hunspell_en_US.txt";
-	protected final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE.txt";
+	protected String defaultDictEN;
+	protected String defaultDictDE;
 	
 	ITransducer<Candidate>[] transducers;
 	SortedDawg dictionary = null;
@@ -94,7 +90,7 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 			
 		dictionary = new SortedDawg();
 		dictionary.addAll(dictionaryList);
-
+	
 		//TOOD: use standard or include transposing?
 		for (int i = 1; i<= this.scoreThreshold; i++){
 			ITransducer<Candidate> transducer = new TransducerBuilder()
@@ -108,158 +104,13 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 
 		//TODO: init cost matrixes
 		
-
 	}
 	
-	private void initializeDefaultDictionary(Set<String> dictionarySet) {
-		try {
-			BufferedReader br = null;
-			if(language.contentEquals("de")) {
-				br = new BufferedReader(new FileReader(new File(defaultDictDE)));
+	protected abstract void initializeDefaultDictionary(Set<String> dictionarySet);
 	
-			}
-			else if(language.contentEquals("en")) {
-				br = new BufferedReader(new FileReader(new File(defaultDictEN)));
-			}
-			else {
-				getContext().getLogger().log(Level.WARNING,
-	                    "Unknown language '" + language
-	                    + "' was passed, defaulting to English dictionary.");
-				br = new BufferedReader(new FileReader(new File(defaultDictEN)));
-			}
-			while(br.ready()) {
-				dictionarySet.add(br.readLine());
-			}
-			br.close();
-			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+	protected abstract void readAdditionalDictionaries(Set<String> dictionarySet);
 	
-	private void readAdditionalDictionaries(Set<String> dictionarySet) {
-		BufferedReader br = null;
-		for (String path : dictionaries) {
-			try {
-				br = new BufferedReader(new FileReader(new File(path)));
-				while (br.ready()) {
-					dictionarySet.add(br.readLine());
-				}
-				br.close();
-			} catch (FileNotFoundException e1) {
-				getContext().getLogger().log(Level.WARNING,
-	                    "Custom dictionary "+path+" not found.");
-				e1.printStackTrace();
-			}
-			catch (IOException e) {
-				getContext().getLogger().log(Level.WARNING,
-	                    "Unable to read custom dictionary "+path);
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@Override
-	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		
-//		System.out.println("GERMANNY "+dictionary.contains("Germany"));
-		
-		AnnotationChecker.requireExists(this, aJCas, this.getLogger(), Token.class);
-		AnnotationChecker.requireExists(this, aJCas, this.getLogger(), SpellingAnomaly.class);
-		
-		for (SpellingAnomaly anomaly : select(aJCas, SpellingAnomaly.class)) {
-				
-				String tokenText = anomaly.getCoveredText();
-				SuggestionCostTuples tuples = new SuggestionCostTuples();
-				
-				// merged words: if we split the word, both subparts exist in the lexicon
-				for (int i = 0; i<tokenText.length(); i++){
-					String word1 = tokenText.substring(0, i);
-					String word2 = tokenText.substring(i, tokenText.length());
-					if (dictionary.contains(word1) && dictionary.contains(word2)){
-		//				System.out.println("Found\t"+tokenText+"\t"+word1+"\t"+word2);
-						tuples.addTuple(word1+" "+word2, 1);
-						break;
-					}
-				}
-				
-				// TODO: wir müssen Fälle wie "1.you" anders aufsplitten
-				if (tokenText.contains(".")){
-					String[] parts = tokenText.split("\\.");
-					boolean allFound = true;
-					for (String part : parts){
-						if (!dictionary.contains(part) && (!(part.matches("\\d")))){
-							allFound = false;
-							break;
-						}
-					}
-			//		System.out.println(tokenText+"\t"+allFound);
-					if (allFound){
-						String replacement = String.join(" . ", parts);
-						replacement = replacement.replaceAll("(\\d) ", "$1");
-						tuples.addTuple(replacement, parts.length-1);
-					}
-				}
-				
-				if (tokenText.contains(":")){
-					String[] parts = tokenText.split(":");
-					boolean allFound = true;
-					for (String part : parts){
-						if (!dictionary.contains(part) && (!(part.matches("\\d")))){
-							allFound = false;
-							break;
-						}
-					}
-			//		System.out.println(tokenText+"\t"+allFound);
-					if (allFound){
-						String replacement = String.join(" : ", parts);
-						replacement = replacement.replaceAll("(\\d) ", "$1");
-						tuples.addTuple(replacement, parts.length-1);
-					}
-				}
-				
-				
-				for (ITransducer<Candidate> it : transducers){	
-//					for (Candidate candidate : it.transduce(tokenText.toLowerCase())){
-					for (Candidate candidate : it.transduce(tokenText,scoreThreshold)){
-						String suggestionString = candidate.term();
-						int cost;
-						if(candidateSelectionMethod == CandidateSelectionMethod.LEVENSHTEIN_DISTANCE) {
-							cost = candidate.distance();
-						}
-						else {
-							cost = calculateCosts(tokenText,suggestionString);
-						}
-						tuples.addTuple(suggestionString, cost);
-					}
-				}
-				
-				if (tuples.size() > 0) {
-					FSArray actions = new FSArray(aJCas, tuples.size());
-					int i=0;
-				//	System.out.print(anomaly.getCoveredText()+"\t");
-					for (SuggestionCostTuple tuple : tuples) {
-						SuggestedAction action = new SuggestedAction(aJCas);
-						action.setReplacement(tuple.getSuggestion());
-						//TODO: This is where custom matrixes would take effect
-						action.setCertainty(tuple.getCertainty(tuples.getMaxCost()));
-						actions.set(i, action);
-						i++;
-						System.out.println(tokenText+"\t"+action.getReplacement()+"\t"+action.getCertainty());
-					}
-				//	System.out.println();
-					anomaly.setSuggestions(actions);
-				}
-				else {
-					System.out.println("No correction found for: "+tokenText);
-				}
-		}
-		
-	};
+	protected abstract String getTokenText(SpellingAnomaly spell);
 	
 	public int calculateCosts (CharSequence lhs, CharSequence rhs) {                          
 	    int len0 = lhs.length() + 1;                                                     
@@ -310,7 +161,7 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 		
 	}
 	
-	private class SuggestionCostTuple {
+	class SuggestionCostTuple {
 		private final String suggestion;
 		private final Integer cost;
 

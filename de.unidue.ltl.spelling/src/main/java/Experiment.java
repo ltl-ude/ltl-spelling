@@ -30,7 +30,7 @@ public class Experiment {
 		CollectionReader reader = getReader("en-testData","en");
 		AnalysisEngine engine = createEngine(SpellingCorrector.class,
 				SpellingCorrector.PARAM_LANGUAGE,"en",
-				SpellingCorrector.PARAM_SCORE_THRESHOLD,1,
+				SpellingCorrector.PARAM_SCORE_THRESHOLD,2,
 				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_en,
 				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE,types_to_exclude,
 				SpellingCorrector.PARAM_SELECTION_METHOD,CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,

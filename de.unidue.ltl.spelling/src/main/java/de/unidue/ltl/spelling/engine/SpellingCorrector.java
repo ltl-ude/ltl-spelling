@@ -27,6 +27,8 @@ import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.errorcorrection.ApplyChanges;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.CandidateSelectionMethod;
+import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator_Grapheme;
+import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator_Phoneme;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector;
 import de.unidue.ltl.spelling.errorcorrection.ErrorDetector;
 import de.unidue.ltl.spelling.errorcorrection.ResultTester;
@@ -124,15 +126,22 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase{
 						ErrorDetector.PARAM_LANGUAGE,language
 						);
 
-				AnalysisEngineDescription candidateGenerator = createEngineDescription(CorrectionCandidateGenerator.class,
-						CorrectionCandidateGenerator.PARAM_SCORE_THRESHOLD,scoreThreshold,
-						CorrectionCandidateGenerator.PARAM_LANGUAGE,language,
-						CorrectionCandidateGenerator.PARAM_METHOD,candidateSelectionMethod,
-						CorrectionCandidateGenerator.PARAM_ADDITIONAL_DICTIONARIES, dictionaries);
+//				AnalysisEngineDescription candidateGenerator = createEngineDescription(CorrectionCandidateGenerator_Grapheme.class,
+//						CorrectionCandidateGenerator_Grapheme.PARAM_SCORE_THRESHOLD,scoreThreshold,
+//						CorrectionCandidateGenerator_Grapheme.PARAM_LANGUAGE,language,
+//						CorrectionCandidateGenerator_Grapheme.PARAM_METHOD,candidateSelectionMethod,
+//						CorrectionCandidateGenerator_Grapheme.PARAM_ADDITIONAL_DICTIONARIES, dictionaries);
+				
+				AnalysisEngineDescription candidateGenerator = createEngineDescription(CorrectionCandidateGenerator_Phoneme.class,
+						CorrectionCandidateGenerator_Phoneme.PARAM_SCORE_THRESHOLD,scoreThreshold,
+						CorrectionCandidateGenerator_Phoneme.PARAM_LANGUAGE,language,
+						CorrectionCandidateGenerator_Phoneme.PARAM_METHOD,candidateSelectionMethod,
+						CorrectionCandidateGenerator_Phoneme.PARAM_ADDITIONAL_DICTIONARIES, dictionaries);
 		
 				//Normalization
 				AnalysisEngineDescription changeAnnotator = createEngineDescription(CorrectionCandidateSelector.class,
-						CorrectionCandidateSelector.PARAM_TYPES_TO_COPY,new String[]{"de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token",
+						CorrectionCandidateSelector.PARAM_TYPES_TO_COPY,new String[]{
+								"de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token",
 								"de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly"},
 						CorrectionCandidateSelector.PARAM_LANGUAGE_MODEL,languageModel
 					);
