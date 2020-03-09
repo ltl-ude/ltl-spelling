@@ -26,7 +26,10 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.errorcorrection.AnnotateChanges_SpellingNormalizer;
 import de.unidue.ltl.spelling.errorcorrection.ApplyChanges;
+import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator;
+import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.CandidateSelectionMethod;
 import de.unidue.ltl.spelling.errorcorrection.ErrorDetector;
+import de.unidue.ltl.spelling.errorcorrection.LevenshteinCorrectionCandidateGenerator;
 import de.unidue.ltl.spelling.errorcorrection.Levenshtein_CandidateGenerator;
 import de.unidue.ltl.spelling.preprocessing.NumericAnnotator;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
@@ -41,8 +44,8 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase{
 		private String language;
 	
 		//Same dictionary will also be passed to candidate generation
-		public static final String PARAM_DICTIONARIES = "dictionaries";
-		@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = false, defaultValue = {
+		public static final String PARAM_ADDITIONAL_DICTIONARIES = "dictionaries";
+		@ConfigurationParameter(name = PARAM_ADDITIONAL_DICTIONARIES, mandatory = false, defaultValue = {
 				"dictionaries/de-testDict1.txt", "dictionaries/de-testDict2.txt", "dictionaries/en-testDict1.txt",
 				"dictionaries/en-testDict2.txt" })
 		private String[] dictionaries;
@@ -77,6 +80,10 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase{
 		private int scoreThreshold;
 
 	//For Candidate Selection
+		
+		public static final String PARAM_SELECTION_METHOD = "CandidateSelectionMethod";
+		@ConfigurationParameter(name = PARAM_SELECTION_METHOD, mandatory = false, defaultValue = "LEVENSHTEIN_UNIFORM")
+		protected CandidateSelectionMethod candidateSelectionMethod;
 	
 		//For Normalization
 		//TODO: this does not have to be accessible from the outside does it?
@@ -91,99 +98,83 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase{
 		public static final String PARAM_LANGUAGE_MODEL_PATH = "languageModelPath";
 		@ConfigurationParameter(name = PARAM_LANGUAGE_MODEL_PATH, mandatory = true)
 		private String languageModelPath;
-		
-		
-	
-	AnalysisEngine spellingCorrectorEngine = null;
-	
-	//Don't have to be defined here, can go into buildEngine
-	AnalysisEngineDescription segmenter = null;
-	AnalysisEngineDescription numericAnnotator = null;
-	AnalysisEngineDescription punctuationAnnotator = null;
-	AnalysisEngineDescription namedEntityAnnotator = null;
-	AnalysisEngineDescription errorDetector = null;
-	AnalysisEngineDescription candidateGenerator = null;
-	AnalysisEngineDescription changeAnnotator = null;
-	AnalysisEngineDescription changeApplier = null;
 
+	private AnalysisEngine spellingCorrectorEngine = null;
+		
+		@Override
+		public void initialize(UimaContext context) throws ResourceInitializationException {
+			
+			//To ensure that parameters of this class have been set to be able to use them in creating engines below
+			super.initialize(context);
+			
+			ExternalResourceDescription languageModel = createExternalResourceDescription(LanguageModelResource.class, 
+					LanguageModelResource.PARAM_MODEL_FILE, languageModelPath
+					);
+
+			try {
+				//Preprocessing
+//				segmenter = createEngineDescription(OpenNlpSegmenter.class);
+				AnalysisEngineDescription segmenter = createEngineDescription(CoreNlpSegmenter.class);
+				AnalysisEngineDescription numericAnnotator = createEngineDescription(NumericAnnotator.class);
+				AnalysisEngineDescription punctuationAnnotator = createEngineDescription(PunctuationAnnotator.class);
+				AnalysisEngineDescription namedEntityAnnotator = createEngineDescription(StanfordNamedEntityRecognizer.class);
+			
+				//Error Detection
+				AnalysisEngineDescription errorDetector = createEngineDescription(ErrorDetector.class,
+						ErrorDetector.PARAM_ADDITIONAL_DICTIONARIES, dictionaries
+						,
+						ErrorDetector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, additionalTypesToExclude
+						,
+						ErrorDetector.PARAM_LANGUAGE,language
+						);
+
+				AnalysisEngineDescription candidateGenerator = createEngineDescription(LevenshteinCorrectionCandidateGenerator.class,
+						LevenshteinCorrectionCandidateGenerator.PARAM_SCORE_THRESHOLD,scoreThreshold,
+						LevenshteinCorrectionCandidateGenerator.PARAM_LANGUAGE,language,
+						LevenshteinCorrectionCandidateGenerator.PARAM_METHOD,candidateSelectionMethod,
+						LevenshteinCorrectionCandidateGenerator.PARAM_ADDITIONAL_DICTIONARIES, dictionaries);
+		
+				//Normalization
+				AnalysisEngineDescription changeAnnotator = createEngineDescription(AnnotateChanges_SpellingNormalizer.class,
+					AnnotateChanges_SpellingNormalizer.PARAM_TYPES_TO_COPY,new String[]{"de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token"},
+					AnnotateChanges_SpellingNormalizer.PARAM_LANGUAGE_MODEL,languageModel
+					);
+				AnalysisEngineDescription changeApplier = createEngineDescription(ApplyChanges.class);
+			
+				List<AnalysisEngineDescription> spellingComponents = new ArrayList<AnalysisEngineDescription>();
+				spellingComponents.add(segmenter);
+				spellingComponents.add(numericAnnotator);
+				spellingComponents.add(punctuationAnnotator);
+				spellingComponents.add(namedEntityAnnotator);
+				spellingComponents.add(errorDetector);
+				spellingComponents.add(candidateGenerator);
+				spellingComponents.add(changeAnnotator);
+				spellingComponents.add(changeApplier);
+				
+				List<String> componentNames = new ArrayList<String>();
+				componentNames.add("segmenter");
+				componentNames.add("numericAnnotator");
+				componentNames.add("punctuationAnnotator");
+				componentNames.add("namedEntityAnnotator");
+				componentNames.add("errorDetector");
+				componentNames.add("candidateGenerator");
+				componentNames.add("changeAnnotator");
+				componentNames.add("changeApplier");
+				
+				spellingCorrectorEngine =  AnalysisEngineFactory.createEngine(spellingComponents, componentNames, null, null);
+			
+			} catch (ResourceInitializationException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+		}	
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 		
-		if(spellingCorrectorEngine == null) {
-			System.out.println("BUILDING ENGINE");
-			buildEngine();
-		}
-		
-		System.out.println("PROCESSING");
 		spellingCorrectorEngine.process(aJCas);
 		
 	}
-	
-	public void buildEngine() {
-		
-		System.out.println("LANGUAGE: "+language);
-		
-		ExternalResourceDescription languageModel = createExternalResourceDescription(LanguageModelResource.class, 
-				LanguageModelResource.PARAM_MODEL_FILE, languageModelPath
-				);
-
-		try {
-			//Preprocessing
-//			segmenter = createEngineDescription(OpenNlpSegmenter.class);
-			segmenter = createEngineDescription(CoreNlpSegmenter.class);
-	        numericAnnotator = createEngineDescription(NumericAnnotator.class);
-	        punctuationAnnotator = createEngineDescription(PunctuationAnnotator.class);
-			namedEntityAnnotator = createEngineDescription(StanfordNamedEntityRecognizer.class);
-		
-			//Error Detection
-			errorDetector = createEngineDescription(ErrorDetector.class,
-					ErrorDetector.PARAM_DICTIONARIES, dictionaries
-					,
-					ErrorDetector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, additionalTypesToExclude
-					,
-					ErrorDetector.PARAM_LANGUAGE,language
-					);
-
-			candidateGenerator = createEngineDescription(Levenshtein_CandidateGenerator.class,
-					Levenshtein_CandidateGenerator.PARAM_SCORE_THRESHOLD,scoreThreshold,
-					Levenshtein_CandidateGenerator.PARAM_DICTIONARIES, dictionaries);
-	
-			//Normalization
-			changeAnnotator = createEngineDescription(AnnotateChanges_SpellingNormalizer.class,
-				AnnotateChanges_SpellingNormalizer.PARAM_TYPES_TO_COPY,new String[]{"de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token"},
-				AnnotateChanges_SpellingNormalizer.PARAM_LANGUAGE_MODEL,languageModel
-				);
-			changeApplier = createEngineDescription(ApplyChanges.class);
-		
-			List<AnalysisEngineDescription> spellingComponents = new ArrayList<AnalysisEngineDescription>();
-			spellingComponents.add(segmenter);
-			spellingComponents.add(numericAnnotator);
-			spellingComponents.add(punctuationAnnotator);
-			spellingComponents.add(namedEntityAnnotator);
-			spellingComponents.add(errorDetector);
-			spellingComponents.add(candidateGenerator);
-			spellingComponents.add(changeAnnotator);
-			spellingComponents.add(changeApplier);
-			
-			List<String> componentNames = new ArrayList<String>();
-			componentNames.add("segmenter");
-			componentNames.add("numericAnnotator");
-			componentNames.add("punctuationAnnotator");
-			componentNames.add("namedEntityAnnotator");
-			componentNames.add("errorDetector");
-			componentNames.add("candidateGenerator");
-			componentNames.add("changeAnnotator");
-			componentNames.add("changeApplier");
-			
-			spellingCorrectorEngine =  AnalysisEngineFactory.createEngine(spellingComponents, componentNames, null, null);
-			System.out.println("ENGINE BUILT");
-		
-		} catch (ResourceInitializationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-	};
 
 }

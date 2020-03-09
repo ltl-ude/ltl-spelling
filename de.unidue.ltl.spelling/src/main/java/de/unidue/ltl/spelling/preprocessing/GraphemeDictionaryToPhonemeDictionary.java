@@ -35,9 +35,9 @@ public class GraphemeDictionaryToPhonemeDictionary {
 		
 		//deu-DE OR eng-US
 		processDictionary(
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US.txt",
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US_phoneme_test.txt",
-				"eng-US");
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE.txt",
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme.txt",
+				"deu-DE");
 	}
 	
 	private static void processDictionary(String path,String outputFileName, String language) throws IOException {

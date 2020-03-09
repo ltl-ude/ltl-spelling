@@ -30,11 +30,8 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
 	private String language;
 
-	//TODO: default is hunspell, but set depending on language
-	public static final String PARAM_DICTIONARIES = "dictionaries";
-	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = false, defaultValue = {
-			"dictionaries/de-testDict1.txt", "dictionaries/de-testDict2.txt", "dictionaries/en-testDict1.txt",
-			"dictionaries/en-testDict2.txt" })
+	public static final String PARAM_ADDITIONAL_DICTIONARIES = "dictionaries";
+	@ConfigurationParameter(name = PARAM_ADDITIONAL_DICTIONARIES, mandatory = false)
 	private String[] dictionaries;
 	
 	//Referring to de.unidue.ltl.spelling.types.Numeric
@@ -60,7 +57,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 	private Set<String> typesToExclude = new HashSet<String>();
  
 	private final String defaultDictEN = "src/main/resources/dictionaries/hunspell_en_US.txt";
-	private final String defaultDictDE = "";
+	private final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE_unmunched.txt";
 	
 	private final String numericType = "de.unidue.ltl.spelling.types.Numeric";
 	private final String punctuationType = "de.unidue.ltl.spelling.types.Punctuation";
@@ -74,7 +71,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 		mergeTypesToExclude();
 		try {
 			readDefaultDictionary(language);
-			readDictionaries();
+			readAdditionalDictionaries();
 		} catch (IOException e) {
 			throw new ResourceInitializationException(e);
 		}
@@ -108,7 +105,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 		
 	}
 	
-	//Combine types that were set to exclude via parameter with those passed by the user
+	//Combine types that were set to be excluded via parameter with those passed by the user
 	private void mergeTypesToExclude() {
 		if(additionalTypesToExclude != null) {
 			typesToExclude.addAll(Arrays.asList(additionalTypesToExclude));
@@ -133,7 +130,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 		} else {
 			getContext().getLogger().log(Level.WARNING,
                     "Unknown language '" + language
-                    + "' was passed, defaulting to English.");
+                    + "' was passed, defaulting to English dictionary.");
 			br = new BufferedReader(new FileReader(new File(defaultDictEN)));
 		}
 
@@ -143,7 +140,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 		br.close();
 	}
 
-	private void readDictionaries() throws IOException {
+	private void readAdditionalDictionaries() throws IOException {
 		BufferedReader br = null;
 		for (String path : dictionaries) {
 			br = new BufferedReader(new FileReader(new File(path)));
@@ -161,6 +158,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 		Collection<Token> tokens = JCasUtil.select(aJCas, Token.class);
 		for (Token token : tokens) {
 			isCandidate = true;
+			// Check if to be excluded
 			for (String type : typesToExclude) {
 				try {
 					if (JCasUtil.contains(aJCas, token, (Class<? extends Annotation>) Class.forName(type))) {
@@ -181,7 +179,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 					spell.setBegin(token.getBegin());
 					spell.setEnd(token.getEnd());
 					spell.addToIndexes();
-					System.out.println("Found Error: " + token.getCoveredText());
+					System.out.println("Found Anomaly: " + token.getCoveredText());
 				}
 			}
 
