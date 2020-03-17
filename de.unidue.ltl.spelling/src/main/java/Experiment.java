@@ -11,8 +11,8 @@ import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.dkpro.core.io.text.TextReader;
 
-import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.CandidateSelectionMethod;
 import de.unidue.ltl.spelling.engine.SpellingCorrector;
+import de.unidue.ltl.spelling.engine.SpellingCorrector.CandidateSelectionMethod;
 
 public class Experiment {
 	
@@ -31,7 +31,7 @@ public class Experiment {
 		AnalysisEngine engine = createEngine(SpellingCorrector.class,
 				SpellingCorrector.PARAM_LANGUAGE,"en",
 				SpellingCorrector.PARAM_SCORE_THRESHOLD,2,
-				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_en,
+//				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_en,
 				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE,types_to_exclude,
 				SpellingCorrector.PARAM_SELECTION_METHOD,CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
 				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH,languageModel);

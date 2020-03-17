@@ -33,18 +33,18 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 	public static final String PARAM_ADDITIONAL_DICTIONARIES = "dictionaries";
 	@ConfigurationParameter(name = PARAM_ADDITIONAL_DICTIONARIES, mandatory = false)
 	private String[] dictionaries;
-	
-	//Referring to de.unidue.ltl.spelling.types.Numeric
+
+	// Referring to de.unidue.ltl.spelling.types.Numeric
 	public static final String PARAM_EXCLUDE_NUMERIC = "excludeNumeric";
 	@ConfigurationParameter(name = PARAM_EXCLUDE_NUMERIC, defaultValue = "true")
 	private boolean excludeNumeric;
-	
-	//Referring to de.unidue.ltl.spelling.types.Punctuation
+
+	// Referring to de.unidue.ltl.spelling.types.Punctuation
 	public static final String PARAM_EXCLUDE_PUNCTUATION = "excludePunctuation";
 	@ConfigurationParameter(name = PARAM_EXCLUDE_PUNCTUATION, defaultValue = "true")
 	private boolean excludePunctuation;
-	
-	//Referring to de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity
+
+	// Referring to de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity
 	public static final String PARAM_EXCLUDE_NAMED_ENTITIES = "excludeNamedEntities";
 	@ConfigurationParameter(name = PARAM_EXCLUDE_NAMED_ENTITIES, defaultValue = "true")
 	private boolean excludeNamedEntities;
@@ -55,10 +55,10 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 
 	private Set<String> dictionaryWords = new HashSet<String>();
 	private Set<String> typesToExclude = new HashSet<String>();
- 
+
 	private final String defaultDictEN = "src/main/resources/dictionaries/hunspell_en_US.txt";
 	private final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE.txt";
-	
+
 	private final String numericType = "de.unidue.ltl.spelling.types.Numeric";
 	private final String punctuationType = "de.unidue.ltl.spelling.types.Punctuation";
 	private final String namedEntityType = "de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity";
@@ -76,44 +76,43 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 		}
 		readAdditionalDictionaries();
 	};
-	
+
 	private void checkForConflictsInTypesToExclude() {
-		if(additionalTypesToExclude != null) {
+		if (additionalTypesToExclude != null) {
 			Set<String> excludeTypes = new HashSet<String>();
 			excludeTypes.addAll(Arrays.asList(additionalTypesToExclude));
-			if(!excludeNumeric && excludeTypes.contains(numericType)) {
-				getContext().getLogger().log(Level.WARNING,
-                        "Boolean switch excludeNumeric set to false, but type '" + numericType
-                        + "' was passed as type to exclude. Setting excludeNumeric to true.");
+			if (!excludeNumeric && excludeTypes.contains(numericType)) {
+				getContext().getLogger().log(Level.WARNING, "Boolean switch excludeNumeric set to false, but type '"
+						+ numericType + "' was passed as type to exclude. Setting excludeNumeric to true.");
 				excludeNumeric = true;
 			}
-			if(!excludePunctuation && excludeTypes.contains(punctuationType)) {
-				getContext().getLogger().log(Level.WARNING,
-                        "Boolean switch excludePunctuation set to false, but type '" + punctuationType
-                        + "' was passed as type to exclude. Setting excludePunctiation to true.");
+			if (!excludePunctuation && excludeTypes.contains(punctuationType)) {
+				getContext().getLogger().log(Level.WARNING, "Boolean switch excludePunctuation set to false, but type '"
+						+ punctuationType + "' was passed as type to exclude. Setting excludePunctiation to true.");
 				excludePunctuation = true;
 			}
-			if(!excludeNamedEntities && excludeTypes.contains(namedEntityType)) {
+			if (!excludeNamedEntities && excludeTypes.contains(namedEntityType)) {
 				getContext().getLogger().log(Level.WARNING,
-                        "Boolean switch excludeNamedEntities set to false, but type '" + namedEntityType
-                        + "' was passed as type to exclude. Setting excludeNamedEntities to true.");
+						"Boolean switch excludeNamedEntities set to false, but type '" + namedEntityType
+								+ "' was passed as type to exclude. Setting excludeNamedEntities to true.");
 				excludeNamedEntities = true;
 			}
-		}	
+		}
 	}
-	
-	//Combine types that were set to be excluded via parameter with those passed by the user
+
+	// Combine types that were set to be excluded via parameter with those passed by
+	// the user
 	private void mergeTypesToExclude() {
-		if(additionalTypesToExclude != null) {
+		if (additionalTypesToExclude != null) {
 			typesToExclude.addAll(Arrays.asList(additionalTypesToExclude));
 		}
-		if(excludeNumeric) {
+		if (excludeNumeric) {
 			typesToExclude.add(numericType);
 		}
-		if(excludePunctuation) {
+		if (excludePunctuation) {
 			typesToExclude.add(punctuationType);
 		}
-		if(excludeNamedEntities) {
+		if (excludeNamedEntities) {
 			typesToExclude.add(namedEntityType);
 		}
 	}
@@ -124,11 +123,11 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 			br = new BufferedReader(new FileReader(new File(defaultDictEN)));
 		} else if (language.contentEquals("de")) {
 			br = new BufferedReader(new FileReader(new File(defaultDictDE)));
+			// Never reached, because SpellingCorrector checks language
 		} else {
-			getContext().getLogger().log(Level.WARNING,
-                    "Unknown language '" + language
-                    + "' was passed, defaulting to English dictionary.");
-			br = new BufferedReader(new FileReader(new File(defaultDictEN)));
+			getContext().getLogger().log(Level.WARNING, "Unknown language '" + language
+					+ "' was passed, as of now only English ('en') and German ('de') are supported.");
+			System.exit(1);
 		}
 		while (br.ready()) {
 			dictionaryWords.add(br.readLine());
@@ -137,26 +136,28 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 	}
 
 	private void readAdditionalDictionaries() {
-		BufferedReader br = null;
-		for (String path : dictionaries) {
-			try {
-				br = new BufferedReader(new FileReader(new File(path)));
-				while (br.ready()) {
-					dictionaryWords.add(br.readLine());
+		if (dictionaries != null) {
+			BufferedReader br = null;
+			for (String path : dictionaries) {
+				try {
+					br = new BufferedReader(new FileReader(new File(path)));
+					while (br.ready()) {
+						dictionaryWords.add(br.readLine());
+					}
+					br.close();
+				} catch (FileNotFoundException e) {
+					System.out.println("Could not find custom dictionary " + path);
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-				br.close();
-			} catch (FileNotFoundException e) {
-				System.out.println("Could not find custom dictionary "+path);
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 	}
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		
+
 		boolean isCandidate = true;
 		Collection<Token> tokens = JCasUtil.select(aJCas, Token.class);
 		for (Token token : tokens) {
@@ -170,8 +171,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 					}
 				} catch (ClassNotFoundException e) {
 					getContext().getLogger().log(Level.WARNING,
-	                        "Failed to find type '" + type
-	                        + "' that was passed as a type to exclude.");
+							"Failed to find type '" + type + "' that was passed as a type to exclude.");
 					e.printStackTrace();
 				}
 			}
@@ -181,7 +181,8 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 					ExtendedSpellingAnomaly spell = new ExtendedSpellingAnomaly(aJCas);
 					spell.setBegin(token.getBegin());
 					spell.setEnd(token.getEnd());
-					spell.setFixed(false);
+					spell.setCorrected(false);
+					spell.setMisspelledTokenText(token.getCoveredText());
 					spell.addToIndexes();
 					System.out.println("Found Anomaly: " + token.getCoveredText());
 				}

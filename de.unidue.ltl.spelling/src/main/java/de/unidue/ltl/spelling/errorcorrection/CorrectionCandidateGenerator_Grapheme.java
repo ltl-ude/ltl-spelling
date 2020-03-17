@@ -21,7 +21,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.tudarmstadt.ukp.dkpro.core.api.parameter.AnnotationChecker;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.CandidateSelectionMethod;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.SuggestionCostTuple;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator.SuggestionCostTuples;
 
@@ -44,11 +43,12 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 			else if(language.contentEquals("en")) {
 				br = new BufferedReader(new FileReader(new File(defaultDictEN)));
 			}
+			//Never reached, because SpellingCorrector checks language
 			else {
 				getContext().getLogger().log(Level.WARNING,
 	                    "Unknown language '" + language
-	                    + "' was passed, defaulting to English dictionary.");
-				br = new BufferedReader(new FileReader(new File(defaultDictEN)));
+	                    + "' was passed, as of now only English ('en') and German ('de') are supported.");
+				System.exit(1);
 			}
 			while(br.ready()) {
 				dictionarySet.add(br.readLine());
@@ -145,17 +145,9 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 				
 				
 				for (ITransducer<Candidate> it : transducers){	
-//					for (Candidate candidate : it.transduce(tokenText.toLowerCase())){
 					for (Candidate candidate : it.transduce(tokenText,scoreThreshold)){
 						String suggestionString = candidate.term();
-						int cost;
-						if(candidateSelectionMethod == CandidateSelectionMethod.LEVENSHTEIN_DISTANCE) {
-							cost = candidate.distance();
-						}
-						else {
-							cost = calculateCosts(tokenText,suggestionString);
-						}
-						tuples.addTuple(suggestionString, cost);
+						tuples.addTuple(suggestionString, candidate.distance());
 					}
 				}
 				

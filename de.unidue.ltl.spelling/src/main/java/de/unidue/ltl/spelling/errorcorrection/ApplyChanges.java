@@ -44,61 +44,44 @@ import eu.openminted.share.annotations.api.DocumentationResource;
  */
 @ResourceMetaData(name = "CAS Transformation - Apply")
 @DocumentationResource("${docbase}/component-reference.html#engine-${shortClassName}")
-@TypeCapability(
-        inputs = {
-            "de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData",
-            "de.tudarmstadt.ukp.dkpro.core.api.transform.type.SofaChangeAnnotation"},
-        outputs = {
-            "de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData",
-            "de.tudarmstadt.ukp.dkpro.core.api.transform.type.SofaChangeAnnotation"})
+@TypeCapability(inputs = { "de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData",
+		"de.tudarmstadt.ukp.dkpro.core.api.transform.type.SofaChangeAnnotation" }, outputs = {
+				"de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData",
+				"de.tudarmstadt.ukp.dkpro.core.api.transform.type.SofaChangeAnnotation" })
 
-public class ApplyChanges
-    extends JCasAnnotator_ImplBase
-{
-    public static final String VIEW_SOURCE = "_InitialView";
-    public static final String VIEW_TARGET = "target";
+public class ApplyChanges extends JCasAnnotator_ImplBase {
+	public static final String VIEW_SOURCE = "_InitialView";
+	public static final String VIEW_TARGET = "target";
 
-    public static final String OP_INSERT = "insert";
-    public static final String OP_REPLACE = "replace";
-    public static final String OP_DELETE = "delete";
+	public static final String OP_INSERT = "insert";
+	public static final String OP_REPLACE = "replace";
+	public static final String OP_DELETE = "delete";
 
-    @Override
-    public void process(JCas aJCas)
-        throws AnalysisEngineProcessException
-    {
-        try {
-            JCas sourceView = aJCas.getView(VIEW_SOURCE);
-            JCas targetView = aJCas.createView(VIEW_TARGET);
-            DocumentMetaData.copy(sourceView, targetView);
-            applyChanges(sourceView, targetView);
-            
-//            for(Token token : JCasUtil.select(sourceView, Token.class)){
-//            	Token targetToken = new Token(targetView);
-//            	targetToken.setBegin(token.getBegin());
-//            	targetToken.setEnd(token.getEnd());
-//            	targetToken.addToIndexes();
-//            }
-            
-//            System.out.println(sourceView.);
-            System.out.println("anomaly count: "+JCasUtil.select(targetView, Token.class).size());
-        }
-        catch (CASException e) {
-            throw new AnalysisEngineProcessException(e);
-        }
-    }
+	@Override
+	public void process(JCas aJCas) throws AnalysisEngineProcessException {
+		try {
+			JCas sourceView = aJCas.getView(VIEW_SOURCE);
+			JCas targetView = aJCas.createView(VIEW_TARGET);
+			DocumentMetaData.copy(sourceView, targetView);
+			applyChanges(sourceView, targetView);
+		} catch (CASException e) {
+			throw new AnalysisEngineProcessException(e);
+		}
+	}
 
-    protected void applyChanges(JCas aSourceView, JCas aTargetView)
-    {
-        AlignedString as = AlignmentFactory.createAlignmentsFor(aSourceView);
+	protected void applyChanges(JCas aSourceView, JCas aTargetView) {
 
-        // Set the text of the new Sofa
-        aTargetView.setDocumentText(as.get());
+		AlignedString as = AlignmentFactory.createAlignmentsFor(aSourceView);
 
-        // Set document language
-        aTargetView.setDocumentLanguage(aSourceView.getDocumentLanguage());
+		// Set the text of the new Sofa
+		aTargetView.setDocumentText(as.get());
 
-        // Optionally we may want to remember the AlignedString for the backmapper.
-        AlignmentStorage.getInstance().put(aSourceView.getCasImpl().getBaseCAS(),
-                aSourceView.getViewName(), aTargetView.getViewName(), as);
-    }
+		// Set document language
+		aTargetView.setDocumentLanguage(aSourceView.getDocumentLanguage());
+
+		// Optionally we may want to remember the AlignedString for the backmapper.
+		AlignmentStorage.getInstance().put(aSourceView.getCasImpl().getBaseCAS(), aSourceView.getViewName(),
+				aTargetView.getViewName(), as);
+
+	}
 }

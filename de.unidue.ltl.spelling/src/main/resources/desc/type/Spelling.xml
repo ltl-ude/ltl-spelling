@@ -4,7 +4,10 @@
 	<description/>
 	<version>1.0</version>
 	<vendor/>
-	<types>
+	<imports>
+    <import name="desc.type.Anomalies"/>
+  </imports>
+  <types>
     <typeDescription>
       <name>de.unidue.ltl.spelling.types.Numeric</name>
       <description/>
@@ -14,6 +17,23 @@
       <name>de.unidue.ltl.spelling.types.Punctuation</name>
       <description/>
       <supertypeName>uima.tcas.Annotation</supertypeName>
+    </typeDescription>
+  <typeDescription>
+      <name>de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly</name>
+      <description/>
+      <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly</supertypeName>
+      <features>
+        <featureDescription>
+          <name>corrected</name>
+          <description>Indicates whether the anomaly has been replaced with a suggestion</description>
+          <rangeTypeName>uima.cas.Boolean</rangeTypeName>
+        </featureDescription>
+      <featureDescription>
+          <name>misspelledTokenText</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>
     </typeDescription>
   </types>
 </typeSystemDescription>

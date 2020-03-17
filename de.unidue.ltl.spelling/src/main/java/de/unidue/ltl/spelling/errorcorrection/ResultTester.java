@@ -5,8 +5,8 @@ import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 
-import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 
 public class ResultTester extends JCasAnnotator_ImplBase{
 
@@ -17,12 +17,8 @@ public class ResultTester extends JCasAnnotator_ImplBase{
 		for(Token t : JCasUtil.select(aJCas, Token.class)) {
 			System.out.println(t.getCoveredText());
 		}
-		for(SpellingAnomaly anomaly : JCasUtil.select(aJCas, SpellingAnomaly.class)) {
-			System.out.println(anomaly.getCoveredText());
-//			anomaly.setFixed(true);
+		for(ExtendedSpellingAnomaly anomaly : JCasUtil.select(aJCas, ExtendedSpellingAnomaly.class)) {
+			System.out.println(anomaly.getCoveredText()+" "+anomaly.getCorrected());
 		}
 	}
-	
-	
-
 }
