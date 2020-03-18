@@ -20,7 +20,6 @@ import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 
-import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 
@@ -36,22 +35,23 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 
 	// Referring to de.unidue.ltl.spelling.types.Numeric
 	public static final String PARAM_EXCLUDE_NUMERIC = "excludeNumeric";
-	@ConfigurationParameter(name = PARAM_EXCLUDE_NUMERIC, defaultValue = "true")
+	@ConfigurationParameter(name = PARAM_EXCLUDE_NUMERIC, mandatory = true, defaultValue = "true")
 	private boolean excludeNumeric;
 
 	// Referring to de.unidue.ltl.spelling.types.Punctuation
 	public static final String PARAM_EXCLUDE_PUNCTUATION = "excludePunctuation";
-	@ConfigurationParameter(name = PARAM_EXCLUDE_PUNCTUATION, defaultValue = "true")
+	@ConfigurationParameter(name = PARAM_EXCLUDE_PUNCTUATION, mandatory = true, defaultValue = "true")
 	private boolean excludePunctuation;
 
 	// Referring to de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity
 	public static final String PARAM_EXCLUDE_NAMED_ENTITIES = "excludeNamedEntities";
-	@ConfigurationParameter(name = PARAM_EXCLUDE_NAMED_ENTITIES, defaultValue = "true")
+	@ConfigurationParameter(name = PARAM_EXCLUDE_NAMED_ENTITIES, mandatory = true, defaultValue = "true")
 	private boolean excludeNamedEntities;
 
 	public static final String PARAM_ADDITIONAL_TYPES_TO_EXCLUDE = "additionalTypesToExclude";
 	@ConfigurationParameter(name = PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, mandatory = false)
 	private String[] additionalTypesToExclude;
+	
 
 	private Set<String> dictionaryWords = new HashSet<String>();
 	private Set<String> typesToExclude = new HashSet<String>();
@@ -146,7 +146,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 					}
 					br.close();
 				} catch (FileNotFoundException e) {
-					System.out.println("Could not find custom dictionary " + path);
+					getContext().getLogger().log(Level.WARNING,"Could not find custom dictionary " + path);
 					e.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();

@@ -1,28 +1,17 @@
 package de.unidue.ltl.spelling.errorcorrection;
 
-import static org.apache.uima.fit.util.JCasUtil.select;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.uima.UimaContext;
-import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.apache.uima.util.Level;
 
 import com.github.liblevenshtein.collection.dictionary.SortedDawg;
 import com.github.liblevenshtein.transducer.Algorithm;
@@ -32,9 +21,6 @@ import com.github.liblevenshtein.transducer.factory.TransducerBuilder;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
-import de.tudarmstadt.ukp.dkpro.core.api.parameter.AnnotationChecker;
-import de.tudarmstadt.ukp.dkpro.core.api.parameter.ComponentParameters;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 
 public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBase {
 
@@ -46,11 +32,7 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	@ConfigurationParameter(name = PARAM_ADDITIONAL_DICTIONARIES, mandatory = false)
 	protected String[] dictionaries;
 
-	public static final String PARAM_MODEL_ENCODING = ComponentParameters.PARAM_MODEL_ENCODING;
-	@ConfigurationParameter(name = PARAM_MODEL_ENCODING, mandatory = false, defaultValue = "UTF-8")
-	protected String dictEncoding;
-
-	public static final String PARAM_DISTANCE_THRESHOLD = "ScoreThreshold";
+	public static final String PARAM_DISTANCE_THRESHOLD = "scoreThreshold";
 	@ConfigurationParameter(name = PARAM_DISTANCE_THRESHOLD, mandatory = true, defaultValue = "1")
 	protected int scoreThreshold;
 
@@ -62,7 +44,7 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	protected String defaultDictDE;
 
 	ITransducer<Candidate>[] transducers;
-	SortedDawg dictionary = null;
+	SortedDawg dictionary;
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
@@ -99,11 +81,26 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 
 	protected abstract void readAdditionalDictionaries(Set<String> dictionarySet);
 
-	protected abstract String getTokenText(SpellingAnomaly spell);
-
-	// To be called by process to determine candidates; can be implemented here
-	public void generateCandidates(int maxDistance, Set<String> dictionary) {
-
+	// Create suggested actions for the generated candidates
+	protected void addSuggestedActions(JCas aJCas, SpellingAnomaly anomaly, SuggestionCostTuples tuples) {
+		if (tuples.size() > 0) {
+			FSArray actions = new FSArray(aJCas, tuples.size());
+			int i = 0;
+			// System.out.print(anomaly.getCoveredText()+"\t");
+			for (SuggestionCostTuple tuple : tuples) {
+				SuggestedAction action = new SuggestedAction(aJCas);
+				action.setReplacement(tuple.getSuggestion());
+				action.setCertainty(tuple.getCertainty(tuples.getMaxCost()));
+				actions.set(i, action);
+				i++;
+				System.out.println(
+						anomaly.getCoveredText() + "\t" + action.getReplacement() + "\t" + action.getCertainty());
+			}
+			anomaly.setSuggestions(actions);
+		} else {
+			System.out.println("No correction found for: " + anomaly.getCoveredText());
+		}
+		System.out.println();
 	}
 
 	class SuggestionCostTuple {
@@ -158,5 +155,4 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 			return tuples.iterator();
 		}
 	}
-
 }

@@ -22,7 +22,6 @@ public class PunctuationAnnotator extends JCasAnnotator_ImplBase{
 			System.out.println(token.getCoveredText());
 			if(token.getCoveredText().matches("[!?\\.,\"\'-´`']")) {
 				//Create new Punctuation annotation
-				System.out.println("Found punctuation: "+token.getCoveredText());
 				Punctuation punct = new Punctuation(aJCas);
 				punct.setBegin(token.getBegin());
 				punct.setEnd(token.getEnd());
