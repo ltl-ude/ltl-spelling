@@ -101,6 +101,7 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 	}
 
 	private AnalysisEngine spellingCorrectorEngine = null;
+	ExternalResourceDescription languageModel;
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
@@ -115,11 +116,11 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 			System.exit(1);
 		}
 
-//		ExternalResourceDescription languageModel = createExternalResourceDescription(LanguageModelResource.class,
-//				LanguageModelResource.PARAM_MODEL_FILE, languageModelPath);
-
 		try {
 
+			languageModel = createExternalResourceDescription(LanguageModelResource.class,
+					LanguageModelResource.PARAM_MODEL_FILE, languageModelPath);
+			
 			List<AnalysisEngineDescription> spellingComponents = new ArrayList<AnalysisEngineDescription>();
 			List<String> componentNames = new ArrayList<String>();
 
@@ -220,9 +221,11 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 		case KEYBOARD_DISTANCE:
 			return createEngineDescription(CorrectionCandidateSelector_Matrix.class);
 		case LANGUAGE_MODEL_FREQUENCY:
-			return createEngineDescription(CorrectionCandidateSelector_LanguageModelProbability.class);
+			return createEngineDescription(CorrectionCandidateSelector_LanguageModelFrequency.class,
+					CorrectionCandidateSelector_LanguageModelFrequency.PARAM_LANGUAGE_MODEL, languageModel);
 		case LANGUAGE_MODEL_PROBABILITY:
-			return createEngineDescription(CorrectionCandidateSelector_LanguageModelFrequency.class);
+			return createEngineDescription(CorrectionCandidateSelector_LanguageModelProbability.class,
+					CorrectionCandidateSelector_LanguageModelProbability.PARAM_LANGUAGE_MODEL, languageModel);
 		case PHONETIC:
 			return createEngineDescription(CorrectionCandidateSelector_LitKey.class);
 		default:

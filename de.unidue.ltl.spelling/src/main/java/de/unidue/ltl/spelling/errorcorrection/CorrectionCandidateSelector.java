@@ -23,17 +23,16 @@ public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase
 		}
 	}
 
-//	public abstract void narrowDownSuggestions(JCas aJCas, SpellingAnomaly s);
-
 	protected void narrowDownSuggestions(JCas aJCas, SpellingAnomaly anomaly) {
-		Float highestValue = 0.0f;
+		double highestValue = 0.0f;
 		List<SuggestedAction> bestSuggestions = new ArrayList<SuggestedAction>();
 
 		if (anomaly.getSuggestions() != null) {
 			for (int i = 0; i < anomaly.getSuggestions().size(); i++) {
 				SuggestedAction currentSuggestion = anomaly.getSuggestions(i);
-				Float currentValue = getValue(currentSuggestion);
-
+				double currentValue = getValue(aJCas, anomaly.getCoveredText(), currentSuggestion);
+				System.out.println("Value: "+currentValue);
+				
 				// Case 1: suggestion is worse
 				if (currentValue < highestValue) {
 					// No need to do anything
@@ -62,17 +61,6 @@ public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase
 		}
 	}
 
-	protected abstract float getValue(SuggestedAction action);
-
-	protected void replaceSuggestions(JCas aJCas, SpellingAnomaly anomaly, List<SuggestedAction> bestSuggestions) {
-		FSArray actions = new FSArray(aJCas, bestSuggestions.size());
-		for (int i = 0; i < actions.size(); i++) {
-			actions.set(i, bestSuggestions.get(i));
-		}
-
-		// Replace suggestions with new, reduced set
-		anomaly.getSuggestions().removeFromIndexes();
-		anomaly.setSuggestions(actions);
-	}
+	protected abstract double getValue(JCas aJCas, String anomalyText, SuggestedAction action);
 
 }

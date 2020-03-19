@@ -43,14 +43,13 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	protected String defaultDictEN;
 	protected String defaultDictDE;
 
-	ITransducer<Candidate>[] transducers;
+	ITransducer<Candidate> transducer;
 	SortedDawg dictionary;
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
 
-		transducers = new ITransducer[this.scoreThreshold];
 		Set<String> dictionarySet = new HashSet<String>();
 
 		initializeDefaultDictionary(dictionarySet);
@@ -69,12 +68,8 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 		} else {
 			method = Algorithm.STANDARD;
 		}
-
-		for (int i = 1; i <= this.scoreThreshold; i++) {
-			ITransducer<Candidate> transducer = new TransducerBuilder().dictionary(dictionary).algorithm(method)
-					.defaultMaxDistance(i).includeDistance(true).build();
-			transducers[i - 1] = transducer;
-		}
+		transducer = new TransducerBuilder().dictionary(dictionary).algorithm(method)
+				.defaultMaxDistance(this.scoreThreshold).includeDistance(true).build();
 	}
 
 	protected abstract void initializeDefaultDictionary(Set<String> dictionarySet);

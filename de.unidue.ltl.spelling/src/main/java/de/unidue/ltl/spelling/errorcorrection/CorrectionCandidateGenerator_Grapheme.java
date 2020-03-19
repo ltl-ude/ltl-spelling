@@ -133,12 +133,11 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 
 			// Generate candidates
 
-			for (ITransducer<Candidate> it : transducers) {
-				for (Candidate candidate : it.transduce(tokenText, scoreThreshold)) {
-					String suggestionString = candidate.term();
-					tuples.addTuple(suggestionString, candidate.distance());
-				}
+			for (Candidate candidate : transducer.transduce(tokenText, scoreThreshold)) {
+				String suggestionString = candidate.term();
+				tuples.addTuple(suggestionString, candidate.distance());
 			}
+
 			addSuggestedActions(aJCas, anomaly, tuples);
 		}
 	};

@@ -35,6 +35,7 @@ import org.apache.uima.jcas.JCas;
 import org.dkpro.core.api.transform.JCasTransformerChangeBased_ImplBase;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
+import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.unidue.ltl.spelling.resources.LanguageModelResource;
@@ -49,63 +50,13 @@ import eu.openminted.share.annotations.api.constants.OperationType;
 @Component(OperationType.NORMALIZER)
 
 public class CorrectionCandidateSelector_Matrix extends CorrectionCandidateSelector
-{
-	
-	public static final String PARAM_LANGUAGE_MODEL = "languageModel";
-	@ExternalResource(key=PARAM_LANGUAGE_MODEL)
-	private LanguageModelResource languageModel;
-	
-	public static final String PARAM_METHOD = "candidateSelectionMethod";
-	@ConfigurationParameter(name = PARAM_METHOD, mandatory = false, defaultValue = "LEVENSHTEIN_UNIFORM")
-	protected CandidateSelectionMethod candidateSelectionMethod;
-	
-	public enum CandidateSelectionMethod {
-		LEVENSHTEIN_DISTANCE, KEYBOARD_DISTANCE, PHONETIC, LANGUAGE_MODEL_FREQUENCY, LANGUAGE_MODEL_PROBABILITY
-	}
-	
+{	
 	Map<String, Integer> insert = new HashMap<String, Integer>();
 	Map<String, Integer> delete = new HashMap<String, Integer>();
 	//Outer map: char to replace; inner map: replacement, mapped to respective cost
 	Map<Character, Map<Character,Integer>> substitute = new HashMap<Character, Map<Character, Integer>>();
-	
-    @Override
-    public void process(JCas aInput, JCas aOutput) throws AnalysisEngineProcessException
-    {
-    		System.out.println(select(aInput,SpellingAnomaly.class).size());
-	        for (SpellingAnomaly anomaly : select(aInput, SpellingAnomaly.class)) {
-	            replace(anomaly.getBegin(), anomaly.getEnd(), getBestSuggestion(anomaly));
-//	            SpellingAnomalyTransfer exAn = new SpellingAnomalyTransfer(aOutput);
-//	            exAn.setBegin(anomaly.getBegin());
-//	            exAn.setEnd(anomaly.getEnd());
-////	            exAn.setSuggestions(anomaly.getSuggestions());
-//	            exAn.addToIndexes();
-	        }
-    }
-
-    public String getBestSuggestion(SpellingAnomaly anomaly)
-    {
-        Float bestCertainty = 0.0f;
-        List<Token> tokens = JCasUtil.selectCovered(Token.class, anomaly);
-        if(tokens.size() > 1) {
-        	System.out.println("Found more than one token annotation for same string, using the first one.");
-        }
-        String bestReplacement = tokens.get(0).getCoveredText();
-
-        if(anomaly.getSuggestions() != null) {
-	        for (int i = 0; i < anomaly.getSuggestions().size(); i++) {
-	            Float currentCertainty = anomaly.getSuggestions(i).getCertainty();
-	            String currentReplacement = anomaly.getSuggestions(i).getReplacement();
-//		        System.out.println("Frequency in LM: "+currentReplacement+"\t"+languageModel.getFrequency(currentReplacement));
-	
-	            if (currentCertainty > bestCertainty) {
-	                bestCertainty = currentCertainty;
-	                bestReplacement = currentReplacement;
-	            }
-	        }
-        }
-        return bestReplacement;
-    }
     
+	//TODO: Check method
 	public int calculateCosts (CharSequence lhs, CharSequence rhs) {                          
 	    int len0 = lhs.length() + 1;                                                     
 	    int len1 = rhs.length() + 1;                                                     
@@ -147,5 +98,10 @@ public class CorrectionCandidateSelector_Matrix extends CorrectionCandidateSelec
 	                                                                                    
 	    // the distance is the cost for transforming all letters in both strings        
 	    return cost[len0 - 1];                                                          
+	}
+
+	@Override
+	protected double getValue(JCas aJCas, String anomalyText, SuggestedAction action) {
+		return calculateCosts(anomalyText, action.getReplacement());
 	}
 }

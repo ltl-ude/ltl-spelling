@@ -37,7 +37,6 @@ public class LanguageModelResource extends Resource_ImplBase{
         System.out.println("Initialize LM: "+modelFile);
         try {
 			web1tSearcher = new JWeb1TSearcher(new File(modelFile),1,1);
-//			web1tIterator = new JWeb1TIterator(modelFile,1);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -48,11 +47,13 @@ public class LanguageModelResource extends Resource_ImplBase{
         return true;
     }
     
-    public long getFrequency(String token) {
+    public double getFrequency(String token){
     	
-    	long count = 0;
+    	double count = 0;
     	try {
-			count =  web1tSearcher.getFrequency(token);
+			count =  (web1tSearcher.getFrequency(token)*1.0);
+			//TODO: This returns -1, something must be wrong with the web1t index files (ENGLISH)
+//					/web1tSearcher.getNrOfDistinctNgrams(1);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

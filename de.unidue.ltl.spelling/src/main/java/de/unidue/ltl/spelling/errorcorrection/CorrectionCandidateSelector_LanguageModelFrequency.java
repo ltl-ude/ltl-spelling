@@ -1,6 +1,7 @@
 package de.unidue.ltl.spelling.errorcorrection;
 
 import org.apache.uima.fit.descriptor.ExternalResource;
+import org.apache.uima.jcas.JCas;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.unidue.ltl.spelling.resources.LanguageModelResource;
@@ -12,7 +13,7 @@ public class CorrectionCandidateSelector_LanguageModelFrequency extends Correcti
 	private LanguageModelResource languageModel;
 
 	@Override
-	public float getValue(SuggestedAction currentSuggestion) {
+	public double getValue(JCas aJCas, String anomalyText, SuggestedAction currentSuggestion) {
 		return languageModel.getFrequency(currentSuggestion.getReplacement());
 	}
 

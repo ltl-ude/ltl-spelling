@@ -115,11 +115,9 @@ public class CorrectionCandidateGenerator_Phoneme extends CorrectionCandidateGen
 
 			// Generate candidates, add a tuple for all graphemes corresponding to the
 			// respective phonemes
-			for (ITransducer<Candidate> it : transducers) {
-				for (Candidate candidate : it.transduce(token, scoreThreshold)) {
-					for (String grapheme : phoneme2grapheme.get(candidate.term())) {
-						tuples.addTuple(grapheme, candidate.distance());
-					}
+			for (Candidate candidate : transducer.transduce(token, scoreThreshold)) {
+				for (String grapheme : phoneme2grapheme.get(candidate.term())) {
+					tuples.addTuple(grapheme, candidate.distance());
 				}
 			}
 			addSuggestedActions(aJCas, anomaly, tuples);
