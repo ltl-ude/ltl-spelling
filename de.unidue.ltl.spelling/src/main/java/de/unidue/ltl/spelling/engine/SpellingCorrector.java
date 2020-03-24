@@ -32,7 +32,9 @@ import de.unidue.ltl.spelling.errorcorrection.ResultTester;
 import de.unidue.ltl.spelling.errorcorrection.SpellingAnomalyReplacer;
 import de.unidue.ltl.spelling.preprocessing.NumericAnnotator;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
+import de.unidue.ltl.spelling.resources.FrequencyDistributionLanguageModel;
 import de.unidue.ltl.spelling.resources.LanguageModelResource;
+import de.unidue.ltl.spelling.resources.Web1TLanguageModel;
 
 public class SpellingCorrector extends JCasAnnotator_ImplBase {
 
@@ -91,9 +93,13 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 	protected CandidateSelectionMethod candidateSelectionMethod_secondLevel;
 
 	public static final String PARAM_LANGUAGE_MODEL_PATH = "languageModelPath";
-	@ConfigurationParameter(name = PARAM_LANGUAGE_MODEL_PATH, mandatory = true)
+	@ConfigurationParameter(name = PARAM_LANGUAGE_MODEL_PATH, mandatory = false)
 	private String languageModelPath;
-	
+
+	public static final String PARAM_CUSTOM_LM_WEIGHT = "customLMWeight";
+	@ConfigurationParameter(name = PARAM_CUSTOM_LM_WEIGHT, mandatory = false)
+	private double customLMWeight;
+
 	public static final String PARAM_NGRAM_SIZE = "ngramSize";
 	@ConfigurationParameter(name = PARAM_NGRAM_SIZE, mandatory = true, defaultValue = "1")
 	private int ngramSize;
@@ -103,7 +109,10 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 	}
 
 	private AnalysisEngine spellingCorrectorEngine = null;
-	ExternalResourceDescription languageModel;
+	ExternalResourceDescription customLanguageModel;
+	ExternalResourceDescription defaultLanguageModel;
+	private final String web1tPathGerman = "/Volumes/Marie2/web1t_de/export/data/ltlab/data/web1t/EUROPEAN/data/test";
+	private final String web1tPathEnglish = "/Volumes/Marie2/web1t/en/data";
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
@@ -119,10 +128,27 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 		}
 
 		try {
+			if (language.contentEquals("de")) {
+				defaultLanguageModel = createExternalResourceDescription(Web1TLanguageModel.class,
+						Web1TLanguageModel.PARAM_MODEL_FILE, web1tPathGerman);
+			} else if (language.contentEquals("en")) {
+				defaultLanguageModel = createExternalResourceDescription(Web1TLanguageModel.class,
+						Web1TLanguageModel.PARAM_MODEL_FILE, web1tPathEnglish);
+			}
+			// Will never happen because language has already been checked above
+			else {
+				getContext().getLogger().log(Level.WARNING, "Unknown language '" + language
+						+ "' was passed, as of now only English ('en') and German ('de') are supported.");
+				System.exit(1);
+			}
 
-			languageModel = createExternalResourceDescription(LanguageModelResource.class,
-					LanguageModelResource.PARAM_MODEL_FILE, languageModelPath);
-			
+			if (languageModelPath != null) {
+				System.out.println("ngram size: "+ngramSize);
+				customLanguageModel = createExternalResourceDescription(FrequencyDistributionLanguageModel.class,
+						FrequencyDistributionLanguageModel.PARAM_MODEL_FILE, languageModelPath,
+						FrequencyDistributionLanguageModel.PARAM_NGRAM_SIZE, ""+ngramSize);
+			}
+
 			List<AnalysisEngineDescription> spellingComponents = new ArrayList<AnalysisEngineDescription>();
 			List<String> componentNames = new ArrayList<String>();
 
@@ -169,6 +195,19 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 			}
 			spellingComponents.add(candidateGenerator);
 			componentNames.add("candidateGenerator");
+
+			// Check whether a LM was provided
+			if (customLMWeight > 0 && languageModelPath == null) {
+				getContext().getLogger().log(Level.WARNING,
+						"You did not provide a custom language model via the 'LANGUAGE_MODEL_PATH' parameter, but passed a weight that should be assigned to this nonexistent language model."
+						+ "The weight will be ignored and language model probability will be determined solely based on the default language model.");
+			}
+			// Check whether the weight is in the expected range
+			if(customLMWeight > 1.0) {
+				getContext().getLogger().log(Level.WARNING,
+						"You set 'PARAM_CUSTOM_LM_WEIGHT' to "+customLMWeight+", which is greater than 1. A probability between 0.0 and 1.0 was expected, defaulting to 0.5.");
+				customLMWeight = 0.5;
+			}
 
 			// CandidateSelection
 			AnalysisEngineDescription candidateSelector_firstLevel = getCandidateSelector(
@@ -224,7 +263,9 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 			return createEngineDescription(CorrectionCandidateSelector_Matrix.class);
 		case LANGUAGE_MODEL:
 			return createEngineDescription(CorrectionCandidateSelector_LanguageModel.class,
-					CorrectionCandidateSelector_LanguageModel.PARAM_LANGUAGE_MODEL, languageModel,
+					CorrectionCandidateSelector_LanguageModel.PARAM_DEFAULT_LANGUAGE_MODEL, defaultLanguageModel,
+					CorrectionCandidateSelector_LanguageModel.PARAM_CUSTOM_LANGUAGE_MODEL, customLanguageModel,
+//					CorrectionCandidateSelector_LanguageModel.PARAM_CUSTOM_LM_WEIGHT, customLMWeight,
 					CorrectionCandidateSelector_LanguageModel.PARAM_NGRAM_SIZE, ngramSize);
 		case PHONETIC:
 			return createEngineDescription(CorrectionCandidateSelector_LitKey.class);

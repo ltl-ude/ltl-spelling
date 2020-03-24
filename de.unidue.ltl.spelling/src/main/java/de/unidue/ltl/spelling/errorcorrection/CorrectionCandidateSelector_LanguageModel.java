@@ -15,17 +15,26 @@ import de.unidue.ltl.spelling.resources.LanguageModelResource;
 
 public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandidateSelector {
 
-	public static final String PARAM_LANGUAGE_MODEL = "languageModel";
-	@ExternalResource(key = PARAM_LANGUAGE_MODEL)
-	private LanguageModelResource languageModel;
+	public static final String PARAM_DEFAULT_LANGUAGE_MODEL = "defaultLanguageModel";
+	@ExternalResource(key = PARAM_DEFAULT_LANGUAGE_MODEL)
+	private LanguageModelResource defaultLanguageModel;
+	
+	public static final String PARAM_CUSTOM_LANGUAGE_MODEL = "customLanguageModel";
+	@ExternalResource(key = PARAM_CUSTOM_LANGUAGE_MODEL)
+	private LanguageModelResource customLanguageModel;
 	
 	public static final String PARAM_NGRAM_SIZE = "ngramSize";
 	@ConfigurationParameter(name = PARAM_NGRAM_SIZE, mandatory = true, defaultValue = "2")
 	private int ngramSize;
+	
+	public static final String PARAM_CUSTOM_LM_WEIGHT = "customLMWeight";
+	@ConfigurationParameter(name = PARAM_CUSTOM_LM_WEIGHT, mandatory = false)
+	private double customLMWeight;
 
 	@Override
 	protected double getValue(JCas aJCas, SpellingAnomaly anomaly, SuggestedAction currentSuggestion) {
-		double probability = 1;
+		double probabilityInDefaultLM = 1.0;
+		double probabilityInCustomLM = 1.0;
 //		JCasUtil.indexCovering(aJCas, currentSuggestion, Sentence.class);
 		List<Sentence> sentences = JCasUtil.selectCovering(Sentence.class, anomaly);
 		// Should only be one
@@ -84,13 +93,21 @@ public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandida
 						ngram[j] = tokens.get(i).getCoveredText();
 						j++;
 					}
-					probability = probability * languageModel.getFrequency(ngram);
+					probabilityInDefaultLM = probabilityInDefaultLM * defaultLanguageModel.getFrequency(ngram);
+					probabilityInCustomLM = probabilityInCustomLM * customLanguageModel.getFrequency(ngram);
 					start += 1;
 					end += 1;
 				}
 			}
 			
-		}	
+		}
+		double probability = 1.0;
+		if(probabilityInCustomLM != 0) {
+			probability = probabilityInCustomLM * customLMWeight + probabilityInDefaultLM * (1-customLMWeight);
+		}
+		else {
+			probability = probabilityInDefaultLM;
+		}
 		return probability;
 	}
 }

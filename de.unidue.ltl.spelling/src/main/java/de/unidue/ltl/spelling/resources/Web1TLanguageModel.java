@@ -21,7 +21,7 @@ public class Web1TLanguageModel extends LanguageModelResource{
         if (!super.initialize(aSpecifier, additionalParams)) {
             return false;
         }  
-//        System.out.println("Initialize web1t LM from: "+modelFile);
+        System.out.println("Initialize web1t LM from: "+modelFile);
         try {
 			web1tSearcher = new JWeb1TSearcher(new File(modelFile),1,1);
 		} catch (IOException e) {
