@@ -16,8 +16,8 @@ import de.unidue.ltl.spelling.engine.SpellingCorrector.CandidateSelectionMethod;
 public class Experiment {
 
 	public static void main(String[] args) throws UIMAException, IOException {
-		runEnglish();
-
+//		runEnglish();
+		runGerman();
 	}
 
 	public static void runEnglish() throws UIMAException, IOException {
@@ -32,7 +32,8 @@ public class Experiment {
 				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_en,
 				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, types_to_exclude,
 				SpellingCorrector.PARAM_PHONETIC_CANDIDATE_GENERATION, true,
-				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL_PROBABILITY,
+				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+				SpellingCorrector.PARAM_NGRAM_SIZE, 2,
 //				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
 				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH, languageModel);
 		SimplePipeline.runPipeline(reader, engine);
@@ -43,15 +44,16 @@ public class Experiment {
 		String[] types_to_exclude = new String[] {};
 
 		String languageModel = "/Volumes/Marie2/web1t_de/export/data/ltlab/data/web1t/EUROPEAN/data/test"; // Just
-																											// unigrams
-																											// atm
 
 		CollectionReader reader = getReader("de-testData", "de");
 		AnalysisEngine engine = createEngine(SpellingCorrector.class, SpellingCorrector.PARAM_LANGUAGE, "de",
-				SpellingCorrector.PARAM_SCORE_THRESHOLD, 2, SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_de,
-				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, types_to_exclude,
-				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
-				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
+				SpellingCorrector.PARAM_SCORE_THRESHOLD, 2,
+				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_de,
+//				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, types_to_exclude,
+				SpellingCorrector.PARAM_PHONETIC_CANDIDATE_GENERATION, true,
+				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+				SpellingCorrector.PARAM_NGRAM_SIZE, 2,
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
 				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH, languageModel);
 		SimplePipeline.runPipeline(reader, engine);
 

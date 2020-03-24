@@ -27,13 +27,12 @@ public class LanguageModelResource extends Resource_ImplBase{
 //	private JWeb1TIterator web1tIterator;
 	
     @Override
-    public boolean initialize(ResourceSpecifier aSpecifier, Map aAdditionalParams)
+    public boolean initialize(ResourceSpecifier aSpecifier, Map additionalParams)
         throws ResourceInitializationException
     {
-        if (!super.initialize(aSpecifier, aAdditionalParams)) {
+        if (!super.initialize(aSpecifier, additionalParams)) {
             return false;
-        }
-        
+        }  
         System.out.println("Initialize LM: "+modelFile);
         try {
 			web1tSearcher = new JWeb1TSearcher(new File(modelFile),1,1);
@@ -41,29 +40,29 @@ public class LanguageModelResource extends Resource_ImplBase{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        
         System.out.println("unigram count: "+web1tSearcher.getNrOfDistinctNgrams(1));
-
         return true;
     }
     
-    public double getFrequency(String token){
-    	
-    	double count = 0;
+    //TODO: Should return normalized token frequency (probability) 
+    public double getFrequency(String[] ngram){	
+    	String ngramToQuery = String.join(" ", ngram);
+    	double count = 0.0;
+    	System.out.println("Attempting to get frequency of: "+ngramToQuery);
     	try {
-			count =  (web1tSearcher.getFrequency(token)*1.0);
+			count = (web1tSearcher.getFrequency(ngramToQuery)*1.0);
+    		System.out.println("Freuqency of "+ngramToQuery+": "+count);
 			//TODO: This returns -1, something must be wrong with the web1t index files (ENGLISH)
 //					/web1tSearcher.getNrOfDistinctNgrams(1);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+    	//TODO: never return 0; set nonexisting ngrams to 1/ngramCount instead
+    	if(count == 0.0) {
+    		count = 1/10000;
+    	}
     	return count;
-    }
-    
-    public long getProbability(String sentence) {
-
-    	return 0;
     }
 
 }

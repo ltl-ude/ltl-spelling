@@ -101,7 +101,7 @@ public class CorrectionCandidateSelector_Matrix extends CorrectionCandidateSelec
 	}
 
 	@Override
-	protected double getValue(JCas aJCas, String anomalyText, SuggestedAction action) {
-		return calculateCosts(anomalyText, action.getReplacement());
+	protected double getValue(JCas aJCas, SpellingAnomaly anomaly, SuggestedAction action) {
+		return calculateCosts(anomaly.getCoveredText(), action.getReplacement());
 	}
 }

@@ -131,9 +131,4 @@ public class ExtendedSpellingAnomaly extends SpellingAnomaly {
     if (ExtendedSpellingAnomaly_Type.featOkTst && ((ExtendedSpellingAnomaly_Type)jcasType).casFeat_misspelledTokenText == null)
       jcasType.jcas.throwFeatMissing("misspelledTokenText", "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly");
     jcasType.ll_cas.ll_setStringValue(addr, ((ExtendedSpellingAnomaly_Type)jcasType).casFeatCode_misspelledTokenText, v);}    
-    	
-  @Override
-	public String getCoveredText() {
-		return this.getMisspelledTokenText();
-	}
 }

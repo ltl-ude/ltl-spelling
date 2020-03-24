@@ -30,7 +30,7 @@ public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase
 		if (anomaly.getSuggestions() != null) {
 			for (int i = 0; i < anomaly.getSuggestions().size(); i++) {
 				SuggestedAction currentSuggestion = anomaly.getSuggestions(i);
-				double currentValue = getValue(aJCas, anomaly.getCoveredText(), currentSuggestion);
+				double currentValue = getValue(aJCas, anomaly, currentSuggestion);
 				System.out.println("Value: "+currentValue);
 				
 				// Case 1: suggestion is worse
@@ -61,6 +61,6 @@ public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase
 		}
 	}
 
-	protected abstract double getValue(JCas aJCas, String anomalyText, SuggestedAction action);
+	protected abstract double getValue(JCas aJCas, SpellingAnomaly anomaly, SuggestedAction action);
 
 }

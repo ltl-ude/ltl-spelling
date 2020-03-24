@@ -24,8 +24,7 @@ import de.unidue.ltl.spelling.errorcorrection.ApplyChanges;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator_Grapheme;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator_Phoneme;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_Distance;
-import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_LanguageModelFrequency;
-import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_LanguageModelProbability;
+import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_LanguageModel;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_LitKey;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_Matrix;
 import de.unidue.ltl.spelling.errorcorrection.ErrorDetector;
@@ -94,10 +93,13 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 	public static final String PARAM_LANGUAGE_MODEL_PATH = "languageModelPath";
 	@ConfigurationParameter(name = PARAM_LANGUAGE_MODEL_PATH, mandatory = true)
 	private String languageModelPath;
+	
+	public static final String PARAM_NGRAM_SIZE = "ngramSize";
+	@ConfigurationParameter(name = PARAM_NGRAM_SIZE, mandatory = true, defaultValue = "1")
+	private int ngramSize;
 
 	public enum CandidateSelectionMethod {
-		LEVENSHTEIN_DISTANCE, KEYBOARD_DISTANCE, CUSTOM_MATRIX, PHONETIC, LANGUAGE_MODEL_FREQUENCY,
-		LANGUAGE_MODEL_PROBABILITY
+		LEVENSHTEIN_DISTANCE, KEYBOARD_DISTANCE, CUSTOM_MATRIX, PHONETIC, LANGUAGE_MODEL
 	}
 
 	private AnalysisEngine spellingCorrectorEngine = null;
@@ -220,12 +222,10 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 			return createEngineDescription(CorrectionCandidateSelector_Matrix.class);
 		case KEYBOARD_DISTANCE:
 			return createEngineDescription(CorrectionCandidateSelector_Matrix.class);
-		case LANGUAGE_MODEL_FREQUENCY:
-			return createEngineDescription(CorrectionCandidateSelector_LanguageModelFrequency.class,
-					CorrectionCandidateSelector_LanguageModelFrequency.PARAM_LANGUAGE_MODEL, languageModel);
-		case LANGUAGE_MODEL_PROBABILITY:
-			return createEngineDescription(CorrectionCandidateSelector_LanguageModelProbability.class,
-					CorrectionCandidateSelector_LanguageModelProbability.PARAM_LANGUAGE_MODEL, languageModel);
+		case LANGUAGE_MODEL:
+			return createEngineDescription(CorrectionCandidateSelector_LanguageModel.class,
+					CorrectionCandidateSelector_LanguageModel.PARAM_LANGUAGE_MODEL, languageModel,
+					CorrectionCandidateSelector_LanguageModel.PARAM_NGRAM_SIZE, ngramSize);
 		case PHONETIC:
 			return createEngineDescription(CorrectionCandidateSelector_LitKey.class);
 		default:
