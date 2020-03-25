@@ -23,10 +23,11 @@ import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.errorcorrection.ApplyChanges;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator_Grapheme;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateGenerator_Phoneme;
+import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_CustomMatrixes;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_Distance;
+import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_KeyboardDistance;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_LanguageModel;
 import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_LitKey;
-import de.unidue.ltl.spelling.errorcorrection.CorrectionCandidateSelector_Matrix;
 import de.unidue.ltl.spelling.errorcorrection.ErrorDetector;
 import de.unidue.ltl.spelling.errorcorrection.ResultTester;
 import de.unidue.ltl.spelling.errorcorrection.SpellingAnomalyReplacer;
@@ -91,6 +92,22 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 	public static final String PARAM_SECOND_LEVEL_SELECTION_METHOD = "candidateSelectionMethod_secondLevel";
 	@ConfigurationParameter(name = PARAM_SECOND_LEVEL_SELECTION_METHOD, mandatory = false)
 	protected CandidateSelectionMethod candidateSelectionMethod_secondLevel;
+	
+	public static final String PARAM_MATRIX_INSERTION = "levenshteinMatrixInsertion";
+	@ConfigurationParameter(name = PARAM_MATRIX_INSERTION, mandatory = false)
+	private String filePathInsertion;
+	
+	public static final String PARAM_MATRIX_DELETION = "levenshteinMatrixDeletion";
+	@ConfigurationParameter(name = PARAM_MATRIX_DELETION, mandatory = false)
+	private String filePathDeletion;
+	
+	public static final String PARAM_MATRIX_SUBSTITUTION = "levenshteinMatrixSubstitution";
+	@ConfigurationParameter(name = PARAM_MATRIX_SUBSTITUTION, mandatory = false)
+	private String filePathSubstitution;
+	
+	public static final String PARAM_MATRIX_TRANSPOSITION = "levenshteinMatrixTransposition";
+	@ConfigurationParameter(name = PARAM_MATRIX_TRANSPOSITION, mandatory = false)
+	private String filePathTransposition;
 
 	public static final String PARAM_LANGUAGE_MODEL_PATH = "languageModelPath";
 	@ConfigurationParameter(name = PARAM_LANGUAGE_MODEL_PATH, mandatory = false)
@@ -143,10 +160,10 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 			}
 
 			if (languageModelPath != null) {
-				System.out.println("ngram size: "+ngramSize);
+				System.out.println("ngram size: " + ngramSize);
 				customLanguageModel = createExternalResourceDescription(FrequencyDistributionLanguageModel.class,
 						FrequencyDistributionLanguageModel.PARAM_MODEL_FILE, languageModelPath,
-						FrequencyDistributionLanguageModel.PARAM_NGRAM_SIZE, ""+ngramSize);
+						FrequencyDistributionLanguageModel.PARAM_NGRAM_SIZE, "" + ngramSize);
 			}
 
 			List<AnalysisEngineDescription> spellingComponents = new ArrayList<AnalysisEngineDescription>();
@@ -200,12 +217,12 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 			if (customLMWeight > 0 && languageModelPath == null) {
 				getContext().getLogger().log(Level.WARNING,
 						"You did not provide a custom language model via the 'LANGUAGE_MODEL_PATH' parameter, but passed a weight that should be assigned to this nonexistent language model."
-						+ "The weight will be ignored and language model probability will be determined solely based on the default language model.");
+								+ "The weight will be ignored and language model probability will be determined solely based on the default language model.");
 			}
 			// Check whether the weight is in the expected range
-			if(customLMWeight > 1.0) {
-				getContext().getLogger().log(Level.WARNING,
-						"You set 'PARAM_CUSTOM_LM_WEIGHT' to "+customLMWeight+", which is greater than 1. A probability between 0.0 and 1.0 was expected, defaulting to 0.5.");
+			if (customLMWeight > 1.0) {
+				getContext().getLogger().log(Level.WARNING, "You set 'PARAM_CUSTOM_LM_WEIGHT' to " + customLMWeight
+						+ ", which is greater than 1. A probability between 0.0 and 1.0 was expected, defaulting to 0.5.");
 				customLMWeight = 0.5;
 			}
 
@@ -258,13 +275,39 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 		case LEVENSHTEIN_DISTANCE:
 			return createEngineDescription(CorrectionCandidateSelector_Distance.class);
 		case CUSTOM_MATRIX:
-			return createEngineDescription(CorrectionCandidateSelector_Matrix.class);
+			return createEngineDescription(CorrectionCandidateSelector_CustomMatrixes.class,
+					CorrectionCandidateSelector_CustomMatrixes.PARAM_INCLUDE_TRANSPOSITION, includeTransposition,
+					CorrectionCandidateSelector_CustomMatrixes.PARAM_MAP_DELETION, filePathDeletion,
+					CorrectionCandidateSelector_CustomMatrixes.PARAM_MAP_INSERTION, filePathInsertion,
+					CorrectionCandidateSelector_CustomMatrixes.PARAM_MAP_SUBSTITUTION, filePathSubstitution,
+					CorrectionCandidateSelector_CustomMatrixes.PARAM_MAP_TRANSPOSITION, filePathTransposition);
 		case KEYBOARD_DISTANCE:
-			return createEngineDescription(CorrectionCandidateSelector_Matrix.class);
+			if (candidateSelectionMethod_firstLevel != CandidateSelectionMethod.CUSTOM_MATRIX
+					&& candidateSelectionMethod_secondLevel != CandidateSelectionMethod.CUSTOM_MATRIX) {
+				if (filePathDeletion != null) {
+					getContext().getLogger().log(Level.WARNING, "A custom cost matrix for deletion was passed as '"
+							+ filePathDeletion + ". This requires selecting CandidateSelectionMethod.CUSTOM_MATRIX to take effect.");
+				}
+				if (filePathInsertion != null) {
+					getContext().getLogger().log(Level.WARNING, "A custom cost matrix for insertion was passed as '"
+							+ filePathInsertion + ". This requires selecting CandidateSelectionMethod.CUSTOM_MATRIX to take effect.");
+				}
+				if (filePathSubstitution != null) {
+					getContext().getLogger().log(Level.WARNING, "A custom cost matrix for substitution was passed as '"
+							+ filePathSubstitution + ". This requires selecting CandidateSelectionMethod.CUSTOM_MATRIX to take effect.");
+				}
+				if (filePathTransposition != null) {
+					getContext().getLogger().log(Level.WARNING, "A custom cost matrix for transposition was passed as '"
+							+ filePathTransposition + ". This requires selecting CandidateSelectionMethod.CUSTOM_MATRIX to take effect.");
+				}
+			}
+			return createEngineDescription(CorrectionCandidateSelector_KeyboardDistance.class,
+					CorrectionCandidateSelector_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, includeTransposition);
 		case LANGUAGE_MODEL:
 			return createEngineDescription(CorrectionCandidateSelector_LanguageModel.class,
 					CorrectionCandidateSelector_LanguageModel.PARAM_DEFAULT_LANGUAGE_MODEL, defaultLanguageModel,
 					CorrectionCandidateSelector_LanguageModel.PARAM_CUSTOM_LANGUAGE_MODEL, customLanguageModel,
+					//TODO: this gives weird type error, says PARAM_CUSTOM_LM_WEIGHT would require float
 //					CorrectionCandidateSelector_LanguageModel.PARAM_CUSTOM_LM_WEIGHT, customLMWeight,
 					CorrectionCandidateSelector_LanguageModel.PARAM_NGRAM_SIZE, ngramSize);
 		case PHONETIC:
