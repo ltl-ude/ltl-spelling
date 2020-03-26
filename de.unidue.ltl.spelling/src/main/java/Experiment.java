@@ -10,6 +10,7 @@ import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 import org.dkpro.core.api.frequency.util.FrequencyDistribution;
 import org.dkpro.core.io.text.TextReader;
 
@@ -30,14 +31,15 @@ public class Experiment {
 		String lmPath = "src/main/resources/LM.ser";
 
 		FrequencyDistribution<String> fd = new FrequencyDistribution<String>();
-		fd.inc("Hello there");
-		fd.inc("this Frequency");
-		fd.inc("Frequency Distrbution");
-		fd.inc("Distrbution is");
-		fd.inc("is about");
-		fd.inc("about to");
-		fd.inc("to be");
-		fd.inc("be serialized");
+		ConditionalFrequencyDistribution<Integer,String> cfd = new ConditionalFrequencyDistribution<Integer,String>();
+		cfd.inc(2,"Hello there");
+		cfd.inc(2,"this Frequency");
+		cfd.inc(2,"Frequency Distrbution");
+		cfd.inc(2,"Distrbution is");
+		cfd.inc(2,"is about");
+		cfd.inc(2,"about to");
+		cfd.inc(2,"to be");
+		cfd.inc(2,"be serialized");
 		
         try
         {    

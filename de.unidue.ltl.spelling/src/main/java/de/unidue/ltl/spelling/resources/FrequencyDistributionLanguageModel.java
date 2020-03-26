@@ -9,6 +9,7 @@ import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.ResourceSpecifier;
 import org.apache.uima.util.Level;
+import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 import org.dkpro.core.api.frequency.util.FrequencyDistribution;
 
 public class FrequencyDistributionLanguageModel extends LanguageModelResource{
@@ -19,7 +20,7 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource{
 	
 	//TODO: is there a better way to get this in here other than via serialization?
 	//TODO: do we just assume that the ngram size corresponds to what was requested as selection size and warn if it is not?
-	FrequencyDistribution<String> fd;
+	ConditionalFrequencyDistribution<Integer,String> fd;
 	//TODO: this should work with an int configuration parameter (but it didnt, hence the String workaround)
 	int ngramSize;
 
@@ -35,18 +36,18 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource{
         {    
             FileInputStream file = new FileInputStream(modelFile); 
             ObjectInputStream in = new ObjectInputStream(file); 
-            fd = (FrequencyDistribution<String>)in.readObject();           
+            fd = (ConditionalFrequencyDistribution<Integer,String>)in.readObject();           
             in.close(); 
             file.close();          
 			getUimaContext().getLogger().log(Level.INFO, "Frequency distrbution '" + modelFile
 					+ "' was succesfully deseralized.");
 //			Check if fd has proposed size
-			for(String key : fd.getKeys()) {
-				if(key.split(" ").length != ngramSize ) {
-					getUimaContext().getLogger().log(Level.WARNING, "You selected ngram size '" + ngramSize
-							+ "', but provided a frequency distribution containing '"+key+"'.");
-				}
-			}
+//			for(String key : fd.getFrequencyDistribution(ngramSize).getKeys()) {
+//				if(key.split(" ").length != ngramSize ) {
+//					getUimaContext().getLogger().log(Level.WARNING, "You selected ngram size '" + ngramSize
+//							+ "', but provided a frequency distribution containing '"+key+"'.");
+//				}
+//			}
         } 
           
         catch(IOException e) 
@@ -66,7 +67,7 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource{
 	@Override
 	public double getFrequency(String[] ngram) {
 		String ngramJoined = String.join(" ", ngram);
-		double result = fd.getCount(ngramJoined)/(double)fd.getN();
+		double result = fd.getCount(ngramSize,ngramJoined)/(double)fd.getFrequencyDistribution(ngramSize).getN();
 		if(result == 0) {
 			result = 1.0/fd.getN();
 		}
