@@ -14,6 +14,8 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
 public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase {
+	
+	private boolean maximize;
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
@@ -24,7 +26,7 @@ public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase
 	}
 
 	protected void narrowDownSuggestions(JCas aJCas, SpellingAnomaly anomaly) {
-		double highestValue = 0.0f;
+		double bestValue = 0.0f;
 		List<SuggestedAction> bestSuggestions = new ArrayList<SuggestedAction>();
 
 		if (anomaly.getSuggestions() != null) {
@@ -34,15 +36,15 @@ public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase
 				System.out.println("Value: "+currentValue);
 				
 				// Case 1: suggestion is worse
-				if (currentValue < highestValue) {
+				if ((currentValue < bestValue && maximize) || (currentValue > bestValue && !maximize)) {
 					// No need to do anything
 				}
 				// Case 2: suggestion is better
-				else if (currentValue > highestValue) {
+				else if ((currentValue > bestValue && maximize) || (currentValue < bestValue && !maximize)) {
 					// Replace previously saved suggestions
 					bestSuggestions.clear();
 					bestSuggestions.add(currentSuggestion);
-					highestValue = currentValue;
+					bestValue = currentValue;
 				}
 				// Case 3: suggestion is equal
 				else {

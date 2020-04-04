@@ -302,7 +302,8 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 				}
 			}
 			return createEngineDescription(CorrectionCandidateSelector_KeyboardDistance.class,
-					CorrectionCandidateSelector_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, includeTransposition);
+					CorrectionCandidateSelector_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, includeTransposition,
+					CorrectionCandidateSelector_KeyboardDistance.PARAM_LANGUAGE, language);
 		case LANGUAGE_MODEL:
 			return createEngineDescription(CorrectionCandidateSelector_LanguageModel.class,
 					CorrectionCandidateSelector_LanguageModel.PARAM_DEFAULT_LANGUAGE_MODEL, defaultLanguageModel,
@@ -311,7 +312,8 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 //					CorrectionCandidateSelector_LanguageModel.PARAM_CUSTOM_LM_WEIGHT, customLMWeight,
 					CorrectionCandidateSelector_LanguageModel.PARAM_NGRAM_SIZE, ngramSize);
 		case PHONETIC:
-			return createEngineDescription(CorrectionCandidateSelector_LitKey.class);
+			return createEngineDescription(CorrectionCandidateSelector_LitKey.class,
+					CorrectionCandidateSelector_LitKey.PARAM_LANGUAGE,language);
 		default:
 			getContext().getLogger().log(Level.WARNING,
 					"Selected unknown selection type '" + method + "' , defaulting to levenshtein distance.");

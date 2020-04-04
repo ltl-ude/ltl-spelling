@@ -12,64 +12,61 @@ import org.apache.uima.util.Level;
 import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 import org.dkpro.core.api.frequency.util.FrequencyDistribution;
 
-public class FrequencyDistributionLanguageModel extends LanguageModelResource{
-	
+public class FrequencyDistributionLanguageModel extends LanguageModelResource {
+
 	public static final String PARAM_NGRAM_SIZE = "ngramSize";
 	@ConfigurationParameter(name = PARAM_NGRAM_SIZE, mandatory = true)
 	private String ngramSize_String;
-	
-	//TODO: is there a better way to get this in here other than via serialization?
-	//TODO: do we just assume that the ngram size corresponds to what was requested as selection size and warn if it is not?
-	ConditionalFrequencyDistribution<Integer,String> fd;
-	//TODO: this should work with an int configuration parameter (but it didnt, hence the String workaround)
+
+	// TODO: is there a better way to get this in here other than via serialization?
+	// TODO: do we just assume that the ngram size corresponds to what was requested
+	// as selection size and warn if it is not?
+	ConditionalFrequencyDistribution<Integer, String> fd;
+	// TODO: this should work with an int configuration parameter (but it didnt,
+	// hence the String workaround)
 	int ngramSize;
 
-    @Override
-    public boolean initialize(ResourceSpecifier aSpecifier, Map additionalParams)
-        throws ResourceInitializationException
-    {
-        if (!super.initialize(aSpecifier, additionalParams)) {
-            return false;
-        }  
-    	int ngramSize = Integer.parseInt(ngramSize_String);
-        try
-        {    
-            FileInputStream file = new FileInputStream(modelFile); 
-            ObjectInputStream in = new ObjectInputStream(file); 
-            fd = (ConditionalFrequencyDistribution<Integer,String>)in.readObject();           
-            in.close(); 
-            file.close();          
-			getUimaContext().getLogger().log(Level.INFO, "Frequency distrbution '" + modelFile
-					+ "' was succesfully deseralized.");
-//			Check if fd has proposed size
-//			for(String key : fd.getFrequencyDistribution(ngramSize).getKeys()) {
-//				if(key.split(" ").length != ngramSize ) {
-//					getUimaContext().getLogger().log(Level.WARNING, "You selected ngram size '" + ngramSize
-//							+ "', but provided a frequency distribution containing '"+key+"'.");
-//				}
-//			}
-        } 
-          
-        catch(IOException e) 
-        {  
-            e.printStackTrace();
-			getUimaContext().getLogger().log(Level.WARNING, "Unable to read frequency distribution from '" + modelFile
-					+ "'.");
-        } 
-          
-        catch(ClassNotFoundException e) 
-        { 
-            e.printStackTrace();
-        } 
-        return true;
-    }
-	
+	@Override
+	public boolean initialize(ResourceSpecifier aSpecifier, Map additionalParams)
+			throws ResourceInitializationException {
+		if (!super.initialize(aSpecifier, additionalParams)) {
+			return false;
+		}
+		int ngramSize = Integer.parseInt(ngramSize_String);
+		try {
+			FileInputStream file = new FileInputStream(modelFile);
+			ObjectInputStream in = new ObjectInputStream(file);
+			fd = (ConditionalFrequencyDistribution<Integer, String>) in.readObject();
+			in.close();
+			file.close();
+			getUimaContext().getLogger().log(Level.INFO,
+					"Frequency distrbution '" + modelFile + "' was succesfully deseralized.");
+//			Check how many entries of requested size are present in fd
+			getUimaContext().getLogger().log(Level.INFO, fd.getFrequencyDistribution(ngramSize).getKeys().size()+" ngrams of selected NGRAM_SIZE (" + ngramSize
+					+ ") are present in ConditionalFrequencyDistribution you passed.");
+
+		}
+
+		catch (
+
+		IOException e) {
+			e.printStackTrace();
+			getUimaContext().getLogger().log(Level.WARNING,
+					"Unable to read frequency distribution from '" + modelFile + "'.");
+		}
+
+		catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return true;
+	}
+
 	@Override
 	public double getFrequency(String[] ngram) {
 		String ngramJoined = String.join(" ", ngram);
-		double result = fd.getCount(ngramSize,ngramJoined)/(double)fd.getFrequencyDistribution(ngramSize).getN();
-		if(result == 0) {
-			result = 1.0/fd.getN();
+		double result = fd.getCount(ngramSize, ngramJoined) / (double) fd.getFrequencyDistribution(ngramSize).getN();
+		if (result == 0) {
+			result = 1.0 / fd.getN();
 		}
 		return result;
 	}

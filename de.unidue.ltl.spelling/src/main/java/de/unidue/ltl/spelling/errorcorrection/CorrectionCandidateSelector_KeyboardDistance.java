@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.uima.UimaContext;
@@ -22,46 +23,49 @@ public class CorrectionCandidateSelector_KeyboardDistance extends CorrectionCand
 	public static final String PARAM_LANGUAGE = "language";
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
 	private String language;
-	
+
 	public static final String PARAM_INCLUDE_TRANSPOSITION = "includeTransposition";
 	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "false")
 	private boolean includeTransposition;
-	
-	//This matrix is used threefold:
-	//Deletion: min{distance between char_to_delete and previous char, distance between char_to_delete and subsequent char}
-	//Substition
-	//Transposition
-	private final String keyboardDistanceMatrixGerman = "src/main/resources/matrixes/keyboardDistance_DE.txt";
-	private final String keyboardDistanceMatrixEnglish = "src/main/resources/matrixes/keyboardDistance_EN.txt";
-	//Insertion cost is constantly 1
-	
-	private Map<String,double[]> distanceMap;
-	
+
+//	private final String keyboardDistanceMatrixGerman = "src/main/resources/matrixes/keyboardDistance_DE.txt";
+//	private final String keyboardDistanceMatrixEnglish = "src/main/resources/matrixes/keyboardDistance_EN.txt";
+	private final String keyboardDistanceMatrixGerman = "src/main/resources/matrixes/keyboardDistance_DE-manual.txt";
+	private final String keyboardDistanceMatrixEnglish = "src/main/resources/matrixes/keyboardDistance_EN-manual.txt";
+
+//	private Map<Character, double[]> distanceMap;
+	private Map<Character, Map<Character, Double>> distanceMap = new HashMap<Character, Map<Character, Double>>();
+	private final int defaultDistance = 4;
+
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
 
-		//Initialize map from file
+		// Initialize map from file
 		String keyboardDistanceMatrix = null;
-		if(language.contentEquals("de")) {
+		if (language.contentEquals("de")) {
 			keyboardDistanceMatrix = keyboardDistanceMatrixGerman;
-		}
-		else if(language.contentEquals("en")) {
+		} else if (language.contentEquals("en")) {
 			keyboardDistanceMatrix = keyboardDistanceMatrixEnglish;
-		}
-		else {
+		} else {
 			getContext().getLogger().log(Level.WARNING, "Unknown language '" + language
 					+ "' was passed, as of now only English ('en') and German ('de') are supported.");
 			System.exit(1);
 		}
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(new File(keyboardDistanceMatrix)));
-			String line;
+			String line = null;
 			String[] entries;
-			while(br.ready()) {
+			Map<Character, Double> current;
+			while (br.ready()) {
 				line = br.readLine();
 				entries = line.split("\t");
-				distanceMap.put(entries[0],new double[]{Double.parseDouble(entries[1]),Double.parseDouble(entries[2])});
+				current = distanceMap.get(entries[0].charAt(0));
+				if (current == null) {
+					distanceMap.put(entries[0].charAt(0), new HashMap<Character, Double>());
+					current = distanceMap.get(entries[0].charAt(0));
+				}
+				current.put(entries[1].charAt(0), Double.parseDouble(entries[2]));
 			}
 			br.close();
 		} catch (FileNotFoundException e) {
@@ -70,65 +74,96 @@ public class CorrectionCandidateSelector_KeyboardDistance extends CorrectionCand
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}	
+		}
 	}
 
 	@Override
 	protected double getValue(JCas aJCas, SpellingAnomaly anomaly, SuggestedAction action) {
 		return calculateCost(anomaly.getCoveredText(), action.getReplacement());
 	}
-	
-	// TODO: Check method
-	public double calculateCost(CharSequence lhs, CharSequence rhs) {
-		int len0 = lhs.length() + 1;
-		int len1 = rhs.length() + 1;
 
-		// the array of distances
-		// cost: referring to s0
-		// newcost: referring to s1
-		double[] cost = new double[len0];
-		double[] newcost = new double[len0];
+	private double getDistance(char a, char b) {
+		try {
+			return distanceMap.get(a).get(b);
+		} catch (NullPointerException e) {
+			System.out.println("Not found: " + a + b);
+			return defaultDistance;
+		}
+	}
 
-		// initial cost of skipping prefix in String s0
-		for (int i = 0; i < len0; i++)
-			cost[i] = i;
+	private double calculateCost(String misspelling, String correction) {
 
-		// dynamically computing the array of distances
+		//TODO: handle upper/lower case differently?
+		misspelling = misspelling.toLowerCase();
+		correction = correction.toLowerCase();
+		Map<Character, Integer> da = new HashMap<Character, Integer>();
+		double[][] d = new double[misspelling.length() + 2][correction.length() + 2];
 
-		// transformation cost for each letter in s1
-		for (int j = 1; j < len1; j++) {
-			// initial cost of skipping prefix in String s1
-			newcost[0] = j;
+		double maxdist = Integer.MAX_VALUE;
+		d[0][0] = maxdist;
 
-			// transformation cost for each letter in s0
-			for (int i = 1; i < len0; i++) {
-				// matching current letters in both strings
-				int match = (lhs.charAt(i - 1) == rhs.charAt(j - 1)) ? 0 : 1;
-
-				// computing cost for each transformation
-				// if the chars do not match: look up substitution cost
-				double cost_replace = cost[i - 1] + match * getDistance(lhs.charAt(i - 1),rhs.charAt(j - 1));
-				double cost_insert = cost[i] + 1;
-				double cost_delete = newcost[i - 1] + Math.min(getDistance(lhs.charAt(i-2),lhs.charAt(i-1)), getDistance(lhs.charAt(i-1),lhs.charAt(i)));
-
-				// keep minimum cost
-				newcost[i] = Math.min(Math.min(cost_insert, cost_delete), cost_replace);
-			}
-
-			// swap cost/newcost arrays
-			double[] swap = cost;
-			cost = newcost;
-			newcost = swap;
+		// from 1 to end of array
+		for (int i = 0; i < misspelling.length() + 1; i++) {
+			d[i + 1][0] = maxdist;
+			d[i + 1][1] = i * 4;
 		}
 
-		// the distance is the cost for transforming all letters in both strings
-		return cost[len0 - 1];
+		// from 1 to end of array
+		for (int i = 0; i < correction.length() + 1; i++) {
+			d[0][i + 1] = maxdist;
+			d[1][i + 1] = i * 4;
+		}
+
+		for (int i = 1; i < misspelling.length() + 1; i++) {
+			int db = 0;
+			for (int j = 1; j < correction.length() + 1; j++) {
+				int k = 0;
+				try {
+					k = da.get(correction.charAt(j - 1));
+				} catch (Exception e) {
+
+				}
+				int l = db;
+				double cost = 1.0;
+				if (misspelling.charAt(i - 1) == correction.charAt(j - 1)) {
+					cost = 0.0;
+					db = j;
+				}
+
+				double substitution = d[i][j] + cost * getDistance(misspelling.charAt(i - 1), correction.charAt(j - 1));
+				// Estimate insertion cost as moderate distance
+				double insertion = d[i + 1][j] + defaultDistance;
+				// Min of distance to char before/after char to delete
+				double deletion = d[i][j + 1] + defaultDistance;
+				if (i > 1 && i < misspelling.length()) {
+					deletion = d[i][j + 1] + Math.min(getDistance(misspelling.charAt(i - 2), misspelling.charAt(i - 1)),
+							getDistance(misspelling.charAt(i - 1), misspelling.charAt(i)));
+				} else if (i > 1) {
+					deletion = d[i][j + 1] + getDistance(misspelling.charAt(i - 2), misspelling.charAt(i - 1));
+				} else if (i < misspelling.length()) {
+					deletion = d[i][j + 1] + getDistance(misspelling.charAt(i - 1), misspelling.charAt(i));
+				}
+				double transposition = Integer.MAX_VALUE;
+				if (includeTransposition && i > 1) {
+					transposition = d[k][l] + (i - k - 1)
+							+ getDistance(misspelling.charAt(i-2), misspelling.charAt(i - 1)) + (j - l - 1);
+				}
+
+				d[i + 1][j + 1] = Math.min(Math.min(substitution, insertion), Math.min(deletion, transposition));
+			}
+			da.put(misspelling.charAt(i - 1), i);
+		}
+
+		for (int m = 0; m < misspelling.length() + 2; m++) {
+			for (int n = 0; n < correction.length() + 2; n++) {
+				System.out.print(d[m][n] + "\t");
+			}
+			System.out.println();
+		}
+
+		System.out.println("Distance between " + misspelling + " and " + correction + " is "
+				+ d[misspelling.length() + 1][correction.length() + 1]);
+		//TODO: must invert somehow because CorrectionCandidateSelector looks for highest value
+		return d[misspelling.length() + 1][correction.length() + 1];
 	}
-	
-	private double getDistance(char a, char b) {
-		double result = Math.abs(distanceMap.get(a)[0] - distanceMap.get(b)[0]);
-		result += Math.abs(distanceMap.get(a)[1] - distanceMap.get(b)[1]);
-		return result;
-	}
-	
 }

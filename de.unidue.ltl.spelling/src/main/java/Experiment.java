@@ -62,7 +62,7 @@ public class Experiment {
 				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_en,
 				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, types_to_exclude,
 				SpellingCorrector.PARAM_PHONETIC_CANDIDATE_GENERATION, true,
-				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
 				SpellingCorrector.PARAM_NGRAM_SIZE, 1,
 //				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
 				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH, lmPath);
