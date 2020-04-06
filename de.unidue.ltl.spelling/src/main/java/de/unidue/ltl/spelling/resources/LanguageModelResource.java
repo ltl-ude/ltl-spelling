@@ -9,6 +9,6 @@ public abstract class LanguageModelResource extends Resource_ImplBase{
 	@ConfigurationParameter(name = PARAM_MODEL_FILE, mandatory = true)
 	protected String modelFile;
     
-    //TODO: Should return normalized token frequency (probability) 
+    // Should return normalized token frequency (probability) 
     public abstract double getFrequency(String[] ngram);
 }

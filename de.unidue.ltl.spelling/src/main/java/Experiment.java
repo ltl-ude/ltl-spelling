@@ -10,7 +10,6 @@ import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 import org.dkpro.core.api.frequency.util.FrequencyDistribution;
 import org.dkpro.core.io.text.TextReader;
 
@@ -20,52 +19,84 @@ import de.unidue.ltl.spelling.engine.SpellingCorrector.CandidateSelectionMethod;
 public class Experiment {
 
 	public static void main(String[] args) throws UIMAException, IOException {
-		runEnglish();
-//		runGerman();
+//		runEnglish();
+		runGerman();
 	}
 
 	public static void runEnglish() throws UIMAException, IOException {
 		String[] dicts_en = new String[] { "dictionaries/en-testDict1.txt", "dictionaries/en-testDict2.txt" };
 		String[] types_to_exclude = new String[] {};
-		
 		String lmPath = "src/main/resources/LM.ser";
 
+		// Issue: cannot serialize
+//		ConditionalFrequencyDistribution<Integer, String> cfd = new ConditionalFrequencyDistribution<Integer, String>();
+//		cfd.inc(2,"Hello there");
+//		cfd.inc(2,"this Frequency");
+//		cfd.inc(2,"Frequency Distrbution");
+//		cfd.inc(2,"Distrbution is");
+//		cfd.inc(2,"is about");
+//		cfd.inc(2,"about to");
+//		cfd.inc(2,"to be");
+//		cfd.inc(2,"be serialized");
+
 		FrequencyDistribution<String> fd = new FrequencyDistribution<String>();
-		ConditionalFrequencyDistribution<Integer,String> cfd = new ConditionalFrequencyDistribution<Integer,String>();
-		cfd.inc(2,"Hello there");
-		cfd.inc(2,"this Frequency");
-		cfd.inc(2,"Frequency Distrbution");
-		cfd.inc(2,"Distrbution is");
-		cfd.inc(2,"is about");
-		cfd.inc(2,"about to");
-		cfd.inc(2,"to be");
-		cfd.inc(2,"be serialized");
-		
-        try
-        {    
-            FileOutputStream file = new FileOutputStream(lmPath); 
-            ObjectOutputStream out = new ObjectOutputStream(file); 
-            out.writeObject(fd); 
-            out.close(); 
-            file.close(); 
-        } 
-          
-        catch(IOException e) 
-        { 
-            e.printStackTrace();
-        } 
-		
-		
+		fd.inc("Hello ,");
+		fd.inc(", this");
+		fd.inc("this Frequency");
+		fd.inc("Frequency Distrbution");
+		fd.inc("Distribution is");
+		fd.inc("is about");
+		fd.inc("about to");
+		fd.inc("to be");
+		fd.inc("be serialized");
+
+		serializeFrequencyDistribution(fd, lmPath);
+
 		CollectionReader reader = getReader("en-testData", "en");
 		AnalysisEngine engine = createEngine(SpellingCorrector.class, SpellingCorrector.PARAM_LANGUAGE, "en",
-				SpellingCorrector.PARAM_SCORE_THRESHOLD, 2,
 				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_en,
-				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, types_to_exclude,
-				SpellingCorrector.PARAM_PHONETIC_CANDIDATE_GENERATION, true,
-				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
-				SpellingCorrector.PARAM_NGRAM_SIZE, 1,
-//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
-				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH, lmPath);
+
+				/* ErrorDetector */
+
+				// Only address if necessary (default: true)
+//				SpellingCorrector.PARAM_EXCLUDE_NAMED_ENTITIES, false,
+//				SpellingCorrector.PARAM_EXCLUDE_NUMERIC, false,
+//				SpellingCorrector.PARAM_EXCLUDE_PUNCTUATION, false,
+				// Can pass additional types
+//				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, types_to_exclude,
+
+				/* Candidate Generation */
+
+				// Only address if candidates should be generated based on phonemes (as opposed
+				// to graphemes); default: false
+//				SpellingCorrector.PARAM_PHONETIC_CANDIDATE_GENERATION, true,
+				// Default: 1
+				SpellingCorrector.PARAM_SCORE_THRESHOLD, 2,
+				// Default: false
+				SpellingCorrector.PARAM_INCLUDE_TRANSPOSITION, true,
+
+				/* Candidate Selection */
+
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.CUSTOM_LEVENSHTEIN,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
+				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.DEFAULT_LEVENSHTEIN,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
+				// A second method is optional
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.CUSTOM_LEVENSHTEIN,
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.DEFAULT_LEVENSHTEIN,
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
+
+				/* In case candidates are to be selected based on custom weights */
+				SpellingCorrector.PARAM_MATRIX_DELETION, null, SpellingCorrector.PARAM_MATRIX_INSERTION, null,
+				SpellingCorrector.PARAM_MATRIX_SUBSTITUTION, null, SpellingCorrector.PARAM_MATRIX_TRANSPOSITION, null,
+
+				/* If candidates are to be ranked based on language model information */
+				SpellingCorrector.PARAM_NGRAM_SIZE, 1, SpellingCorrector.PARAM_CUSTOM_LANGUAGE_MODEL_PATH, lmPath,
+				SpellingCorrector.PARAM_CUSTOM_LM_WEIGHT, 0.3f);
+
 		SimplePipeline.runPipeline(reader, engine);
 	}
 
@@ -73,18 +104,76 @@ public class Experiment {
 		String[] dicts_de = new String[] { "dictionaries/de-testDict1.txt", "dictionaries/de-testDict2.txt" };
 		String[] types_to_exclude = new String[] {};
 
-		String languageModel = "/Volumes/Marie2/web1t_de/export/data/ltlab/data/web1t/EUROPEAN/data/test"; // Just
+		String lmPath = "src/main/resources/LM.ser";
+
+		// Issue: cannot serialize
+//		SerializableConditionalFrequencyDistribution<Integer, String> cfd = new SerializableConditionalFrequencyDistribution<Integer, String>();
+//		cfd.inc(2,"Hallo ,");
+//		cfd.inc(2,", diese");
+//		cfd.inc(2, "diese Frequency");
+//		cfd.inc(2,"Frequency Distrbution");
+//		cfd.inc(2,"Distribution wird");
+//		cfd.inc(2,"wird jetzt");
+//		cfd.inc(2,"jetzt serialisiert");
+//		cfd.inc(2,"serialisiert .");
+
+		FrequencyDistribution<String> fd = new FrequencyDistribution<String>();
+		fd.inc("Hallo ,");
+		fd.inc(", diese");
+		fd.inc("diese Frequency");
+		fd.inc("Frequency Distrbution");
+		fd.inc("Distribution wird");
+		fd.inc("wird jetzt");
+		fd.inc("jetzt serialisiert");
+		fd.inc("serialisiert .");
+
+		serializeFrequencyDistribution(fd, lmPath);
 
 		CollectionReader reader = getReader("de-testData", "de");
 		AnalysisEngine engine = createEngine(SpellingCorrector.class, SpellingCorrector.PARAM_LANGUAGE, "de",
-				SpellingCorrector.PARAM_SCORE_THRESHOLD, 2,
 				SpellingCorrector.PARAM_ADDITIONAL_DICTIONARIES, dicts_de,
+
+				/* ErrorDetector */
+
+				// Only address if necessary (default: true)
+//				SpellingCorrector.PARAM_EXCLUDE_NAMED_ENTITIES, false,
+//				SpellingCorrector.PARAM_EXCLUDE_NUMERIC, false,
+//				SpellingCorrector.PARAM_EXCLUDE_PUNCTUATION, false,
+				// Can pass additional types
 //				SpellingCorrector.PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, types_to_exclude,
-				SpellingCorrector.PARAM_PHONETIC_CANDIDATE_GENERATION, true,
-				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
-				SpellingCorrector.PARAM_NGRAM_SIZE, 2,
+
+				/* Candidate Generation */
+
+				// Only address if candidates should be generated based on phonemes (as opposed
+				// to graphemes); default: false
+//				SpellingCorrector.PARAM_PHONETIC_CANDIDATE_GENERATION, true,
+				// Default: 1
+				SpellingCorrector.PARAM_SCORE_THRESHOLD, 2,
+				// Default: false
+				SpellingCorrector.PARAM_INCLUDE_TRANSPOSITION, true,
+
+				/* Candidate Selection */
+
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.CUSTOM_MATRIX,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
+				// A second method is optional
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.CUSTOM_MATRIX,
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
 //				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
-				SpellingCorrector.PARAM_LANGUAGE_MODEL_PATH, languageModel);
+//				SpellingCorrector.PARAM_SECOND_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
+
+				/* In case candidates are to be selected based on custom weights */
+				SpellingCorrector.PARAM_MATRIX_DELETION, null, SpellingCorrector.PARAM_MATRIX_INSERTION, null,
+				SpellingCorrector.PARAM_MATRIX_SUBSTITUTION, null, SpellingCorrector.PARAM_MATRIX_TRANSPOSITION, null,
+
+				/* If candidates are to be ranked based on language model information */
+				SpellingCorrector.PARAM_NGRAM_SIZE, 1, SpellingCorrector.PARAM_CUSTOM_LANGUAGE_MODEL_PATH, lmPath,
+				SpellingCorrector.PARAM_CUSTOM_LM_WEIGHT, 0.3f);
+
 		SimplePipeline.runPipeline(reader, engine);
 
 	}
@@ -94,4 +183,33 @@ public class Experiment {
 				TextReader.PARAM_PATTERNS, "*.txt", TextReader.PARAM_LANGUAGE, language);
 	}
 
+	public static void serializeFrequencyDistribution(FrequencyDistribution<String> cfd, String lmPath) {
+		FileOutputStream file = null;
+		ObjectOutputStream out = null;
+		try {
+			file = new FileOutputStream(lmPath);
+			out = new ObjectOutputStream(file);
+			out.writeObject(cfd);
+			out.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (file != null) {
+				try {
+					file.close();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (out != null) {
+				try {
+					out.close();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 }

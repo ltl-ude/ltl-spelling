@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.candidateselection;
 
 import static org.apache.uima.fit.util.JCasUtil.select;
 
@@ -14,8 +14,10 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
 public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase {
-	
-	private boolean maximize;
+
+	// Indicating whether a specific selector class calls for maximizing or
+	// minimizing the values assigned to correction candidates
+	protected boolean maximize;
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
@@ -26,29 +28,29 @@ public abstract class CorrectionCandidateSelector extends JCasAnnotator_ImplBase
 	}
 
 	protected void narrowDownSuggestions(JCas aJCas, SpellingAnomaly anomaly) {
-		double bestValue = 0.0f;
+		double bestValue = Integer.MIN_VALUE;
+		if (!maximize) {
+			bestValue = Integer.MAX_VALUE;
+		}
 		List<SuggestedAction> bestSuggestions = new ArrayList<SuggestedAction>();
 
 		if (anomaly.getSuggestions() != null) {
 			for (int i = 0; i < anomaly.getSuggestions().size(); i++) {
 				SuggestedAction currentSuggestion = anomaly.getSuggestions(i);
 				double currentValue = getValue(aJCas, anomaly, currentSuggestion);
-				System.out.println("Value: "+currentValue);
-				
-				// Case 1: suggestion is worse
+
+				// Case 1: suggestion is worse: no need to do anything
 				if ((currentValue < bestValue && maximize) || (currentValue > bestValue && !maximize)) {
-					// No need to do anything
+
 				}
-				// Case 2: suggestion is better
+				// Case 2: suggestion is better: replace previously best suggestions
 				else if ((currentValue > bestValue && maximize) || (currentValue < bestValue && !maximize)) {
-					// Replace previously saved suggestions
 					bestSuggestions.clear();
 					bestSuggestions.add(currentSuggestion);
 					bestValue = currentValue;
 				}
-				// Case 3: suggestion is equal
+				// Case 3: suggestion is equal: add to current best suggestions
 				else {
-					// Add to currently best suggestions
 					bestSuggestions.add(currentSuggestion);
 				}
 			}

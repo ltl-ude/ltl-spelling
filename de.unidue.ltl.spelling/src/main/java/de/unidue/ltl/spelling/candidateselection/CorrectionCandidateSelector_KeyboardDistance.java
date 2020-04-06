@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.candidateselection;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -75,6 +75,9 @@ public class CorrectionCandidateSelector_KeyboardDistance extends CorrectionCand
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		// Aim is to minimize cost
+		maximize = false;
 	}
 
 	@Override
@@ -143,6 +146,7 @@ public class CorrectionCandidateSelector_KeyboardDistance extends CorrectionCand
 				} else if (i < misspelling.length()) {
 					deletion = d[i][j + 1] + getDistance(misspelling.charAt(i - 1), misspelling.charAt(i));
 				}
+				// TODO: transposition does not behave as expected when used with distance values
 				double transposition = Integer.MAX_VALUE;
 				if (includeTransposition && i > 1) {
 					transposition = d[k][l] + (i - k - 1)

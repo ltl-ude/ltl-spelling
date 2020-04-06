@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.normalization;
 
 import static org.apache.uima.fit.util.JCasUtil.select;
 
@@ -16,12 +16,11 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 
 			if (anomaly.getSuggestions() != null) {
 
-				replace(anomaly.getBegin(), anomaly.getEnd(), anomaly.getSuggestions(0).getReplacement());
-				anomaly.setCorrected(true);
-
+				if (anomaly.getSuggestions().size() > 0) {
+					replace(anomaly.getBegin(), anomaly.getEnd(), anomaly.getSuggestions(0).getReplacement());
+					anomaly.setCorrected(true);
+				}
 			}
-
 		}
 	}
-
 }

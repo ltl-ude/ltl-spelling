@@ -1,11 +1,13 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.candidateselection;
 
 import java.util.List;
 
+import org.apache.uima.UimaContext;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.descriptor.ExternalResource;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.resource.ResourceInitializationException;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
@@ -24,25 +26,30 @@ public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandida
 	private LanguageModelResource customLanguageModel;
 
 	public static final String PARAM_NGRAM_SIZE = "ngramSize";
-	@ConfigurationParameter(name = PARAM_NGRAM_SIZE, mandatory = true, defaultValue = "2")
+	@ConfigurationParameter(name = PARAM_NGRAM_SIZE, mandatory = true, defaultValue = "1")
 	private int ngramSize;
 
 	public static final String PARAM_CUSTOM_LM_WEIGHT = "customLMWeight";
-	@ConfigurationParameter(name = PARAM_CUSTOM_LM_WEIGHT, mandatory = false)
-	private double customLMWeight;
+	@ConfigurationParameter(name = PARAM_CUSTOM_LM_WEIGHT, mandatory = false, defaultValue = "0.5f")
+	private float customLMWeight;
+
+	@Override
+	public void initialize(UimaContext context) throws ResourceInitializationException {
+		super.initialize(context);
+		// Aim is to maximize probability
+		maximize = true;
+	}
 
 	@Override
 	protected double getValue(JCas aJCas, SpellingAnomaly anomaly, SuggestedAction currentSuggestion) {
 		double probabilityInDefaultLM = 1.0;
 		double probabilityInCustomLM = 1.0;
-//		JCasUtil.indexCovering(aJCas, currentSuggestion, Sentence.class);
 		List<Sentence> sentences = JCasUtil.selectCovering(Sentence.class, anomaly);
-		// Should only be one
+		// TODO: Should only be one
 		for (Sentence sentence : sentences) {
-//			System.out.println(sentence.getCoveredText());
 			List<Token> tokens = JCasUtil.selectCovered(aJCas, Token.class, sentence);
-			// Determine token of anomaly, include n-1 tokens before and after that to
-			// determine probability
+			// Determine index of anomaly token
+			// Include n-1 tokens before and after that to determine probability
 			int anomalyIndex = -1;
 			for (int i = 0; i < tokens.size(); i++) {
 				Token t = tokens.get(i);
@@ -51,7 +58,6 @@ public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandida
 					break;
 				}
 			}
-//			System.out.println("anomaly index: "+anomalyIndex);
 			int minIndex = -1;
 			int maxIndex = -1;
 			// Should never happen
@@ -70,29 +76,27 @@ public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandida
 				if (maxIndex >= tokens.size()) {
 					maxIndex = tokens.size() - 1;
 				}
-//				System.out.println("min index: "+minIndex);
-//				System.out.println("max index: "+maxIndex);
 				int ngramSizeToConsider;
-				// Check if an at least one ngram of the desired size fits into the determined
-				// span
+				// Does at least one ngram of the desired size fits into the determined span?
 				if (maxIndex - minIndex < ngramSize - 1) {
 					// Must consider smaller ngram size for this sentence
 					ngramSizeToConsider = maxIndex - minIndex + 1;
 				} else {
 					ngramSizeToConsider = ngramSize;
 				}
-//				System.out.println("Ngram size to consider: "+ngramSizeToConsider);
 				// Get probability of ngrams from lm, multiply
 				int start = minIndex;
 				int end = start + ngramSizeToConsider - 1;
 				while (end <= maxIndex) {
-//					System.out.println("start: "+start);
-//					System.out.println("end: "+end);
 					String[] ngram = new String[ngramSizeToConsider];
 					int j = 0;
 					for (int i = start; i <= end; i++) {
-						ngram[j] = tokens.get(i).getCoveredText();
-						j++;
+						if (i == anomalyIndex) {
+							ngram[j] = anomaly.getCoveredText();
+						} else {
+							ngram[j] = tokens.get(i).getCoveredText();
+							j++;
+						}
 					}
 					probabilityInDefaultLM = probabilityInDefaultLM * defaultLanguageModel.getFrequency(ngram);
 					if (customLanguageModel != null) {
@@ -105,7 +109,7 @@ public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandida
 
 		}
 		double probability = 1.0;
-		if (probabilityInCustomLM != 0) {
+		if (customLanguageModel != null) {
 			probability = probabilityInCustomLM * customLMWeight + probabilityInDefaultLM * (1 - customLMWeight);
 		} else {
 			probability = probabilityInDefaultLM;

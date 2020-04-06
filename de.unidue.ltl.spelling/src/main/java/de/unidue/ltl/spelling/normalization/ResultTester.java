@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.normalization;
 
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -12,7 +12,6 @@ public class ResultTester extends JCasAnnotator_ImplBase{
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		// TODO Auto-generated method stub
 		System.out.println("RESULTING TEXT: ");
 		for(Token t : JCasUtil.select(aJCas, Token.class)) {
 			System.out.println(t.getCoveredText());

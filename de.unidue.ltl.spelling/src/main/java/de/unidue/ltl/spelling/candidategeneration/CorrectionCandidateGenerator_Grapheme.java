@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.candidategeneration;
 
 import static org.apache.uima.fit.util.JCasUtil.select;
 
@@ -11,15 +11,12 @@ import java.util.Set;
 
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.Level;
+import org.dkpro.core.api.parameter.AnnotationChecker;
 
 import com.github.liblevenshtein.transducer.Candidate;
-import com.github.liblevenshtein.transducer.ITransducer;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
-import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
-import de.tudarmstadt.ukp.dkpro.core.api.parameter.AnnotationChecker;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 
 public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGenerator {
@@ -48,9 +45,10 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
+			getContext().getLogger().log(Level.WARNING, "Unable to locate default dictionary for language '" + language
+					+ "'.");
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -68,7 +66,7 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 				getContext().getLogger().log(Level.WARNING, "Custom dictionary " + path + " not found.");
 				e1.printStackTrace();
 			} catch (IOException e) {
-				getContext().getLogger().log(Level.WARNING, "Unable to read custom dictionary " + path);
+				getContext().getLogger().log(Level.WARNING, "Unable to read custom dictionary from" + path);
 				e.printStackTrace();
 			}
 		}
@@ -80,13 +78,14 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 		AnnotationChecker.requireExists(this, aJCas, this.getLogger(), Token.class);
 		AnnotationChecker.requireExists(this, aJCas, this.getLogger(), SpellingAnomaly.class);
 
+		// For each spelling anomaly generate candidates
 		for (SpellingAnomaly anomaly : select(aJCas, SpellingAnomaly.class)) {
 
 			String tokenText = anomaly.getCoveredText();
 			SuggestionCostTuples tuples = new SuggestionCostTuples();
 
-			// Merged word: if we split it, both subparts exist in dictionary
-
+			// Merged word: both sub-parts exist in dictionary if split
+			// TODO: this affects subsequent steps and is so far not handled appropriately
 			for (int i = 0; i < tokenText.length(); i++) {
 				String word1 = tokenText.substring(0, i);
 				String word2 = tokenText.substring(i, tokenText.length());
@@ -97,6 +96,7 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 				}
 			}
 
+			// TODO: this affects subsequent steps and is so far not handled appropriately
 			if (tokenText.contains(".")) {
 				String[] parts = tokenText.split("\\.");
 				boolean allFound = true;
@@ -114,6 +114,7 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 				}
 			}
 
+			// TODO: this affects subsequent steps and is so far not handled appropriately
 			if (tokenText.contains(":")) {
 				String[] parts = tokenText.split(":");
 				boolean allFound = true;
@@ -132,12 +133,12 @@ public class CorrectionCandidateGenerator_Grapheme extends CorrectionCandidateGe
 			}
 
 			// Generate candidates
-
 			for (Candidate candidate : transducer.transduce(tokenText, scoreThreshold)) {
 				String suggestionString = candidate.term();
 				tuples.addTuple(suggestionString, candidate.distance());
 			}
 
+			// Insert candidates as suggested actions for the current SpellingAnomaly
 			addSuggestedActions(aJCas, anomaly, tuples);
 		}
 	};

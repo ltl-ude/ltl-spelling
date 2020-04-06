@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.candidategeneration;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -46,6 +46,7 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	ITransducer<Candidate> transducer;
 	SortedDawg dictionary;
 
+	// Initialize resource to generate candidates (SortedDawg)
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
@@ -81,15 +82,14 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 		if (tuples.size() > 0) {
 			FSArray actions = new FSArray(aJCas, tuples.size());
 			int i = 0;
-			// System.out.print(anomaly.getCoveredText()+"\t");
 			for (SuggestionCostTuple tuple : tuples) {
 				SuggestedAction action = new SuggestedAction(aJCas);
 				action.setReplacement(tuple.getSuggestion());
 				action.setCertainty(tuple.getCertainty(tuples.getMaxCost()));
 				actions.set(i, action);
 				i++;
-				System.out.println(
-						anomaly.getCoveredText() + "\t" + action.getReplacement() + "\t" + action.getCertainty());
+				System.out.println("Added new correction candidate: " + anomaly.getCoveredText() + "\t"
+						+ action.getReplacement() + "\t" + action.getCertainty());
 			}
 			anomaly.setSuggestions(actions);
 		} else {
@@ -100,9 +100,9 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 
 	class SuggestionCostTuple {
 		private final String suggestion;
-		private final Integer cost;
+		private final int cost;
 
-		public SuggestionCostTuple(String suggestion, Integer cost) {
+		public SuggestionCostTuple(String suggestion, int cost) {
 			this.suggestion = suggestion;
 			this.cost = cost;
 		}

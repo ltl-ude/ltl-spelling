@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.candidateselection;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +49,8 @@ public class CorrectionCandidateSelector_CustomMatrixes extends CorrectionCandid
 					+ "' , but opted not to include transposition by setting PARAM_INCLUDE_TRANSPOSITION = false. Your custom transposition map will be ignored.");
 		}
 		
+		// Aim is to minimize cost
+		maximize = false;	
 	}
 
 	// TODO: Check method

@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.errorcorrection;
+package de.unidue.ltl.spelling.candidategeneration;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,6 +33,11 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 	@ConfigurationParameter(name = PARAM_ADDITIONAL_DICTIONARIES, mandatory = false)
 	private String[] dictionaries;
 
+	/*
+	 * - Boolean switches to not exclude types that are by default excluded 
+	 * - Option to pass list of additional types to exclude
+	 */
+
 	// Referring to de.unidue.ltl.spelling.types.Numeric
 	public static final String PARAM_EXCLUDE_NUMERIC = "excludeNumeric";
 	@ConfigurationParameter(name = PARAM_EXCLUDE_NUMERIC, mandatory = true, defaultValue = "true")
@@ -51,7 +56,6 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 	public static final String PARAM_ADDITIONAL_TYPES_TO_EXCLUDE = "additionalTypesToExclude";
 	@ConfigurationParameter(name = PARAM_ADDITIONAL_TYPES_TO_EXCLUDE, mandatory = false)
 	private String[] additionalTypesToExclude;
-	
 
 	private Set<String> dictionaryWords = new HashSet<String>();
 	private Set<String> typesToExclude = new HashSet<String>();
@@ -146,7 +150,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 					}
 					br.close();
 				} catch (FileNotFoundException e) {
-					getContext().getLogger().log(Level.WARNING,"Could not find custom dictionary " + path);
+					getContext().getLogger().log(Level.WARNING, "Could not find custom dictionary " + path);
 					e.printStackTrace();
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -166,7 +170,7 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 			for (String type : typesToExclude) {
 				try {
 					if (JCasUtil.contains(aJCas, token, (Class<? extends Annotation>) Class.forName(type))) {
-						System.out.println("Ignoring: " + token.getCoveredText());
+						System.out.println("Ignoring: " + token.getCoveredText() + " because it is of type " + type);
 						isCandidate = false;
 					}
 				} catch (ClassNotFoundException e) {
@@ -187,9 +191,6 @@ public class ErrorDetector extends JCasAnnotator_ImplBase {
 					System.out.println("Found Anomaly: " + token.getCoveredText());
 				}
 			}
-
 		}
-
 	}
-
 }
