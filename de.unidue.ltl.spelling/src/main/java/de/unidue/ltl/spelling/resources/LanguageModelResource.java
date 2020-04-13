@@ -5,10 +5,11 @@ import org.apache.uima.fit.descriptor.ConfigurationParameter;
 
 public abstract class LanguageModelResource extends Resource_ImplBase{
 	
-	public static final String PARAM_MODEL_FILE = "modelFile";
-	@ConfigurationParameter(name = PARAM_MODEL_FILE, mandatory = true)
-	protected String modelFile;
+	public static final String PARAM_MODEL_FILES = "modelFiles";
+	@ConfigurationParameter(name = PARAM_MODEL_FILES, mandatory = true)
+	protected String[] modelFiles;
     
     // Should return normalized token frequency (probability) 
     public abstract double getFrequency(String[] ngram);
+  
 }

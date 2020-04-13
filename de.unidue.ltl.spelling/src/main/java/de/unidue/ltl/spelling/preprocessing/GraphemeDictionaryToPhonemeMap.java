@@ -35,15 +35,15 @@ public class GraphemeDictionaryToPhonemeMap {
 	public static void main(String[] args) throws IOException {
 		
 		//deu-DE OR eng-US
-//		processDictionary(
-//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE.txt",
-//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map.txt",
-//				"deu-DE");
-		
 		processDictionary(
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US.txt",
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US_phoneme_map.txt",
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE.txt",
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map_noHyphens.txt",
 				"deu-DE");
+		
+//		processDictionary(
+//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US.txt",
+//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US_phoneme_map.txt",
+//				"deu-DE");
 	}
 	
 	private static void processDictionary(String path,String outputFileName, String language) throws IOException {

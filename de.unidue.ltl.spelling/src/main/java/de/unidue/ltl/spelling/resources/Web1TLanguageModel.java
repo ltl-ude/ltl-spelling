@@ -23,7 +23,7 @@ public class Web1TLanguageModel extends LanguageModelResource {
 //        System.out.println("Initialize web1t LM from: "+modelFile);
 		try {
 			// TODO: fix index files to support this
-			web1tSearcher = new JWeb1TSearcher(new File(modelFile), 1, 5);
+			web1tSearcher = new JWeb1TSearcher(new File(modelFiles[0]), 1, 5);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -34,6 +34,7 @@ import de.unidue.ltl.spelling.normalization.SpellingAnomalyReplacer;
 import de.unidue.ltl.spelling.preprocessing.NumericAnnotator;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
 import de.unidue.ltl.spelling.resources.FrequencyDistributionLanguageModel;
+import de.unidue.ltl.spelling.resources.LanguageModelResource;
 import de.unidue.ltl.spelling.resources.Web1TLanguageModel;
 
 public class SpellingCorrector extends JCasAnnotator_ImplBase {
@@ -135,9 +136,9 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 	@ConfigurationParameter(name = PARAM_NGRAM_SIZE, mandatory = true, defaultValue = "1")
 	private int ngramSize;
 
-	public static final String PARAM_CUSTOM_LANGUAGE_MODEL_PATH = "languageModelPath";
-	@ConfigurationParameter(name = PARAM_CUSTOM_LANGUAGE_MODEL_PATH, mandatory = false)
-	private String languageModelPath;
+	public static final String PARAM_CUSTOM_LANGUAGE_MODEL_PATHS = "languageModelPaths";
+	@ConfigurationParameter(name = PARAM_CUSTOM_LANGUAGE_MODEL_PATHS, mandatory = false)
+	private String[] languageModelPaths;
 
 	public static final String PARAM_CUSTOM_LM_WEIGHT = "customLM_weight";
 	@ConfigurationParameter(name = PARAM_CUSTOM_LM_WEIGHT, mandatory = false)
@@ -170,10 +171,10 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 		try {
 			if (language.contentEquals("de")) {
 				defaultLanguageModel = createExternalResourceDescription(Web1TLanguageModel.class,
-						Web1TLanguageModel.PARAM_MODEL_FILE, web1tPathGerman);
+						Web1TLanguageModel.PARAM_MODEL_FILES, web1tPathGerman);
 			} else if (language.contentEquals("en")) {
 				defaultLanguageModel = createExternalResourceDescription(Web1TLanguageModel.class,
-						Web1TLanguageModel.PARAM_MODEL_FILE, web1tPathEnglish);
+						Web1TLanguageModel.PARAM_MODEL_FILES, web1tPathEnglish);
 			}
 			// Will never happen because language has already been checked above
 			else {
@@ -232,13 +233,14 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 			componentNames.add("candidateGenerator");
 
 			// If a custom LM was passed, create the corresponding resource
-			if (languageModelPath != null) {
+			if (languageModelPaths != null) {
+				System.out.println(languageModelPaths);
 				customLanguageModel = createExternalResourceDescription(FrequencyDistributionLanguageModel.class,
-						FrequencyDistributionLanguageModel.PARAM_MODEL_FILE, languageModelPath);
+						LanguageModelResource.PARAM_MODEL_FILES, languageModelPaths);
 			}
 
 			// If no custom LM provided, but a weight for it: warn
-			if (customLMWeight > 0 && languageModelPath == null) {
+			if (customLMWeight > 0 && languageModelPaths == null) {
 				getContext().getLogger().log(Level.WARNING,
 						"You did not provide a custom language model via the 'LANGUAGE_MODEL_PATH' parameter, but passed a weight that should be assigned to this nonexistent language model."
 								+ "The weight will be ignored and language model probability will be determined based on the default language model alone.");
