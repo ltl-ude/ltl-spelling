@@ -21,8 +21,8 @@ import de.unidue.ltl.spelling.utils.CFD_Serializer;
 public class Experiment {
 
 	public static void main(String[] args) throws UIMAException, IOException {
-		runEnglish();
-//		runGerman();
+//		runEnglish();
+		runGerman();
 	}
 
 	public static void runEnglish() throws UIMAException, IOException {
@@ -68,8 +68,8 @@ public class Experiment {
 				/* Candidate Selection */
 
 //				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.CUSTOM_LEVENSHTEIN,
-//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
-				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
 //				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.DEFAULT_LEVENSHTEIN,
 //				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
 				// A second method is optional
@@ -85,7 +85,8 @@ public class Experiment {
 
 				/* If candidates are to be ranked based on language model information */
 				SpellingCorrector.PARAM_NGRAM_SIZE, 1,
-				SpellingCorrector.PARAM_CUSTOM_LANGUAGE_MODEL_PATHS, lmPaths,
+				//TODO: just a quick fix, need to figure out how to serialize cfd
+				SpellingCorrector.PARAM_CUSTOM_LANGUAGE_MODEL_PATHS, lmPaths[0],
 				SpellingCorrector.PARAM_CUSTOM_LM_WEIGHT, 0.3f);
 
 		SimplePipeline.runPipeline(reader, engine);
@@ -134,8 +135,8 @@ public class Experiment {
 				/* Candidate Selection */
 
 //				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.CUSTOM_MATRIX,
-//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
-				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
+				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.KEYBOARD_DISTANCE,
+//				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LANGUAGE_MODEL,
 //				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.LEVENSHTEIN_DISTANCE,
 //				SpellingCorrector.PARAM_FIRST_LEVEL_SELECTION_METHOD, CandidateSelectionMethod.PHONETIC,
 				// A second method is optional
@@ -150,7 +151,7 @@ public class Experiment {
 				SpellingCorrector.PARAM_MATRIX_SUBSTITUTION, null, SpellingCorrector.PARAM_MATRIX_TRANSPOSITION, null,
 
 				/* If candidates are to be ranked based on language model information */
-				SpellingCorrector.PARAM_NGRAM_SIZE, 1, SpellingCorrector.PARAM_CUSTOM_LANGUAGE_MODEL_PATHS, lmPaths,
+				SpellingCorrector.PARAM_NGRAM_SIZE, 1, SpellingCorrector.PARAM_CUSTOM_LANGUAGE_MODEL_PATHS, lmPaths[0],
 				SpellingCorrector.PARAM_CUSTOM_LM_WEIGHT, 0.3f);
 
 		SimplePipeline.runPipeline(reader, engine);

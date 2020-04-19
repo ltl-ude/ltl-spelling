@@ -14,10 +14,10 @@ public class ResultTester extends JCasAnnotator_ImplBase{
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 		System.out.println("RESULTING TEXT: ");
 		for(Token t : JCasUtil.select(aJCas, Token.class)) {
-			System.out.println(t.getCoveredText());
+			System.out.println("TOKEN: "+t.getCoveredText());
 		}
 		for(ExtendedSpellingAnomaly anomaly : JCasUtil.select(aJCas, ExtendedSpellingAnomaly.class)) {
-			System.out.println(anomaly.getCoveredText()+" "+anomaly.getCorrected());
+			System.out.println("Anomaly: "+anomaly.getCoveredText()+" "+anomaly.getCorrected());
 		}
 	}
 }

@@ -7,7 +7,7 @@ public abstract class LanguageModelResource extends Resource_ImplBase{
 	
 	public static final String PARAM_MODEL_FILES = "modelFiles";
 	@ConfigurationParameter(name = PARAM_MODEL_FILES, mandatory = true)
-	protected String[] modelFiles;
+	protected String modelFile;
     
     // Should return normalized token frequency (probability) 
     public abstract double getFrequency(String[] ngram);

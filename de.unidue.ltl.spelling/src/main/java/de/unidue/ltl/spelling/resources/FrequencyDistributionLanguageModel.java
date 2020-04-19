@@ -32,7 +32,7 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource {
 		ObjectInputStream oi = null;
 		File file = null;
 
-		for (String modelFile : modelFiles) {
+//		for (String modelFile : modelFiles) {
 			file = new File(modelFile);
 			Integer condition = null;
 			try {
@@ -72,7 +72,7 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource {
 								+ modelFile
 								+ " not conforming to this whose name hence could not be parsed as Integer. It will not be included in your ConditionalFrequencyDistribution.");
 			}
-		}
+//		}
 		return true;
 
 	}

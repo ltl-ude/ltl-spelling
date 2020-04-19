@@ -138,7 +138,7 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 
 	public static final String PARAM_CUSTOM_LANGUAGE_MODEL_PATHS = "languageModelPaths";
 	@ConfigurationParameter(name = PARAM_CUSTOM_LANGUAGE_MODEL_PATHS, mandatory = false)
-	private String[] languageModelPaths;
+	private String languageModelPaths;
 
 	public static final String PARAM_CUSTOM_LM_WEIGHT = "customLM_weight";
 	@ConfigurationParameter(name = PARAM_CUSTOM_LM_WEIGHT, mandatory = false)
@@ -234,7 +234,6 @@ public class SpellingCorrector extends JCasAnnotator_ImplBase {
 
 			// If a custom LM was passed, create the corresponding resource
 			if (languageModelPaths != null) {
-				System.out.println(languageModelPaths);
 				customLanguageModel = createExternalResourceDescription(FrequencyDistributionLanguageModel.class,
 						LanguageModelResource.PARAM_MODEL_FILES, languageModelPaths);
 			}

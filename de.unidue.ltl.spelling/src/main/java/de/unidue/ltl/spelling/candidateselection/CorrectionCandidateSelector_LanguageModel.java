@@ -92,7 +92,8 @@ public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandida
 					int j = 0;
 					for (int i = start; i <= end; i++) {
 						if (i == anomalyIndex) {
-							ngram[j] = anomaly.getCoveredText();
+							//TODO: in case of a split token this will increase ngram size
+							ngram[j] = currentSuggestion.getReplacement();
 						} else {
 							ngram[j] = tokens.get(i).getCoveredText();
 							j++;

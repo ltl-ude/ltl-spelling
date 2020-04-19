@@ -16,6 +16,7 @@ import org.apache.uima.UimaContext;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.apache.uima.util.Level;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -41,6 +42,13 @@ public class CorrectionCandidateSelector_LitKey extends CorrectionCandidateSelec
 		super.initialize(context);
 		// Aim is to determine candidates with lowest errorScore
 		maximize = false;
+
+		if (!language.equals("de")) {
+			getContext().getLogger().log(Level.WARNING,
+					"Phonetic candidate selection is only available for German ('de'), not with the currently selected language '"
+							+ language + "'");
+			System.exit(1);
+		}
 
 		try {
 			String line;
@@ -82,7 +90,7 @@ public class CorrectionCandidateSelector_LitKey extends CorrectionCandidateSelec
 		// Do not process these here
 		if (action.getReplacement().contains(" ")) {
 //			System.out.println("Found token containing whitespaces, assign cost "+StringUtils.countMatches(action.getReplacement(), " ")*2+" to token "+action.getReplacement());
-			return StringUtils.countMatches(action.getReplacement(), " ") * 2.0;
+			return StringUtils.countMatches(action.getReplacement(), " ");
 		}
 
 		// Write anomaly text and correction candidate to file for processing
@@ -104,7 +112,7 @@ public class CorrectionCandidateSelector_LitKey extends CorrectionCandidateSelec
 		Process process = null;
 		try {
 			process = Runtime.getRuntime().exec(new String[] { "bash", "src/main/resources/bodu-spell/runLitkey.sh",
-					file.getAbsolutePath(), language });
+					file.getAbsolutePath(), "de" });
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -134,24 +142,29 @@ public class CorrectionCandidateSelector_LitKey extends CorrectionCandidateSelec
 					// Process errors one by one
 					for (int i = 0; i < errors.length(); i++) {
 						JSONObject error = errors.getJSONObject(i);
-//						Boolean phonOk = error.getBoolean("phon_ok");
 						String errorType = error.getString("category");
 						System.out.println("Candidate:\t" + error.get("candidate").toString());
 						System.out.println("Error:\t" + errorType);
 						if (systematicMap.get(errorType)) {
 							errorScore += 1.0;
 						} else if (!systematicMap.get(errorType)) {
-							// TOOD: treat error type "diffuse" differently; punish harder ?
-							errorScore += 2.0;
+							// Diffuse errors: no mapping between incorrect and correct version possible,
+							// therefore "worse" than other errors
+							if (errorType.contentEquals("diffuse")) {
+								errorScore += 5.0;
+							} else {
+								errorScore += 2.0;
+							}
 						} else {
-							System.out.println(
-									"Lookup of litkey type " + errorType + " yielded no results in systematicMap.");
+							System.out.println("Lookup of litkey error type " + errorType
+									+ " yielded no results in systematicMap.");
 						}
 					}
 				} else {
-					// Script has returned "unknown", therefore return high error score
+					// Script has returned "unknown", therefore return high error score, should
+					// rarely happen
 					System.out.println("unknown");
-					return 100.0;
+					return 10.0;
 				}
 			}
 		} catch (IOException e) {
