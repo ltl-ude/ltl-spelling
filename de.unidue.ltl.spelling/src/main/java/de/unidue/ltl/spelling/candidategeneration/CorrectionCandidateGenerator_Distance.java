@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.candidateselection;
+package de.unidue.ltl.spelling.candidategeneration;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.jcas.JCas;
@@ -7,7 +7,7 @@ import org.apache.uima.resource.ResourceInitializationException;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
-public class CorrectionCandidateSelector_Distance extends CorrectionCandidateSelector {
+public class CorrectionCandidateGenerator_Distance extends CorrectionCandidateSelector {
 	
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {

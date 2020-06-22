@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.candidateselection;
+package de.unidue.ltl.spelling.candidategeneration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import org.apache.uima.util.Level;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
-public class CorrectionCandidateSelector_CustomMatrixes extends CorrectionCandidateSelector {
+public class CorrectionCandidateGenerator_CustomMatrixes extends CorrectionCandidateSelector {
 	public static final String PARAM_INCLUDE_TRANSPOSITION = "includeTransposition";
 	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "false")
 	private boolean includeTransposition;

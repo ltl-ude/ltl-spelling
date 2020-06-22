@@ -13,9 +13,10 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.unidue.ltl.spelling.candidategeneration.CorrectionCandidateSelector;
 import de.unidue.ltl.spelling.resources.LanguageModelResource;
 
-public class CorrectionCandidateSelector_LanguageModel extends CorrectionCandidateSelector {
+public class LanguageModelReranker extends CorrectionCandidateSelector {
 
 	public static final String PARAM_DEFAULT_LANGUAGE_MODEL = "defaultLanguageModel";
 	@ExternalResource(key = PARAM_DEFAULT_LANGUAGE_MODEL)

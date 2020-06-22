@@ -22,14 +22,14 @@ import com.github.liblevenshtein.transducer.factory.TransducerBuilder;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
-public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBase {
+public abstract class CorrectionCandidateGenerator_Liblevenshtein extends JCasAnnotator_ImplBase {
 
-	public static final String PARAM_LANGUAGE = "language";
-	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
-	protected String language;
+//	public static final String PARAM_LANGUAGE = "language";
+//	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
+//	protected String language;
 
-	public static final String PARAM_ADDITIONAL_DICTIONARIES = "dictionaries";
-	@ConfigurationParameter(name = PARAM_ADDITIONAL_DICTIONARIES, mandatory = false)
+	public static final String PARAM_DICTIONARIES = "dictionaries";
+	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = false)
 	protected String[] dictionaries;
 
 	public static final String PARAM_DISTANCE_THRESHOLD = "scoreThreshold";
@@ -39,9 +39,13 @@ public abstract class CorrectionCandidateGenerator extends JCasAnnotator_ImplBas
 	public static final String PARAM_INCLUDE_TRANSPOSITION = "includeTransposition";
 	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "false")
 	protected boolean includeTransposition;
+	
+	public static final String PARAM_NUM_SUGGESTIONS_TO_GENERATE = "numberOfSuggestionsToGenerate";
+	@ConfigurationParameter(name = PARAM_NUM_SUGGESTIONS_TO_GENERATE, mandatory = true, defaultValue = "5")
+	protected int numberOfSuggestionsToGenerate;
 
-	protected String defaultDictEN;
-	protected String defaultDictDE;
+//	protected String defaultDictEN;
+//	protected String defaultDictDE;
 
 	ITransducer<Candidate> transducer;
 	SortedDawg dictionary;

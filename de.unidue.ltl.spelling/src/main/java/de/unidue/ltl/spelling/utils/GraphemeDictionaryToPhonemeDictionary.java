@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.preprocessing;
+package de.unidue.ltl.spelling.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,27 +27,20 @@ import org.jsoup.select.Elements;
 
 import de.unidue.ltl.spelling.utils.PhonemeUtils;
 
-//Takes a dictionary with one word per line (grapheme)
-//and transforms it to one grapheme \t phoneme per line
+//Takes a dictionary with one word per line (grapheme) and transforms it to one word per line (phoneme)
 //To be used for candidate generation based on phonetic distance
-public class GraphemeDictionaryToPhonemeMap {
+public class GraphemeDictionaryToPhonemeDictionary {
 	
 	public static void main(String[] args) throws IOException {
 		
 		//deu-DE OR eng-US
 		processDictionary(
 				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE.txt",
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map_noHyphens.txt",
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme.txt",
 				"deu-DE");
-		
-//		processDictionary(
-//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US.txt",
-//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US_phoneme_map.txt",
-//				"deu-DE");
 	}
 	
 	private static void processDictionary(String path,String outputFileName, String language) throws IOException {
-		FileWriter writer = new FileWriter(outputFileName);
 		//Read tokens into list
 		FileReader fr = new FileReader(path);
 		BufferedReader br = new BufferedReader(fr);
@@ -57,7 +50,9 @@ public class GraphemeDictionaryToPhonemeMap {
 		}
 		br.close();
 		
-		List<String> result;
+		//Determine phonemes for all tokens
+		Set<String> phonemes = new HashSet<String>();
+		
 		//Cannot process all at once, make batches of 10000
 		List<String> subList;
 		int stepSize = 10000;
@@ -70,11 +65,23 @@ public class GraphemeDictionaryToPhonemeMap {
 				subList = graphemes.subList(i*stepSize, (i+1)*stepSize-1);
 			}
 			
-			result =  PhonemeUtils.getPhonemes(subList,language);
-			for(int j = 0; j<subList.size(); j++) {		
-				writer.write(subList.get(j)+"\t"+result.get(j)+System.lineSeparator());
-			}
-		}	
-		writer.close();
+			phonemes.addAll(PhonemeUtils.getPhonemes(subList,language));
+		}
+		
+		//Sort resulting set and write it to file
+		List<String> result = new ArrayList<String>();
+		result.addAll(phonemes);
+		result.sort(null);
+		PhonemeUtils.writeListToFile(result,outputFileName);
+		
 	}
+	
+	private static void writeListToFile(List<String> list, String outputFileName) throws IOException {
+		FileWriter writer = new FileWriter(outputFileName);
+		for(String str: list) {
+			  writer.write(str + System.lineSeparator());
+			}
+			writer.close(); 
+	}
+	
 }

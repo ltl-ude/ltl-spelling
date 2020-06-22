@@ -35,5 +35,15 @@
         </featureDescription>
       </features>
     </typeDescription>
+  <typeDescription>
+      <name>de.unidue.ltl.spelling.types.KnownWord</name>
+      <description/>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+    </typeDescription>
+    <typeDescription>
+      <name>de.unidue.ltl.spelling.types.TokenToConsider</name>
+      <description/>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+    </typeDescription>
   </types>
 </typeSystemDescription>

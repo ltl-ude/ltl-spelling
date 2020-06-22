@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.candidateselection;
+package de.unidue.ltl.spelling.candidategeneration;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,7 +18,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
 //TODO: this may be able to share a common superclass with CustomMatrixes
-public class CorrectionCandidateSelector_KeyboardDistance extends CorrectionCandidateSelector {
+public class CorrectionCandidateGenerator_KeyboardDistance extends CorrectionCandidateSelector {
 
 	public static final String PARAM_LANGUAGE = "language";
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
