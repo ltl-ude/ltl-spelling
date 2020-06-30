@@ -10,7 +10,7 @@ import org.apache.uima.jcas.cas.TOP_Type;
 
 
 /** 
- * Updated by JCasGen Sun Jun 21 19:26:16 CEST 2020
+ * Updated by JCasGen Tue Jun 30 21:13:38 CEST 2020
  * XML source: /Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/desc/type/Spelling.xml
  * @generated */
 public class GrammarAnomaly extends Anomaly {

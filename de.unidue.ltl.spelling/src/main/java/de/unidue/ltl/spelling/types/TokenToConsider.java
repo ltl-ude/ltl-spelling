@@ -14,12 +14,12 @@ import org.apache.uima.jcas.tcas.Annotation;
  * Updated by JCasGen Tue Jun 30 21:13:39 CEST 2020
  * XML source: /Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/desc/type/Spelling.xml
  * @generated */
-public class Numeric extends Annotation {
+public class TokenToConsider extends Annotation {
   /** @generated
    * @ordered 
    */
   @SuppressWarnings ("hiding")
-  public final static int typeIndexID = JCasRegistry.register(Numeric.class);
+  public final static int typeIndexID = JCasRegistry.register(TokenToConsider.class);
   /** @generated
    * @ordered 
    */
@@ -33,14 +33,14 @@ public class Numeric extends Annotation {
  
   /** Never called.  Disable default constructor
    * @generated */
-  protected Numeric() {/* intentionally empty block */}
+  protected TokenToConsider() {/* intentionally empty block */}
     
   /** Internal - constructor used by generator 
    * @generated
    * @param addr low level Feature Structure reference
    * @param type the type of this Feature Structure 
    */
-  public Numeric(int addr, TOP_Type type) {
+  public TokenToConsider(int addr, TOP_Type type) {
     super(addr, type);
     readObject();
   }
@@ -48,7 +48,7 @@ public class Numeric extends Annotation {
   /** @generated
    * @param jcas JCas to which this Feature Structure belongs 
    */
-  public Numeric(JCas jcas) {
+  public TokenToConsider(JCas jcas) {
     super(jcas);
     readObject();   
   } 
@@ -58,7 +58,7 @@ public class Numeric extends Annotation {
    * @param begin offset to the begin spot in the SofA
    * @param end offset to the end spot in the SofA 
   */  
-  public Numeric(JCas jcas, int begin, int end) {
+  public TokenToConsider(JCas jcas, int begin, int end) {
     super(jcas);
     setBegin(begin);
     setEnd(end);

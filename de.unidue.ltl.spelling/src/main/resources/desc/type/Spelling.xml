@@ -45,5 +45,10 @@
       <description/>
       <supertypeName>uima.tcas.Annotation</supertypeName>
     </typeDescription>
+  <typeDescription>
+      <name>de.unidue.ltl.spelling.types.StartOfSentence</name>
+      <description/>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+    </typeDescription>
   </types>
 </typeSystemDescription>

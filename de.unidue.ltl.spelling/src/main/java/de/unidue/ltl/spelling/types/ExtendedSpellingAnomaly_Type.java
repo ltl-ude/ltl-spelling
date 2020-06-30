@@ -11,7 +11,7 @@ import org.apache.uima.cas.Feature;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly_Type;
 
 /** 
- * Updated by JCasGen Sun Jun 21 19:26:16 CEST 2020
+ * Updated by JCasGen Tue Jun 30 21:13:38 CEST 2020
  * @generated */
 public class ExtendedSpellingAnomaly_Type extends SpellingAnomaly_Type {
   /** @generated */

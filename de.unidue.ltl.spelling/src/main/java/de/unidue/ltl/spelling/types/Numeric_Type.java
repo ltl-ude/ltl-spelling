@@ -9,7 +9,7 @@ import org.apache.uima.cas.Type;
 import org.apache.uima.jcas.tcas.Annotation_Type;
 
 /** 
- * Updated by JCasGen Sun Jun 21 19:26:16 CEST 2020
+ * Updated by JCasGen Tue Jun 30 21:13:39 CEST 2020
  * @generated */
 public class Numeric_Type extends Annotation_Type {
   /** @generated */
