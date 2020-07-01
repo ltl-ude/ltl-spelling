@@ -27,8 +27,8 @@ public class MarkTokensToCorrect extends JCasAnnotator_ImplBase {
 
 		for (Token token : JCasUtil.select(aJCas, Token.class)) {
 
-			if (JCasUtil.selectCovered(TokenToConsider.class, token).size() > 0
-					&& JCasUtil.selectCovered(KnownWord.class, token).size() == 0) {
+			if (!JCasUtil.selectCovered(TokenToConsider.class, token).isEmpty()
+					&& JCasUtil.selectCovered(KnownWord.class, token).isEmpty()) {
 				ExtendedSpellingAnomaly anomaly = new ExtendedSpellingAnomaly(aJCas);
 				anomaly.setBegin(token.getBegin());
 				anomaly.setEnd(token.getEnd());

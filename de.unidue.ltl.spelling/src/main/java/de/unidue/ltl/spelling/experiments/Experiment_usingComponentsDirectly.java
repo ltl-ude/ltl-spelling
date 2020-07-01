@@ -3,7 +3,6 @@ package de.unidue.ltl.spelling.experiments;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -15,15 +14,9 @@ import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 import org.dkpro.core.io.text.TextReader;
 
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.Dictionary;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.LinkingMorphemes;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.SimpleDictionary;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.DecompoundingTree;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.LeftToRightSplitterAlgorithm;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.candidategeneration.CandidateGeneratorAndRanker_KeyboardDistance;
 import de.unidue.ltl.spelling.normalization.ApplyChanges;
-import de.unidue.ltl.spelling.normalization.PrintText;
 import de.unidue.ltl.spelling.normalization.ResultTester;
 import de.unidue.ltl.spelling.normalization.SpellingAnomalyReplacer;
 import de.unidue.ltl.spelling.preprocessing.DictionaryChecker;
@@ -31,6 +24,7 @@ import de.unidue.ltl.spelling.preprocessing.MarkSentenceBeginnings;
 import de.unidue.ltl.spelling.preprocessing.MarkTokensToConsider;
 import de.unidue.ltl.spelling.preprocessing.MarkTokensToCorrect;
 import de.unidue.ltl.spelling.preprocessing.NumericAnnotator;
+import de.unidue.ltl.spelling.preprocessing.PrintText;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
 import de.unidue.ltl.spelling.types.Numeric;
 
@@ -49,15 +43,15 @@ public class Experiment_usingComponentsDirectly {
 
 		// Mock-LM
 		// Issue: cannot serialize
-		ConditionalFrequencyDistribution<Integer, String> cfd = new ConditionalFrequencyDistribution<Integer, String>();
-		cfd.inc(2, "Hello there");
-		cfd.inc(2, "this Frequency");
-		cfd.inc(2, "Frequency Distrbution");
-		cfd.inc(2, "Distrbution is");
-		cfd.inc(2, "is about");
-		cfd.inc(2, "about to");
-		cfd.inc(2, "to be");
-		cfd.inc(2, "be serialized");
+//		ConditionalFrequencyDistribution<Integer, String> cfd = new ConditionalFrequencyDistribution<Integer, String>();
+//		cfd.inc(2, "Hello there");
+//		cfd.inc(2, "this Frequency");
+//		cfd.inc(2, "Frequency Distrbution");
+//		cfd.inc(2, "Distrbution is");
+//		cfd.inc(2, "is about");
+//		cfd.inc(2, "about to");
+//		cfd.inc(2, "to be");
+//		cfd.inc(2, "be serialized");
 		// TODO: figure out best implementation
 //		String[] lmPaths = CFD_Serializer.serialize(cfd);
 
@@ -101,8 +95,6 @@ public class Experiment_usingComponentsDirectly {
 		String hunspell_de = "src/main/resources/dictionaries/hunspell_DE.txt";
 		String dict_1_de = "dictionaries/de-testDict1.txt";
 		String dict_2_de = "dictionaries/de-testDict2.txt";
-		String dict_dec = "dictionaries/de_decompounding_text.txt";
-		String iGermanXML = "src/main/resources/dictionaries/igerman98_all.xml";
 
 		// Issue: cannot serialize directly
 //		ConditionalFrequencyDistribution<Integer, String> cfd = new ConditionalFrequencyDistribution<Integer, String>();

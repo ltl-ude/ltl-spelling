@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,18 +17,12 @@ import org.apache.uima.fit.descriptor.ResourceMetaData;
 import org.apache.uima.fit.descriptor.TypeCapability;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.resource.ResourceInitializationException;
 
-import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
-import de.tudarmstadt.ukp.dkpro.core.api.ner.type.Language;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.Dictionary;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.LinkingMorphemes;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.SimpleDictionary;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.DecompoundedWord;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.JWordSplitterAlgorithm;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.LeftToRightSplitterAlgorithm;
-import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 import de.unidue.ltl.spelling.types.KnownWord;
 import de.unidue.ltl.spelling.types.StartOfSentence;
 import de.unidue.ltl.spelling.types.TokenToConsider;
@@ -63,6 +56,8 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 	private String dictionaryPath;
 
 	private Set<String> dictionaryWords = new HashSet<String>();
+	
+	// If German is being processed, check for compounds
 	LeftToRightSplitterAlgorithm splitter = null;
 	LinkingMorphemes linkingMorphemesDE = new LinkingMorphemes(new String[] { "e", "s", "es", "n", "en", "er", "ens" });
 
@@ -119,7 +114,6 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 	private void checkIfWordIsKnown(JCas aJCas, TokenToConsider token, boolean alsoCheckLowercase) {
 		String currentWord = token.getCoveredText();
-		// Word itself is present in dictionary.
 		if (dictionaryWords.contains(currentWord)
 				|| (alsoCheckLowercase && dictionaryWords.contains(currentWord.toLowerCase()))) {
 			KnownWord word = new KnownWord(aJCas);
@@ -133,8 +127,8 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 			System.out.println(
 					"Found\t" + splitter.split(currentWord).getSplits().size() + "\t splits for\t" + currentWord);
-			System.out.println(
-					"Example split of\t" + currentWord + "\tis\t" + splitter.split(currentWord).getSplits().get(0));
+//			System.out.println(
+//					"Example split of\t" + currentWord + "\tis\t" + splitter.split(currentWord).getSplits().get(0));
 
 			KnownWord word = new KnownWord(aJCas);
 			word.setBegin(token.getBegin());
@@ -144,5 +138,4 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 					+ dictionaryPath + ")");
 		}
 	}
-
 }

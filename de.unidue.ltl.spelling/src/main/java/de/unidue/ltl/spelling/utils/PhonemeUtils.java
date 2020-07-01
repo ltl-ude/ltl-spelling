@@ -21,8 +21,15 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
+/**
+ * Takes graphemes and requests phonetic representation from BAS web service.
+ */
+
 public class PhonemeUtils {
 
+	/**
+	 * To process a whole list of inputs.
+	 */
 	public static List<String> getPhonemes(List<String> graphemes, String language) throws IOException {
 
 		// Must create a temporary file containing the graphemes to process
@@ -94,6 +101,9 @@ public class PhonemeUtils {
 
 	}
 	
+	/**
+	 * To process a single word.
+	 */
 	public static String getPhoneme(String grapheme, String language) throws IOException {
 
 		// Must create a temporary file containing the graphemes to process
@@ -172,5 +182,4 @@ public class PhonemeUtils {
 		writer.write(grapheme + System.lineSeparator());
 		writer.close();
 	}
-
 }

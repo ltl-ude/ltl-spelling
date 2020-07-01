@@ -74,7 +74,6 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource {
 			}
 //		}
 		return true;
-
 	}
 
 	@Override
@@ -88,5 +87,4 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource {
 		System.out.println("Looking up "+ngram);
 		return result;
 	}
-
 }

@@ -108,7 +108,6 @@ public class LanguageModelReranker extends CorrectionCandidateSelector {
 					end += 1;
 				}
 			}
-
 		}
 		double probability = 1.0;
 		if (customLanguageModel != null) {
