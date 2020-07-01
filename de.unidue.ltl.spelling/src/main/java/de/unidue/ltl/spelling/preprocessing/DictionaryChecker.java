@@ -24,10 +24,14 @@ import org.apache.uima.resource.ResourceInitializationException;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.Language;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.Dictionary;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.LinkingMorphemes;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.SimpleDictionary;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.DecompoundedWord;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.JWordSplitterAlgorithm;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.LeftToRightSplitterAlgorithm;
 import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 import de.unidue.ltl.spelling.types.KnownWord;
+import de.unidue.ltl.spelling.types.StartOfSentence;
 import de.unidue.ltl.spelling.types.TokenToConsider;
 import eu.openminted.share.annotations.api.DocumentationResource;
 
@@ -59,7 +63,8 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 	private String dictionaryPath;
 
 	private Set<String> dictionaryWords = new HashSet<String>();
-	JWordSplitterAlgorithm splitter = null;
+	LeftToRightSplitterAlgorithm splitter = null;
+	LinkingMorphemes linkingMorphemesDE = new LinkingMorphemes(new String[] { "e", "s", "es", "n", "en", "er", "ens" });
 
 //	private final String defaultDictEN = "src/main/resources/dictionaries/hunspell_en_US.txt";
 //	private final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE.txt";
@@ -90,33 +95,53 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 	private void initializeCompoundSplitter(String dictionaryPath) {
 		Dictionary dict = new SimpleDictionary(Paths.get(dictionaryPath).toFile());
-		splitter = new JWordSplitterAlgorithm();
+		splitter = new LeftToRightSplitterAlgorithm();
 		splitter.setDictionary(dict);
+		splitter.setLinkingMorphemes(linkingMorphemesDE);
 	}
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 		System.out.println();
 		for (TokenToConsider consider : JCasUtil.select(aJCas, TokenToConsider.class)) {
-			String currentWord = consider.getCoveredText();
-			// Word itself is present in dictionary.
-			if (dictionaryWords.contains(currentWord)) {
-				KnownWord word = new KnownWord(aJCas);
-				word.setBegin(consider.getBegin());
-				word.setEnd(consider.getEnd());
-				word.addToIndexes();
-				System.out.println(
-						"Marked as known:\t" + consider.getCoveredText() + "\t(found in " + dictionaryPath + ")");
+
+			// If token is beginning of a new sentence: process in lowercase as well
+			if(!JCasUtil.selectCovered(StartOfSentence.class, consider).isEmpty()) {
+				System.out.println("Also checking in lowercase, because\t"+consider.getCoveredText()+"\t is BOS");
+				checkIfWordIsKnown(aJCas, consider, true);
 			}
-			// Only for German: if splitter finds a compound: is also a KnownWord.
-			else if (language.equals("de") && splitter.split(currentWord).getSplits().get(0).isCompound()) {
-				KnownWord word = new KnownWord(aJCas);
-				word.setBegin(consider.getBegin());
-				word.setEnd(consider.getEnd());
-				word.addToIndexes();
-				System.out.println("Marked as known:\t" + consider.getCoveredText() + "\t(compound of words found in "
-						+ dictionaryPath + ")");
+			else {
+				checkIfWordIsKnown(aJCas, consider, false);
 			}
+			
+		}
+	}
+
+	private void checkIfWordIsKnown(JCas aJCas, TokenToConsider token, boolean alsoCheckLowercase) {
+		String currentWord = token.getCoveredText();
+		// Word itself is present in dictionary.
+		if (dictionaryWords.contains(currentWord)
+				|| (alsoCheckLowercase && dictionaryWords.contains(currentWord.toLowerCase()))) {
+			KnownWord word = new KnownWord(aJCas);
+			word.setBegin(token.getBegin());
+			word.setEnd(token.getEnd());
+			word.addToIndexes();
+			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
+		}
+		// Only for German: if splitter finds a compound: is also a KnownWord.
+		else if (language.equals("de") && splitter.split(currentWord).getSplits().get(0).isCompound()) {
+
+			System.out.println(
+					"Found\t" + splitter.split(currentWord).getSplits().size() + "\t splits for\t" + currentWord);
+			System.out.println(
+					"Example split of\t" + currentWord + "\tis\t" + splitter.split(currentWord).getSplits().get(0));
+
+			KnownWord word = new KnownWord(aJCas);
+			word.setBegin(token.getBegin());
+			word.setEnd(token.getEnd());
+			word.addToIndexes();
+			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(compound of words found in "
+					+ dictionaryPath + ")");
 		}
 	}
 
