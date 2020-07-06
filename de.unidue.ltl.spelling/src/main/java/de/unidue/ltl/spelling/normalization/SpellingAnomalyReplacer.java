@@ -6,11 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
+import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.FSArray;
 import org.dkpro.core.api.transform.JCasTransformerChangeBased_ImplBase;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
+import de.unidue.ltl.spelling.types.StartOfSentence;
 
 public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase {
 
@@ -18,22 +21,29 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 	public void process(JCas aInput, JCas aOutput) throws AnalysisEngineProcessException {
 		for (ExtendedSpellingAnomaly anomaly : select(aInput, ExtendedSpellingAnomaly.class)) {
 			if (anomaly.getSuggestions() != null) {
-				Float minValue = Float.MAX_VALUE;
+				FSArray suggestions = anomaly.getSuggestions();
+				Float maxCertainty = Float.MIN_VALUE;
 				List<String> bestReplacements = new ArrayList<String>();
-				for (int i = 0; i < anomaly.getSuggestions().size(); i++) {
+
+				for (int i = 0; i < suggestions.size(); i++) {
 					SuggestedAction action = anomaly.getSuggestions(i);
 					Float certainty = action.getCertainty();
-					if (certainty < minValue) {
+					if (certainty > maxCertainty) {
 						bestReplacements.clear();
-						minValue = certainty;
+						maxCertainty = certainty;
 						bestReplacements.add(action.getReplacement());
-					} else if (certainty == minValue) {
+					} else if (certainty == maxCertainty) {
 						bestReplacements.add(action.getReplacement());
 					}
 				}
+
+				String replacement = bestReplacements.get(0);
+				if (!JCasUtil.selectCovered(StartOfSentence.class, anomaly).isEmpty()) {
+					replacement = replacement.substring(0, 1).toUpperCase() + replacement.substring(1);
+				}
 				System.out.println(
-						"Replacing anomaly:\t'" + anomaly.getCoveredText() + "'\twith\t'" + bestReplacements.get(0)+"'.");
-				replace(anomaly.getBegin(), anomaly.getEnd(), bestReplacements.get(0));
+						"Replacing anomaly:\t'" + anomaly.getCoveredText() + "'\twith\t'" + replacement + "'.");
+				replace(anomaly.getBegin(), anomaly.getEnd(), replacement);
 				anomaly.setCorrected(true);
 			}
 		}

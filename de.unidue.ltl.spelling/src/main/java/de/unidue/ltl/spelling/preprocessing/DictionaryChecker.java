@@ -56,7 +56,7 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 	private String dictionaryPath;
 
 	private Set<String> dictionaryWords = new HashSet<String>();
-	
+
 	// If German is being processed, check for compounds
 	LeftToRightSplitterAlgorithm splitter = null;
 	LinkingMorphemes linkingMorphemesDE = new LinkingMorphemes(new String[] { "e", "s", "es", "n", "en", "er", "ens" });
@@ -101,14 +101,12 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 		for (TokenToConsider consider : JCasUtil.select(aJCas, TokenToConsider.class)) {
 
 			// If token is beginning of a new sentence: process in lowercase as well
-			if(!JCasUtil.selectCovered(StartOfSentence.class, consider).isEmpty()) {
-				System.out.println("Also checking in lowercase, because\t"+consider.getCoveredText()+"\t is BOS");
+			if (!JCasUtil.selectCovered(StartOfSentence.class, consider).isEmpty()) {
+				System.out.println("Also checking in lowercase, because\t" + consider.getCoveredText() + "\t is BOS");
 				checkIfWordIsKnown(aJCas, consider, true);
-			}
-			else {
+			} else {
 				checkIfWordIsKnown(aJCas, consider, false);
 			}
-			
 		}
 	}
 
@@ -125,8 +123,12 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 		// Only for German: if splitter finds a compound: is also a KnownWord.
 		else if (language.equals("de") && splitter.split(currentWord).getSplits().get(0).isCompound()) {
 
-			System.out.println(
-					"Found\t" + splitter.split(currentWord).getSplits().size() + "\t splits for\t" + currentWord);
+			// TODO: as of now, errors where a space was omitted ("heuteAbend") are marked
+			// as compounds, therefore include LM probability check: only accept compound if
+			// it is less probable to be observed separated than written as a compound
+
+//			System.out.println(
+//					"Found\t" + splitter.split(currentWord).getSplits().size() + "\t splits for\t" + currentWord);
 //			System.out.println(
 //					"Example split of\t" + currentWord + "\tis\t" + splitter.split(currentWord).getSplits().get(0));
 

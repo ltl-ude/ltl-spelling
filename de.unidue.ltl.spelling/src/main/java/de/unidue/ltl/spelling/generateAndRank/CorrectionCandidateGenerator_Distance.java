@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.candidategeneration;
+package de.unidue.ltl.spelling.generateAndRank;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.jcas.JCas;

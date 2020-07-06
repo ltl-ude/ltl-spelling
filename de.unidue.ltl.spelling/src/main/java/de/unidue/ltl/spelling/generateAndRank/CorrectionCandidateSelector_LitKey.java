@@ -1,3 +1,4 @@
+package de.unidue.ltl.spelling.generateAndRank;
 //package de.unidue.ltl.spelling.candidategeneration;
 //
 //import java.io.BufferedReader;

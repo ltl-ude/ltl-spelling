@@ -3,6 +3,7 @@ package de.unidue.ltl.spelling.experiments;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -14,8 +15,14 @@ import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 import org.dkpro.core.io.text.TextReader;
 
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.Dictionary;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.LinkingMorphemes;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.SimpleDictionary;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.BananaSplitterAlgorithm;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.DataDrivenSplitterAlgorithm;
+import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.LeftToRightSplitterAlgorithm;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
-import de.unidue.ltl.spelling.candidategeneration.CandidateGeneratorAndRanker_KeyboardDistance;
+import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_KeyboardDistance;
 import de.unidue.ltl.spelling.normalization.ApplyChanges;
 import de.unidue.ltl.spelling.normalization.ResultTester;
 import de.unidue.ltl.spelling.normalization.SpellingAnomalyReplacer;
@@ -74,11 +81,11 @@ public class Experiment_usingComponentsDirectly {
 				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_en_1, DictionaryChecker.PARAM_LANGUAGE, "en");
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		AnalysisEngineDescription generateRank1 = createEngineDescription(
-				CandidateGeneratorAndRanker_KeyboardDistance.class,
-				CandidateGeneratorAndRanker_KeyboardDistance.PARAM_DICTIONARIES, hunspell_en,
-				CandidateGeneratorAndRanker_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE,
+				GenerateAndRank_KeyboardDistance.class,
+				GenerateAndRank_KeyboardDistance.PARAM_DICTIONARIES, hunspell_en,
+				GenerateAndRank_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE,
 				"src/main/resources/matrixes/keyboardDistance_EN-manual.txt",
-				CandidateGeneratorAndRanker_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, true);
+				GenerateAndRank_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, true);
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
 				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
@@ -108,6 +115,16 @@ public class Experiment_usingComponentsDirectly {
 //		cfd.inc(2,"serialisiert .");
 		// Figure out how to
 //		String[] lmPaths = CFD_Serializer.serialize(cfd);
+		
+//		Dictionary dict = new SimpleDictionary(Paths.get(hunspell_de).toFile());
+//		LinkingMorphemes linkingMorphemesDE = new LinkingMorphemes(new String[] { "e", "s", "es", "n", "en", "er", "ens" });
+////		LeftToRightSplitterAlgorithm splitter = new LeftToRightSplitterAlgorithm();
+////		BananaSplitterAlgorithm splitter = new BananaSplitterAlgorithm();
+//		DataDrivenSplitterAlgorithm splitter = new DataDrivenSplitterAlgorithm();
+//		splitter.setDictionary(dict);
+//		splitter.setLinkingMorphemes(linkingMorphemesDE);
+//		System.out.println(splitter.split("Lehrstelle").getAllSplits());
+//		System.exit(0);
 
 		CollectionReader reader = getReader("de-testData", "de");
 		AnalysisEngineDescription showText = createEngineDescription(PrintText.class);
@@ -127,11 +144,11 @@ public class Experiment_usingComponentsDirectly {
 				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_1_de, DictionaryChecker.PARAM_LANGUAGE, "de");
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		AnalysisEngineDescription generateRank1 = createEngineDescription(
-				CandidateGeneratorAndRanker_KeyboardDistance.class,
-				CandidateGeneratorAndRanker_KeyboardDistance.PARAM_DICTIONARIES, hunspell_de,
-				CandidateGeneratorAndRanker_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE,
+				GenerateAndRank_KeyboardDistance.class,
+				GenerateAndRank_KeyboardDistance.PARAM_DICTIONARIES, hunspell_de,
+				GenerateAndRank_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE,
 				"src/main/resources/matrixes/keyboardDistance_DE-manual.txt",
-				CandidateGeneratorAndRanker_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, true);
+				GenerateAndRank_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, true);
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
 				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
