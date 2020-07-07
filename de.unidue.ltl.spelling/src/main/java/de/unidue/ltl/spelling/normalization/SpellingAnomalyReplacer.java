@@ -22,17 +22,17 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 		for (ExtendedSpellingAnomaly anomaly : select(aInput, ExtendedSpellingAnomaly.class)) {
 			if (anomaly.getSuggestions() != null) {
 				FSArray suggestions = anomaly.getSuggestions();
-				Float maxCertainty = Float.MIN_VALUE;
+				Float minCost = Float.MAX_VALUE;
 				List<String> bestReplacements = new ArrayList<String>();
 
 				for (int i = 0; i < suggestions.size(); i++) {
 					SuggestedAction action = anomaly.getSuggestions(i);
 					Float certainty = action.getCertainty();
-					if (certainty > maxCertainty) {
+					if (certainty < minCost) {
 						bestReplacements.clear();
-						maxCertainty = certainty;
+						minCost = certainty;
 						bestReplacements.add(action.getReplacement());
-					} else if (certainty == maxCertainty) {
+					} else if (certainty == minCost) {
 						bestReplacements.add(action.getReplacement());
 					}
 				}

@@ -5,7 +5,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -27,11 +31,29 @@ import org.jsoup.select.Elements;
 
 public class PhonemeUtils {
 
+	// TODO: to what extent do we want/can we support these?
+	private String[] supportedLanguages = new String[] { "cat", "deu", "eng", "fin", "hat", "hun", "ita", "mlt", "nld",
+			"nze", "pol", "aus-AU", "afr-ZA", "sqi - AL", "eus - ES", "eus - FR", "cat - ES", "nld - NL - GN", "nld - NL",
+			"nld - NL - OH", "nld - NL - PR", "eng - US", "eng - AU", "eng - GB", "eng - GB - OH", "eng - GB - OHFAST", "eng - GB - LE",
+			"eng - SC", "eng - NZ", "eng - CA", "eng - GH", "eng - IN", "eng - IE", "eng - KE", "eng - NG", "eng - PH", "eng - ZA",
+			"eng - TZ", "ekk - EE", "kat - GE", "fin - FI", "fra - FR", "deu - DE", "gsw - CH - BE", "gsw - CH - BS", "gsw - CH - GR",
+			"gsw - CH - SG", "gsw - CH - ZH", "gsw - CH", "hat - HT", "hun - HU", "isl - IS", "ita - IT", "jpn - JP", "gup - AU", "sampa",
+			"ltz - LU", "mlt - MT", "nor - NO", "pol - PL", "ron - RO", "rus - RU", "slk - SK", "spa - ES", "spa - AR", "spa - BO",
+			"spa - CL", "spa - CO", "spa - CR", "spa - DO", "spa - EC", "spa - SV", "spa - GT", "spa - HN", "spa - MX", "spa - NI",
+			"spa - PA", "spa - PY", "spa - PE", "spa - PR", "spa - US", "spa - UY", "spa - VE", "swe - SE", "tha - TH", "guf - AU" };
+	
+	private static Map<String,String> languageMapping = new HashMap<String,String>();
+
 	/**
 	 * To process a whole list of inputs.
 	 */
 	public static List<String> getPhonemes(List<String> graphemes, String language) throws IOException {
 
+		// TODO: handle languages more sensitive
+		languageMapping.put("de","deu");
+		languageMapping.put("en","eng");
+		language = languageMapping.get(language);
+		
 		// Must create a temporary file containing the graphemes to process
 		String tempLocation = "src/main/resources/tempGraphemes.txt";
 
@@ -100,7 +122,7 @@ public class PhonemeUtils {
 		return phonemes;
 
 	}
-	
+
 	/**
 	 * To process a single word.
 	 */
@@ -161,7 +183,7 @@ public class PhonemeUtils {
 		HttpResponse result = httpclient.execute(httpget);
 		String phoneticTranscription = EntityUtils.toString(result.getEntity(), Charset.forName("UTF-8"));
 		phoneticTranscription = phoneticTranscription.substring(phoneticTranscription.indexOf(";") + 1);
-		
+
 		// Delete temp file containing graphemes
 		file.delete();
 
@@ -176,10 +198,15 @@ public class PhonemeUtils {
 		}
 		writer.close();
 	}
-	
+
 	public static void writeStringToFile(String grapheme, String outputFileName) throws IOException {
 		FileWriter writer = new FileWriter(outputFileName);
 		writer.write(grapheme + System.lineSeparator());
 		writer.close();
+	}
+
+	private static boolean checkIfLanguageIsSupported(String lang) {
+
+		return false;
 	}
 }

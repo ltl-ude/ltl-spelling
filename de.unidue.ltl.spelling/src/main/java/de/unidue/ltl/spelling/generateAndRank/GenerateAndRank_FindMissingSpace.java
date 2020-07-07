@@ -50,4 +50,10 @@ public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanke
 			}
 		}
 	}
+	
+	// Not required for this annotator
+	@Override
+	protected float calculateCost(String misspelling, String correction) {
+		return 0;
+	}
 }

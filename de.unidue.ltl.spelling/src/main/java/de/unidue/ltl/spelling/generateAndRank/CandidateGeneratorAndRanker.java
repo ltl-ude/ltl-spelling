@@ -9,10 +9,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 
+import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
+import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSArray;
 
@@ -25,13 +30,17 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
 public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase {
 
+	public static final String PARAM_LANGUAGE = "language";
+	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
+	protected String language;
+	
 	/**
 	 * The dictionary based on which to generate the correction candidates.
 	 */
 	public static final String PARAM_DICTIONARIES = "dictionaries";
 	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
 	protected String[] dictionaries;
-
+	
 	/**
 	 * Number of candidates to be generated with this method. If there are more
 	 * candidates with the same rank as the n-th of the top n candidates these are
@@ -58,6 +67,47 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 			}
 		}
 	}
+	
+	@Override
+	public void process(JCas aJCas) throws AnalysisEngineProcessException {
+
+		for (SpellingAnomaly anomaly : JCasUtil.select(aJCas, SpellingAnomaly.class)) {
+			System.out.println();
+			String misspelling = anomaly.getCoveredText();
+			Map<Float, List<String>> rankedCandidates = new TreeMap<Float, List<String>>();
+
+			for (String word : dictionary) {
+				float cost = calculateCost(misspelling, word);
+				List<String> rankList = rankedCandidates.get(cost);
+				if (rankList == null) {
+					rankedCandidates.put(cost, new ArrayList<String>());
+					rankList = rankedCandidates.get(cost);
+				}
+				rankList.add(word);
+			}
+
+			Iterator<Entry<Float, List<String>>> entries = rankedCandidates.entrySet().iterator();
+			SuggestionCostTuples tuples = new SuggestionCostTuples();
+
+			while (tuples.size() < numberOfCandidatesToGenerate) {
+				if (entries.hasNext()) {
+					Entry<Float, List<String>> entry = entries.next();
+					List<String> currentRankList = entry.getValue();
+					float rank = entry.getKey();
+					for (int j = 0; j < currentRankList.size(); j++) {
+						tuples.addTuple(currentRankList.get(j), rank);
+					}
+				} else {
+					break;
+				}
+			}
+
+			addSuggestedActions(aJCas, anomaly, tuples);
+		}
+		System.out.println();
+	}
+	
+	protected abstract float calculateCost(String misspelling, String correction); 
 
 	// Create suggested actions for the generated candidates
 	// TODO: must ensure not to overwrite existing suggested actions!

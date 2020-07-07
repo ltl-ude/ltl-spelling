@@ -5,24 +5,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import org.apache.uima.UimaContext;
-import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
 import org.apache.uima.fit.descriptor.TypeCapability;
-import org.apache.uima.fit.util.JCasUtil;
-import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 
-import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import eu.openminted.share.annotations.api.DocumentationResource;
 
 /**
@@ -95,47 +86,9 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 		}
 	}
 
-	@Override
-	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-
-		for (SpellingAnomaly anomaly : JCasUtil.select(aJCas, SpellingAnomaly.class)) {
-			System.out.println();
-			String misspelling = anomaly.getCoveredText();
-			Map<Float, List<String>> rankedCandidates = new TreeMap<Float, List<String>>();
-
-			for (String word : dictionary) {
-				float cost = calculateCost(misspelling, word);
-				List<String> rankList = rankedCandidates.get(cost);
-				if (rankList == null) {
-					rankedCandidates.put(cost, new ArrayList<String>());
-					rankList = rankedCandidates.get(cost);
-				}
-				rankList.add(word);
-			}
-
-			Iterator<Entry<Float, List<String>>> entries = rankedCandidates.entrySet().iterator();
-			SuggestionCostTuples tuples = new SuggestionCostTuples();
-
-			while (tuples.size() < numberOfCandidatesToGenerate) {
-				if (entries.hasNext()) {
-					Entry<Float, List<String>> entry = entries.next();
-					List<String> currentRankList = entry.getValue();
-					float rank = entry.getKey();
-					for (int j = 0; j < currentRankList.size(); j++) {
-						tuples.addTuple(currentRankList.get(j), rank);
-					}
-				} else {
-					break;
-				}
-			}
-
-			addSuggestedActions(aJCas, anomaly, tuples);
-		}
-		System.out.println();
-	}
-
 	// Assumes performing operations on 'wrong' to turn it into 'right'
-	private float calculateCost(String wrong, String right) {
+	@Override
+	protected float calculateCost(String wrong, String right) {
 
 		float[][] distanceMatrix = new float[wrong.length() + 1][right.length() + 1];
 
@@ -203,7 +156,6 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 //				+ distanceMatrix[wrong.length()][right.length()]);
 
 		return distanceMatrix[wrong.length()][right.length()];
-
 	}
 
 	private float getDistance(char a, char b) {
