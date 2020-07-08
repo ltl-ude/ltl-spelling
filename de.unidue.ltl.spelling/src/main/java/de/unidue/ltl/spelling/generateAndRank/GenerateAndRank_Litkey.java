@@ -118,7 +118,7 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 		String result;
 		try {
 			while ((result = reader.readLine()) != null) {
-//			System.out.println("LINE: " + result);
+			System.out.println("LINE: " + result);
 				if (!result.startsWith("unknown")) {
 					JSONObject jObject = new JSONObject(result.substring(1, result.length() - 1));
 					JSONArray errors = jObject.getJSONArray("errors");
@@ -134,7 +134,7 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 							// Diffuse errors: no mapping between incorrect and correct version possible,
 							// therefore "worse" than other errors
 							if (errorType.equals("diffuse")) {
-								errorScore += 4.0;
+								errorScore += 10.0;
 							} else {
 								errorScore += 2.0;
 							}
