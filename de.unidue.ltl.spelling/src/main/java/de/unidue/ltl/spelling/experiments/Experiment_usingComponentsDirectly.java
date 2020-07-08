@@ -155,7 +155,16 @@ public class Experiment_usingComponentsDirectly {
 				GenerateAndRank_Litkey.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, 5);
 		AnalysisEngineDescription generateRankLevenshtein = createEngineDescription(
 				GenerateAndRank_LevenshteinGrapheme.class, GenerateAndRank_LevenshteinGrapheme.PARAM_LANGUAGE, "de",
-				GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES, hunspell_de);
+				GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES, hunspell_de,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_INCLUDE_TRANSPOSITION, true,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_DELETION,
+				"src/main/resources/matrixes/RDMatrix_deletion_DE.tsv",
+				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_INSERTION,
+				"src/main/resources/matrixes/RDMatrix_insertion_DE.tsv",
+				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_SUBSTITUTION,
+				"src/main/resources/matrixes/RDMatrix_substitution_DE.tsv",
+				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_TRANSPOSITION,
+				"src/main/resources/matrixes/RDMatrix_transposition_DE.tsv");
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
 				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });

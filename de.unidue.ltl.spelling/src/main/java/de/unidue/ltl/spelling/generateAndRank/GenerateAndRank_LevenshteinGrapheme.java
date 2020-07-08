@@ -33,7 +33,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	 * File containing tab-separated line-by-line entries of deletion costs for
 	 * characters, e.g. "a\t 5". Entries must be lowercase.
 	 */
-	public static final String PARAM_WEIGHT_FILE_DELETION = "weightFileInsertion";
+	public static final String PARAM_WEIGHT_FILE_DELETION = "weightFileDeletion";
 	@ConfigurationParameter(name = PARAM_WEIGHT_FILE_DELETION, mandatory = false)
 	protected String weightFileDeletion;
 
@@ -86,20 +86,27 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
 		readDictionaries(dictionaries);
-		readWeights(weightFileDeletion, deletionMap);
-		readWeights(weightFileInsertion, insertionMap);
-		readWeights2D(weightFileSubstitution, substitutionMap);
-		readWeights2D(weightFileTransposition, transpositionMap);
+
+		deletionMap = readWeights(weightFileDeletion);
+		insertionMap = readWeights(weightFileInsertion);
+		substitutionMap = readWeights2D(weightFileSubstitution);
+		transpositionMap = readWeights2D(weightFileTransposition);
 		if (includeTransposition && weightFileTransposition != null) {
 			includeTransposition = true;
 			getContext().getLogger().log(Level.WARNING,
 					"Transposition was not chosen to be included in GenerateAndRank_LevenshteinGrapheme, but you provided the file'"
 							+ weightFileTransposition + "' with transposition weights. They will be included.");
 		}
+
+		System.out.println(deletionMap);
+		System.out.println(insertionMap);
+		System.out.println(substitutionMap);
+		System.out.println(transpositionMap);
 	}
 
-	private void readWeights2D(String weightFile, Map<Character, Map<Character, Float>> weightMap) {
+	private Map<Character, Map<Character, Float>> readWeights2D(String weightFile) {
 		if (weightFile != null) {
+			Map<Character, Map<Character, Float>> weightMap = new HashMap<Character, Map<Character, Float>>();
 			weightMap = new HashMap<Character, Map<Character, Float>>();
 
 			try {
@@ -109,29 +116,34 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 					String[] weightEntry = line.split("\t");
 					Map<Character, Float> currentCharacterMap = weightMap.get(weightEntry[0].charAt(0));
 					if (currentCharacterMap == null) {
-						weightMap.put(weightEntry[0].charAt(0), new HashMap<Character, Float>());
-						currentCharacterMap = weightMap.get(weightEntry[0].charAt(0));
+						weightMap.put(weightEntry[0].toLowerCase().charAt(0), new HashMap<Character, Float>());
+						currentCharacterMap = weightMap.get(weightEntry[0].toLowerCase().charAt(0));
 					}
-					if (currentCharacterMap.get(weightEntry[1].charAt(0)) == 0.0f) {
-						currentCharacterMap.put(weightEntry[1].charAt(0), Float.parseFloat(weightEntry[2]));
+					if (currentCharacterMap.get(weightEntry[1].toLowerCase().charAt(0)) == null) {
+						currentCharacterMap.put(weightEntry[1].toLowerCase().charAt(0),
+								Float.parseFloat(weightEntry[2]));
 					} else {
 						getContext().getLogger().log(Level.WARNING,
 								"You provided two different weights for '" + weightEntry[0] + "' to '" + weightEntry[1]
-										+ "' (" + currentCharacterMap.get(weightEntry[1].charAt(0)) + " and "
-										+ weightEntry[2] + ") in File" + weightFile + ". The former will be used.");
+										+ "' (" + currentCharacterMap.get(weightEntry[1].toLowerCase().charAt(0))
+										+ " and " + weightEntry[2] + ") in File" + weightFile
+										+ ". The former will be used.");
 					}
 				}
 				br.close();
+				return weightMap;
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		return null;
 	}
 
-	private void readWeights(String weightFile, Map<Character, Float> weightMap) {
+	private Map<Character, Float> readWeights(String weightFile) {
 		if (weightFile != null) {
+			Map<Character, Float> weightMap = new HashMap<Character, Float>();
 			weightMap = new HashMap<Character, Float>();
 
 			try {
@@ -139,9 +151,9 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 				while (br.ready()) {
 					String line = br.readLine();
 					String[] weightEntry = line.split("\t");
-					Float currentWeight = weightMap.get(weightEntry[0].charAt(0));
-					if (currentWeight == 0.0f) {
-						weightMap.put(weightEntry[0].charAt(0), Float.parseFloat(weightEntry[1]));
+					Float currentWeight = weightMap.get(weightEntry[0].toLowerCase().charAt(0));
+					if (currentWeight == null) {
+						weightMap.put(weightEntry[0].toLowerCase().charAt(0), Float.parseFloat(weightEntry[1]));
 					} else {
 						// Warn that there is double info for this char
 						getContext().getLogger().log(Level.WARNING,
@@ -151,17 +163,21 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 					}
 				}
 				br.close();
+				return weightMap;
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		return null;
 	}
 
 	// Assumes performing operations on 'wrong' to turn it into 'right'
 	@Override
 	protected float calculateCost(String wrong, String right) {
+		
+//		System.out.println("Calculating cost for "+wrong+" and "+right+".");
 
 		float[][] distanceMatrix = new float[wrong.length() + 1][right.length() + 1];
 
@@ -173,7 +189,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 		}
 		distanceMatrix[0][0] = 0;
 		for (int j = 1; j <= right.length(); j++) {
-			distanceMatrix[0][j] = distanceMatrix[0][j-1] + getInsertionWeight(right.charAt(j - 1));
+			distanceMatrix[0][j] = distanceMatrix[0][j - 1] + getInsertionWeight(right.charAt(j - 1));
 		}
 
 		for (int wrongIndex = 1; wrongIndex <= wrong.length(); wrongIndex++) {
@@ -192,16 +208,15 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 				if (wrong.charAt(wrongIndex - 1) == (right.charAt(rightIndex - 1))) {
 					charsAreDifferent = 0;
 				}
-				float substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1]
-						+ charsAreDifferent * getSubstitutionWeight(wrong.charAt(wrongIndex - 1), right.charAt(rightIndex - 1));
+				float substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1] + charsAreDifferent
+						* getSubstitutionWeight(wrong.charAt(wrongIndex - 1), right.charAt(rightIndex - 1));
 
 				// TRANSPOSITION
 				if (includeTransposition && wrongIndex > 1 && rightIndex > 1
-						&& wrong.charAt(wrongIndex - 1) == right.charAt(rightIndex - 2)
-						&& wrong.charAt(wrongIndex - 2) == right.charAt(rightIndex - 1)) {
+						&& lowercasedCharsAreEqual(wrong.charAt(wrongIndex - 1), right.charAt(rightIndex - 2))
+						&& lowercasedCharsAreEqual(wrong.charAt(wrongIndex - 2), right.charAt(rightIndex - 1))) {
 					float transposition = distanceMatrix[wrongIndex - 2][rightIndex - 2]
 							+ getTranspositionWeight(wrong.charAt(wrongIndex - 2), wrong.charAt(wrongIndex - 1));
-
 					distanceMatrix[wrongIndex][rightIndex] = Math.min(deletion,
 							Math.min(insertion, Math.min(substitution, transposition)));
 				} else {
@@ -226,13 +241,15 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	}
 
 	private float getInsertionWeight(char a) {
+		
 		if (insertionMap == null) {
 			return defaultWeight;
 		} else {
 			try {
-				return insertionMap.get(a);
+				char lowercased_a = Character.toLowerCase(a);
+				return insertionMap.get(lowercased_a);
 			} catch (NullPointerException e) {
-				System.out.println("No insertion weight found for char " + a + ". Applying default weight instead.");
+//				System.out.println("No insertion weight found for char " + a + ". Applying default weight instead.");				
 				return defaultWeight;
 			}
 		}
@@ -243,9 +260,10 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 			return defaultWeight;
 		} else {
 			try {
-				return deletionMap.get(a);
+				char lowercased_a = Character.toLowerCase(a);
+				return deletionMap.get(lowercased_a);
 			} catch (NullPointerException e) {
-				System.out.println("No deletion weight found for char " + a + ". Applying default weight instead.");
+//				System.out.println("No deletion weight found for char " + a + ". Applying default weight instead.");
 				return defaultWeight;
 			}
 		}
@@ -253,13 +271,19 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 
 	private float getSubstitutionWeight(char a, char b) {
 		if (substitutionMap == null) {
-			return defaultWeight + compareCases(a, b);
+			float result = 0;
+			if (!lowercasedCharsAreEqual(a, b)) {
+				result += defaultWeight;
+			}
+			return result + compareCases(a, b);
 		} else {
 			try {
-				return substitutionMap.get(a).get(b) + compareCases(a, b);
+				char lowercased_a = Character.toLowerCase(a);
+				char lowercased_b = Character.toLowerCase(b);
+				return substitutionMap.get(lowercased_a).get(lowercased_b) + compareCases(a, b);
 			} catch (NullPointerException e) {
-				System.out.println("No substition weight found for chars " + a + " and " + b
-						+ ". Applying default weight instead.");
+//				System.out.println("No substition weight found for chars " + a + " and " + b
+//						+ ". Applying default weight instead.");
 				return defaultWeight + compareCases(a, b);
 			}
 		}
@@ -270,10 +294,12 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 			return defaultWeight + compareCases(a, b);
 		} else {
 			try {
-				return transpositionMap.get(a).get(b) + compareCases(a, b);
+				char lowercased_a = Character.toLowerCase(a);
+				char lowercased_b = Character.toLowerCase(b);
+				return transpositionMap.get(lowercased_a).get(lowercased_b) + compareCases(a, b);
 			} catch (NullPointerException e) {
-				System.out.println("No transposition weight found for chars " + a + " and " + b
-						+ ". Applying default weight instead.");
+//				System.out.println("No transposition weight found for chars " + a + " and " + b
+//						+ ". Applying default weight instead.");
 				return defaultWeight + compareCases(a, b);
 			}
 		}
@@ -287,4 +313,9 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 			return 0.5f;
 		}
 	}
+
+	private boolean lowercasedCharsAreEqual(char a, char b) {
+		return Character.toLowerCase(a) == Character.toLowerCase(b);
+	}
+
 }

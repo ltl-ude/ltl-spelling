@@ -13,6 +13,7 @@ import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
 import org.apache.uima.fit.descriptor.TypeCapability;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.apache.uima.util.Level;
 
 import eu.openminted.share.annotations.api.DocumentationResource;
 
@@ -71,12 +72,20 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 			while (br.ready()) {
 				String line = br.readLine();
 				String[] distanceEntry = line.split("\t");
-				Map<Character, Float> currentCharacterMap = distanceMap.get(distanceEntry[0].charAt(0));
+				Map<Character, Float> currentCharacterMap = distanceMap.get(distanceEntry[0].toLowerCase().charAt(0));
 				if (currentCharacterMap == null) {
-					distanceMap.put(distanceEntry[0].charAt(0), new HashMap<Character, Float>());
-					currentCharacterMap = distanceMap.get(distanceEntry[0].charAt(0));
+					distanceMap.put(distanceEntry[0].toLowerCase().charAt(0), new HashMap<Character, Float>());
+					currentCharacterMap = distanceMap.get(distanceEntry[0].toLowerCase().charAt(0));
 				}
-				currentCharacterMap.put(distanceEntry[1].charAt(0), Float.parseFloat(distanceEntry[2]));
+				if (currentCharacterMap.get(distanceEntry[1].toLowerCase().charAt(0)) == null) {
+					currentCharacterMap.put(distanceEntry[1].toLowerCase().charAt(0),
+							Float.parseFloat(distanceEntry[2]));
+				} else {
+					getContext().getLogger().log(Level.WARNING,
+							"You provided two different weights for '" + distanceEntry[0] + "' to '" + distanceEntry[1]
+									+ "' (" + currentCharacterMap.get(distanceEntry[1].charAt(0)) + " and "
+									+ distanceEntry[2] + ") in File" + distanceFile + ". The former will be used.");
+				}
 			}
 			br.close();
 		} catch (FileNotFoundException e) {
@@ -164,7 +173,7 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 			// It is unlikely to accidentally repeat a character; therefore deleting an o
 			// from hoouse should not cost 0 because the distance between o and o is 0;
 			// apply default distance instead
-			if (a == b) {
+			if (lowercasedCharsAreEqual(a, b)) {
 				return defaultDistance + compareCases(a, b);
 			}
 			return distanceMap.get(Character.toLowerCase(a)).get(Character.toLowerCase(b)) + compareCases(a, b);
@@ -181,5 +190,9 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 		} else {
 			return 0.5f;
 		}
+	}
+
+	private boolean lowercasedCharsAreEqual(char a, char b) {
+		return ((a + "").toLowerCase().equals((b + "").toLowerCase()));
 	}
 }
