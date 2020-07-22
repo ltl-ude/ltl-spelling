@@ -5,11 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -31,29 +27,17 @@ import org.jsoup.select.Elements;
 
 public class PhonemeUtils {
 
-	// TODO: to what extent do we want/can we support these?
-	private String[] supportedLanguages = new String[] { "cat", "deu", "eng", "fin", "hat", "hun", "ita", "mlt", "nld",
-			"nze", "pol", "aus-AU", "afr-ZA", "sqi - AL", "eus - ES", "eus - FR", "cat - ES", "nld - NL - GN", "nld - NL",
-			"nld - NL - OH", "nld - NL - PR", "eng - US", "eng - AU", "eng - GB", "eng - GB - OH", "eng - GB - OHFAST", "eng - GB - LE",
-			"eng - SC", "eng - NZ", "eng - CA", "eng - GH", "eng - IN", "eng - IE", "eng - KE", "eng - NG", "eng - PH", "eng - ZA",
-			"eng - TZ", "ekk - EE", "kat - GE", "fin - FI", "fra - FR", "deu - DE", "gsw - CH - BE", "gsw - CH - BS", "gsw - CH - GR",
-			"gsw - CH - SG", "gsw - CH - ZH", "gsw - CH", "hat - HT", "hun - HU", "isl - IS", "ita - IT", "jpn - JP", "gup - AU", "sampa",
-			"ltz - LU", "mlt - MT", "nor - NO", "pol - PL", "ron - RO", "rus - RU", "slk - SK", "spa - ES", "spa - AR", "spa - BO",
-			"spa - CL", "spa - CO", "spa - CR", "spa - DO", "spa - EC", "spa - SV", "spa - GT", "spa - HN", "spa - MX", "spa - NI",
-			"spa - PA", "spa - PY", "spa - PE", "spa - PR", "spa - US", "spa - UY", "spa - VE", "swe - SE", "tha - TH", "guf - AU" };
-	
-	private static Map<String,String> languageMapping = new HashMap<String,String>();
-
 	/**
 	 * To process a whole list of inputs.
 	 */
 	public static List<String> getPhonemes(List<String> graphemes, String language) throws IOException {
 
-		// TODO: handle languages more sensitive
-		languageMapping.put("de","deu");
-		languageMapping.put("en","eng");
-		language = languageMapping.get(language);
-		
+		language = getG2PLanguageCode(language);
+		if (language.equals("")) {
+			System.out.println("Language " + language
+					+ " not supported by g2p application. It accepts ISO 639-1 codes or combined ISO 639-3-ISO3166-1 codes.");
+		}
+
 		// Must create a temporary file containing the graphemes to process
 		String tempLocation = "src/main/resources/tempGraphemes.txt";
 
@@ -69,10 +53,11 @@ public class PhonemeUtils {
 		entity.addPart("i", new FileBody(file));
 
 		StringBody sb_no = new StringBody("no", ContentType.TEXT_PLAIN);
+		StringBody sb_yes = new StringBody("yes", ContentType.TEXT_PLAIN);
 		entity.addPart("com", sb_no);
 		entity.addPart("align", sb_no);
-		entity.addPart("stress", sb_no);
-		entity.addPart("syl", sb_no);
+		entity.addPart("stress", sb_yes); // no
+		entity.addPart("syl", sb_yes); // no
 		entity.addPart("embed", sb_no);
 		entity.addPart("nrm", sb_no);
 		entity.addPart("map", sb_no);
@@ -83,10 +68,12 @@ public class PhonemeUtils {
 		StringBody sb_iform = new StringBody("list", ContentType.TEXT_PLAIN);
 		entity.addPart("iform", sb_iform);
 
-		StringBody sb_oform = new StringBody("tab", ContentType.TEXT_PLAIN);
+		// tab
+		StringBody sb_oform = new StringBody("exttab", ContentType.TEXT_PLAIN);
 		entity.addPart("oform", sb_oform);
 
-		StringBody sb_featset = new StringBody("standard", ContentType.TEXT_PLAIN);
+		// standard
+		StringBody sb_featset = new StringBody("extended", ContentType.TEXT_PLAIN);
 		entity.addPart("featset", sb_featset);
 
 		StringBody sb_tgrate = new StringBody("16000", ContentType.TEXT_PLAIN);
@@ -112,7 +99,8 @@ public class PhonemeUtils {
 		List<String> phonemes = new ArrayList<String>();
 		String[] tokens = phoneticTranscription.split("\n");
 		for (String token : tokens) {
-			token = token.substring(token.indexOf(";") + 1);
+//			token = token.substring(token.indexOf(";") + 1);
+			System.out.println(token);
 			phonemes.add(token);
 		}
 
@@ -120,13 +108,18 @@ public class PhonemeUtils {
 		file.delete();
 
 		return phonemes;
-
 	}
 
 	/**
 	 * To process a single word.
 	 */
 	public static String getPhoneme(String grapheme, String language) throws IOException {
+
+		language = getG2PLanguageCode(language);
+		if (language.equals("")) {
+			System.out.println("Language " + language
+					+ " not supported by g2p application. It accepts ISO 639-1 codes or combined ISO 639-3-ISO3166-1 codes.");
+		}
 
 		// Must create a temporary file containing the graphemes to process
 		String tempLocation = "src/main/resources/tempGraphemes.txt";
@@ -205,8 +198,17 @@ public class PhonemeUtils {
 		writer.close();
 	}
 
-	private static boolean checkIfLanguageIsSupported(String lang) {
-
-		return false;
+	private static String getG2PLanguageCode(String lang) {
+		if (lang.length() == 2) {
+			return G2P_LanguageCodeMapper.getISO_6393_3_3166_1from639_1(lang);
+		} else {
+			String g2p_lang = G2P_LanguageCodeMapper.getISO_6319_1from639_3_3166_1(lang);
+			if (!g2p_lang.equals("")) {
+				// In this case the language code is supported
+				return lang;
+			}
+			// In this case it is ill-formatted or not supported
+			return g2p_lang;
+		}
 	}
 }
