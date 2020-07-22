@@ -34,8 +34,9 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
  */
 public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
-	// Location of the temporarily saved file containing anomaly text and correction
-	// candidate
+	// Location of the temporarily saved file containing pairs of misspellings and
+	// correction
+	// candidates
 	private final String pathToTempFile = "src/main/resources/bodu-spell/temp.tsv";
 
 	private List<String> dictionaryList = new ArrayList<String>();
@@ -46,8 +47,12 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
 	// Litkey error type 'diffuse' indicates that no relation between error and
 	// candidate could be found
+	// TODO: we do not need this anymore if we decide to optimize Litkey by not
+	// passing in any pairs that will yield a diffuse error
 	private final float diffuseCost = 1000.0f;
-	
+
+	// To avoid calling Litkey with misspelling-correction pairs that will yield a
+	// 'diffuse' error we need to calculate their Levenshtein Distance
 	private LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
 
 	@Override
@@ -93,117 +98,10 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 		}
 	}
 
-//	protected double getValue(JCas aJCas, SpellingAnomaly anomaly, SuggestedAction action) {
-//	For single error - correction - pair
+//	For single error - correction - pair: not needed in this implementation as we want to batch-process multiple candidates at once.
 	@Override
 	protected float calculateCost(String misspelling, String candidate) {
-		float errorScore = 0.0f;
-
-		// Write anomaly text and correction candidate to file for processing
-		FileWriter fw = null;
-		File file = new File(pathToTempFile);
-		try {
-			fw = new FileWriter(file);
-			fw.write(misspelling + "\t" + candidate + System.lineSeparator());
-			System.out.println(
-					"Litkey: processing candidate\t" + misspelling + "\twith suggestion candidate\t" + candidate);
-			fw.close();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-
-		// Execute python script to determine errors of anomaly respective the
-		// current correction candidate
-		Process process = null;
-		try {
-			process = Runtime.getRuntime().exec(new String[] { "bash", "src/main/resources/bodu-spell/runLitkey.sh",
-					file.getAbsolutePath(), "de" });
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		// See if any errors occured during script execution, if yes: print them
-		BufferedReader stdError = new BufferedReader(
-				new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
-		String line;
-		try {
-			while ((line = stdError.readLine()) != null) {
-				System.err.println("Error executing Litkey python script: " + line);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		// Process the result of the script: parse JSON object and read desired fields
-		BufferedReader reader = new BufferedReader(
-				new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-		String result;
-		try {
-			while ((result = reader.readLine()) != null) {
-				System.out.println("LINE: " + result);
-				if (!result.startsWith("unknown")) {
-					JSONObject jObject = new JSONObject(result.substring(1, result.length() - 1));
-					JSONArray errors = jObject.getJSONArray("errors");
-					// Process errors one by one
-					for (int i = 0; i < errors.length(); i++) {
-						JSONObject error = errors.getJSONObject(i);
-						String errorType = error.getString("category");
-						System.out.println("Candidate:\t" + error.get("candidate").toString());
-						System.out.println("Error:\t" + errorType);
-						if (systematicMap.get(errorType)) {
-							errorScore += 1.0;
-						} else if (!systematicMap.get(errorType)) {
-							// Diffuse errors: no mapping between incorrect and correct version possible,
-							// therefore "worse" than other errors
-							if (errorType.equals("diffuse")) {
-								errorScore += 10.0;
-							} else {
-								errorScore += 2.0;
-							}
-						} else {
-							System.out.println("Lookup of litkey error type " + errorType
-									+ " yielded no results in systematicMap.");
-						}
-					}
-				} else {
-					System.out.println("unknown");
-					return 10.0f;
-				}
-			}
-		} catch (IOException e) {
-			System.out.println("Exception in reading output" + e.toString());
-		}
-		return errorScore;
-	}
-
-	private float evaluateErrors(String errorString) {
-		JSONArray errors = new JSONArray(errorString);
-
-		float errorScore = 0.0f;
-
-		for (int i = 0; i < errors.length(); i++) {
-			JSONObject error = errors.getJSONObject(i);
-			String errorType = error.getString("category");
-			if (systematicMap.keySet().contains(errorType)) {
-				if (systematicMap.get(errorType)) {
-					errorScore += 1.0;
-				} else {
-					// Diffuse errors: no mapping between incorrect and correct version possible,
-					// therefore "worse" than other errors
-					if (errorType.equals("diffuse")) {
-						errorScore += diffuseCost;
-					} else {
-						errorScore += 2.0;
-					}
-				} 
-			}
-			else {
-				System.err.println(
-						"Lookup of litkey error type " + errorType + " yielded no results in systematicMap.");
-			}
-		}
-//		System.out.println("String: "+errorString+" errorScore: "+errorScore);
-		return errorScore;
+		return 0.0f;
 	}
 
 	@Override
@@ -211,72 +109,43 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
 		for (SpellingAnomaly anomaly : JCasUtil.select(aJCas, SpellingAnomaly.class)) {
 
-			System.out.println("Processing anomaly: " + anomaly.getCoveredText());
-
-			LocalTime startTime = java.time.LocalTime.now();
-
 			Map<Float, List<String>> rankedCandidates = new TreeMap<Float, List<String>>();
 			String misspelling = anomaly.getCoveredText();
 			List<String> litkeyResultEntries = new ArrayList<String>();
+
+			// For development:
+			System.out.println();
+			System.out.println("Litkey processing anomaly: " + anomaly.getCoveredText());
 			int consideredWords = 0;
 			int nonDiffuse = 0;
-			System.out.println();
-
-			// Write file to be processed by litkey script
-			// Must be processed in batches of 180 words, as larger sizes cannot be handled
-			// by litkey
 			int lengthDeviation = 2;
-//			for (int i = 0; i < dictionaryList.size(); i += 180) {
-//				System.out.println("Batch " + i);
-//				FileWriter fw = null;
-//				File file = new File(pathToTempFile);
-//
-//				try {
-//					fw = new FileWriter(file);
-//					for (int j = 0; j < 180; j++) {
-//						String word = dictionaryList.get(i + j);
-//						if (word.length() <= misspelling.length() + lengthDeviation
-//								&& word.length() >= misspelling.length() - lengthDeviation) {
-//							fw.write(misspelling + "\t" + word + System.lineSeparator());
-//							consideredWords += 1;
-//						}
-//					}
-//					fw.close();
-//				} catch (IOException e1) {
-//					e1.printStackTrace();
-//				}
-//
-//				System.out.println("Start Litkey script: " + java.time.LocalTime.now());
-//
-//				litkeyResultEntries.addAll(runLitkeyScript(file));
-//
-//				System.out.println("End Litkey script: " + java.time.LocalTime.now());
-//
-//				file.delete();
-//			}
+			int batch = 1;
+			LocalTime startTime = java.time.LocalTime.now();
+
+			// Just in case an upper limit is to be imposed on the number of candidates
+			// processed by Litkey script
+			int batchSize = dictionaryList.size();
+			int wordsInFile = 0;
 
 			int dictIndex = 0;
-			int wordsInFile = 0;
-			int batch = 1;
-			int batchSize = 1000;
-			int limit = dictionaryList.size();
-			batchSize = limit;
-			while (dictIndex < limit) {
+			while (dictIndex < dictionaryList.size()) {
 
-				System.out.println("Batch " + batch);
-				System.out.println("Starting from dict index " + dictIndex);
+//				System.out.println("Batch " + batch);
+//				System.out.println("Starting from dict index " + dictIndex);
+
 				FileWriter fw = null;
 				File file = new File(pathToTempFile);
 
 				try {
 					fw = new FileWriter(file);
-					while (wordsInFile < batchSize && dictIndex < limit) {
+					while (wordsInFile < batchSize && dictIndex < dictionaryList.size()) {
 						String word = dictionaryList.get(dictIndex);
 //						if (word.length() <= misspelling.length() + lengthDeviation
 //								&& word.length() >= misspelling.length() - lengthDeviation) {
-						if(!errorWillBeDiffuse(misspelling, word)) {
+						if (!errorWillBeDiffuse(misspelling, word)) {
 //							System.out.println("Writing to file: "+misspelling + "\t" + word);
 							fw.write(misspelling + "\t" + word + System.lineSeparator());
+
 							consideredWords += 1;
 							wordsInFile += 1;
 						}
@@ -287,11 +156,7 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 					e1.printStackTrace();
 				}
 
-				System.out.println("Start Litkey script: " + java.time.LocalTime.now());
-
 				litkeyResultEntries.addAll(runLitkeyScript(file));
-
-//				System.out.println("End Litkey script: " + java.time.LocalTime.now());
 
 				batch++;
 				wordsInFile = 0;
@@ -305,6 +170,7 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 					System.out.println("No result for: " + entry);
 				} else {
 					float cost = evaluateErrors(wordAndErrors[1]);
+					// TODO: can be simplified if we avoid diffuse errors
 					if (cost < diffuseCost) {
 						nonDiffuse += 1;
 						List<String> rankList = rankedCandidates.get(cost);
@@ -318,12 +184,12 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 				}
 			}
 
+			// For development:
 			LocalTime endTime = java.time.LocalTime.now();
-
-			System.out.println("Deviation: " + lengthDeviation);
+//			System.out.println("Deviation: " + lengthDeviation);
 			System.out.println("Considered: " + consideredWords);
 			System.out.println("Non-diffuse: " + nonDiffuse);
-			System.out.println("Result entries: " + litkeyResultEntries.size());
+//			System.out.println("Result entries: " + litkeyResultEntries.size());
 			System.out.println("Start: " + startTime);
 			System.out.println("End: " + endTime);
 
@@ -348,17 +214,46 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 		System.out.println();
 		System.exit(0);
 	}
-	
-	private boolean errorWillBeDiffuse(String misspelling, String candidate) {
-//		System.out.println("Diffuse judgement: "+ candidate+"\t"+(double)(levenshteinDistance.apply(misspelling, candidate))/(double)(candidate.length()));
-		return candidate.length()>4 && (double)(levenshteinDistance.apply(misspelling, candidate))/(double)(candidate.length()) > 0.66;
+
+	// Calculate Litkey error sum from a JSONArray of errors
+	private float evaluateErrors(String errorString) {
+		JSONArray errors = new JSONArray(errorString);
+		float errorScore = 0.0f;
+
+		for (int i = 0; i < errors.length(); i++) {
+			JSONObject error = errors.getJSONObject(i);
+			String errorType = error.getString("category");
+			if (systematicMap.keySet().contains(errorType)) {
+				if (systematicMap.get(errorType)) {
+					errorScore += 1.0;
+				} else {
+					// Diffuse errors: no mapping between incorrect and correct version possible,
+					// therefore "worse" than other errors
+					// TODO: if we avoid diffuse errors this becomes irrelevant
+					if (errorType.equals("diffuse")) {
+						errorScore += diffuseCost;
+					} else {
+						errorScore += 2.0;
+					}
+				}
+			} else {
+				System.err
+						.println("Lookup of litkey error type " + errorType + " yielded no results in systematicMap.");
+			}
+		}
+		return errorScore;
 	}
 
+	private boolean errorWillBeDiffuse(String misspelling, String candidate) {
+		return candidate.length() > 4
+				&& (double) (levenshteinDistance.apply(misspelling, candidate)) / (double) (candidate.length()) > 0.66;
+	}
+
+	// Execute python script to determine errors of anomaly respective the current
+	// correction candidate
 	private List<String> runLitkeyScript(File file) {
 		List<String> results = new ArrayList<String>();
 
-		// Execute python script to determine errors of anomaly respective the
-		// current correction candidate
 		Process process = null;
 		try {
 			process = Runtime.getRuntime().exec(new String[] { "bash", "src/main/resources/bodu-spell/runLitkey.sh",
@@ -380,7 +275,6 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 //			e.printStackTrace();
 //		}
 
-		// Process the result of the script: parse JSON object and read desired fields
 		BufferedReader reader = new BufferedReader(
 				new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
 		String line;

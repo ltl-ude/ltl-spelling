@@ -470,12 +470,7 @@ def plaintolearnerxml(csv_file=None,orig_file=None, target_file=None, word_list 
     # Create BAS output file and print BAS output to separate file
     #if bas_file == None:
     #    bas_output = open(filename+"_bas.txt", mode="w", encoding="utf-8") 
-    #    print(target, file = bas_output)
-    
-    
-    
-    print("Prepating output file", datetime.datetime.now())  
-    
+    #    print(target, file = bas_output)  
         
     # Create xml output file
     if xml_filename == None: created_xml = open(filename+".xml", mode="w")
@@ -1025,8 +1020,6 @@ def plaintolearnerxmlstring(csv_file=None,orig_file=None, target_file=None, word
 
     try: os.remove("temporary.txt")
     except: pass
-    
-    print("Done reading bas", datetime.datetime.now())
 
     # Organize BAS output in list
     table=[]
@@ -1156,7 +1149,6 @@ def plaintolearnerxmlstring(csv_file=None,orig_file=None, target_file=None, word
     # word[4] = target morpheme POS-tags
     # (word[5] = original orthography if given)
     
-    print("writing output file", datetime.datetime.now()) 
     #Create xml root
     xml_tokens = ET.Element("tokens", {"id":filename})
     
@@ -1524,7 +1516,6 @@ def plaintolearnerxmlstring(csv_file=None,orig_file=None, target_file=None, word
         
         ### errors only prepare structure yet
         #ET.SubElement(xml_token, "errors")
-    print("done writing output file", datetime.datetime.now())  
 
     def prettify(elem): 
         """Return a pretty-printed XML string for the Element. http://stackoverflow.com/questions/17402323/use-xml-etree-elementtree-to-write-out-nicely-formatted-xml-files

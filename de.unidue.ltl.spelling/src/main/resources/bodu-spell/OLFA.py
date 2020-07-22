@@ -215,15 +215,12 @@ class OLFA_token(Token):
 
 def get_errors_with_olfa(this_csv_file=None, textname=None, bas_file=None, user_bas_file=None, stanford_tag=True, use_context = False ):
     
-    print("get learner xml",datetime.datetime.now())
     #filetoxml.plaintolearnerxml(csv_file=this_csv_file, input_type = "list", xml_filename = textname + ".xml",  
     #                            with_n_m_alignment=False, bas_file=bas_file, user_bas_file=user_bas_file, stanford_tag = stanford_tag)
     # Marie: without user bas - do we want to keep it like this?
     tokenString = filetoxml.plaintolearnerxmlstring(csv_file=this_csv_file, input_type = "list", xml_filename = textname + ".xml",  
                                 with_n_m_alignment=False, bas_file=bas_file, stanford_tag = stanford_tag)
-    print("done", datetime.datetime.now())
     
-    print("read xml token list",datetime.datetime.now())
     #toks = xmltoken.learnerxmltotokenlist(textname +".xml")
     #toks = xmltoken.learnerxmlstringtotokenlist(textname +".xml")
     toks = xmltoken.learnerxmlstringtotokenlist(tokenString)
@@ -231,12 +228,9 @@ def get_errors_with_olfa(this_csv_file=None, textname=None, bas_file=None, user_
     
     for token in toks[0]: #toks[0] is the list of tokens in xml and toks[1] the file_id
         tok_objs.append(OLFA_token(token))
-    print("done",datetime.datetime.now())
         
-    print("get errors",datetime.datetime.now())
     for token in tok_objs:
         token.add_errors()
-    print("done",datetime.datetime.now())
     
     return tok_objs
         

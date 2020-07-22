@@ -46,8 +46,8 @@ public class Experiment_usingComponentsDirectly {
 
 	public static void runEnglish() throws UIMAException, IOException {
 		String hunspell_en = "src/main/resources/dictionaries/hunspell_en_US.txt";
-		String dict_en_1 = "dictionaries/en-testDict1.txt";
-		String dict_en_2 = "dictionaries/en-testDict2.txt";
+//		String dict_en_1 = "dictionaries/en-testDict1.txt";
+//		String dict_en_2 = "dictionaries/en-testDict2.txt";
 		String[] types_to_exclude = new String[] { Numeric.class.getName() };
 
 		// Mock-LM
@@ -79,8 +79,8 @@ public class Experiment_usingComponentsDirectly {
 
 		AnalysisEngineDescription dictionaryChecker1 = createEngineDescription(DictionaryChecker.class,
 				DictionaryChecker.PARAM_DICTIONARY_FILE, hunspell_en, DictionaryChecker.PARAM_LANGUAGE, "en");
-		AnalysisEngineDescription dictionaryChecker2 = createEngineDescription(DictionaryChecker.class,
-				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_en_1, DictionaryChecker.PARAM_LANGUAGE, "en");
+//		AnalysisEngineDescription dictionaryChecker2 = createEngineDescription(DictionaryChecker.class,
+//				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_en_1, DictionaryChecker.PARAM_LANGUAGE, "en");
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		AnalysisEngineDescription generateRank1 = createEngineDescription(GenerateAndRank_KeyboardDistance.class,
 				GenerateAndRank_KeyboardDistance.PARAM_DICTIONARIES, hunspell_en,
@@ -95,14 +95,15 @@ public class Experiment_usingComponentsDirectly {
 
 		SimplePipeline.runPipeline(reader, showText, segmenter, markSentenceBeginnings, numericAnnotator,
 				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
-				dictionaryChecker2, markTokensToCorrect, generateRank1, anomalyReplacer, changeApplier, segmenter,
+//				dictionaryChecker2,
+				markTokensToCorrect, generateRank1, anomalyReplacer, changeApplier, segmenter,
 				testResult);
 	}
 
 	public static void runGerman() throws UIMAException, IOException {
 		String hunspell_de = "src/main/resources/dictionaries/hunspell_DE.txt";
-		String dict_1_de = "dictionaries/de-testDict1.txt";
-		String dict_2_de = "dictionaries/de-testDict2.txt";
+//		String dict_1_de = "dictionaries/de-testDict1.txt";
+//		String dict_2_de = "dictionaries/de-testDict2.txt";
 
 		// Issue: cannot serialize directly
 //		ConditionalFrequencyDistribution<Integer, String> cfd = new ConditionalFrequencyDistribution<Integer, String>();
@@ -141,8 +142,8 @@ public class Experiment_usingComponentsDirectly {
 
 		AnalysisEngineDescription dictionaryChecker1 = createEngineDescription(DictionaryChecker.class,
 				DictionaryChecker.PARAM_DICTIONARY_FILE, hunspell_de, DictionaryChecker.PARAM_LANGUAGE, "de");
-		AnalysisEngineDescription dictionaryChecker2 = createEngineDescription(DictionaryChecker.class,
-				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_1_de, DictionaryChecker.PARAM_LANGUAGE, "de");
+//		AnalysisEngineDescription dictionaryChecker2 = createEngineDescription(DictionaryChecker.class,
+//				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_1_de, DictionaryChecker.PARAM_LANGUAGE, "de");
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		AnalysisEngineDescription generateRankKeyboard = createEngineDescription(GenerateAndRank_KeyboardDistance.class,
 				GenerateAndRank_KeyboardDistance.PARAM_LANGUAGE, "de",
@@ -173,7 +174,8 @@ public class Experiment_usingComponentsDirectly {
 
 		SimplePipeline.runPipeline(reader, showText, segmenter, markSentenceBeginnings, numericAnnotator,
 				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
-				dictionaryChecker2, markTokensToCorrect,
+//				dictionaryChecker2,
+				markTokensToCorrect,
 //				generateRankKeyboard,
 				generateRankLitkey,
 //				generateRankLevenshtein,
