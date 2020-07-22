@@ -174,8 +174,10 @@ public class Experiment_usingComponentsDirectly {
 		SimplePipeline.runPipeline(reader, showText, segmenter, markSentenceBeginnings, numericAnnotator,
 				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
 				dictionaryChecker2, markTokensToCorrect,
-//				generateRankKeyboard, generateRankLitkey,
-				generateRankLevenshtein, anomalyReplacer, changeApplier, segmenter, testResult);
+//				generateRankKeyboard,
+				generateRankLitkey,
+//				generateRankLevenshtein,
+				anomalyReplacer, changeApplier, segmenter, testResult);
 	}
 
 	public static CollectionReader getReader(String path, String language) throws ResourceInitializationException {
