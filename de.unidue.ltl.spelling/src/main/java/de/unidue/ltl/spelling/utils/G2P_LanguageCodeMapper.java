@@ -1,134 +1,96 @@
 package de.unidue.ltl.spelling.utils;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Simple mapping tool from ISO639-1 codes to ISO639-3-ISO3166-1 codes and vice
  * versa. Necessary for g2p service and only including languages supported by
  * the BAS g2p webservice.
+ * 
+ * Mostly unambiguous, the only defaults are for 'en' (en-US) and 'eu' (eu-ES)
  */
 public class G2P_LanguageCodeMapper {
 
-	public static String getISO_6319_1from639_3_3166_1(String code) {
-		switch (code) {
-		case "deu-DE":
-			return "de";
-		case "eng-US":
-			return "en";
-		case "eng-AU":
-			return "en";
-		case "eng-GB":
-			return "en";
-		case "eng-NZ":
-			return "en";
-		case "afr-ZA":
-			return "af";
-		case "sqi-AL":
-			return "sq";
-		case "eus-ES":
-			return "eu";
-		case "eus-FR":
-			return "eu";
-		case "cat-ES":
-			return "ca";
-		case "nld-NL":
-			return "nl";
-		case "fin-FI":
-			return "fi";
-		case "fra-FR":
-			return "fr";
-		case "kat-GE":
-			return "ka";
-		case "hat-HT":
-			return "ht";
-		case "hun-HU":
-			return "hu";
-		case "isl-IS":
-			return "is";
-		case "ita-IT":
-			return "it";
-		case "jpn-JP":
-			return "ja";
-		case "ltz-LU":
-			return "lb";
-		case "mlt-MT":
-			return "mt";
-		case "nor-NO":
-			return "no";
-		case "pol-PL":
-			return "pl";
-		case "ron-RO":
-			return "ro";
-		case "rus-RU":
-			return "ru";
-		case "slk-SK":
-			return "sk";
-		case "spa-ES":
-			return "es";
-		case "swe-SE":
-			return "sv";
-		case "tha-TH":
-			return "th";
-		default:
+	private static G2P_LanguageCodeMapper mapper = null;
+
+	private String languageCodeFile = "src/main/resources/g2p/languageCodes_639-3_to_639-1.tsv";
+	private String supportedBasCodesFile = "src/main/resources/g2p/supportedBasCodes.txt";
+
+	private Map<String, String> fromBasTo639_1 = null;
+	private Map<String, String> from639_1ToBas = null;
+	private Set<String> supportedBasCodes = null;
+
+	private G2P_LanguageCodeMapper() {
+		fromBasTo639_1 = new HashMap<String, String>();
+		from639_1ToBas = new HashMap<String, String>();
+		supportedBasCodes = new HashSet<String>();
+
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(new File(languageCodeFile)));
+			while (br.ready()) {
+				String line = br.readLine();
+				String[] codes = line.split("\t");
+				if (codes.length == 2) {
+					from639_1ToBas.put(codes[1], codes[0]);
+					String iso639_3 = codes[0].substring(0, codes[0].indexOf("-"));
+					fromBasTo639_1.put(iso639_3, codes[1]);
+				}
+			}
+			br.close();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			br = new BufferedReader(new FileReader(new File(supportedBasCodesFile)));
+
+			while (br.ready()) {
+				supportedBasCodes.add(br.readLine());
+			}
+			br.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	static G2P_LanguageCodeMapper getInstance() {
+		if (mapper == null) {
+			mapper = new G2P_LanguageCodeMapper();
+		}
+		return mapper;
+	}
+
+	public String get639_1FromBas(String languageCode) {
+		languageCode = languageCode.substring(0, languageCode.indexOf("-"));
+		try {
+			return fromBasTo639_1.get(languageCode);
+		} catch (NullPointerException e) {
 			return "";
 		}
 	}
 
-	/**
-	 * Mostly unambiguous, only need defaults for 'en' (en-US) and 'eu' (eu-ES)
-	 */
-	public static String getISO_6393_3_3166_1from639_1(String code) {
-		switch (code) {
-		case "de":
-			return "deu-DE";
-		case "en":
-			return "eng-US";
-		case "af":
-			return "afr-ZA";
-		case "sq":
-			return "sqi-AL";
-		case "eu":
-			return "eus-ES";
-		case "ca":
-			return "cat-ES";
-		case "nl":
-			return "nld-NL";
-		case "fi":
-			return "fin-FI";
-		case "fr":
-			return "fra-FR";
-		case "ka":
-			return "kat-GE";
-		case "ht":
-			return "hat-HT";
-		case "hu":
-			return "hun-HU";
-		case "is":
-			return "isl-IS";
-		case "it":
-			return "ita-IT";
-		case "ja":
-			return "jpn-JP";
-		case "lb":
-			return "ltz-LU";
-		case "mt":
-			return "mlt-MT";
-		case "no":
-			return "nor-NO";
-		case "pl":
-			return "pol-PL";
-		case "ro":
-			return "ron-RO";
-		case "ru":
-			return "rus-RU";
-		case "sk":
-			return "slk-SK";
-		case "es":
-			return "spa-ES";
-		case "sv":
-			return "swe-SE";
-		case "th":
-			return "tha-TH";
-		default:
+	public String getBasFrom639_1(String languageCode) {
+		try {
+			return from639_1ToBas.get(languageCode);
+		} catch (NullPointerException e) {
 			return "";
 		}
+	}
+
+	public boolean checkIfLanguageIsSupported(String languageCode) {
+		return supportedBasCodes.contains(languageCode);
 	}
 }
