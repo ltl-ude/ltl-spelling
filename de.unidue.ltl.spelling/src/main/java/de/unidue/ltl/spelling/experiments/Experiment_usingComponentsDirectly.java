@@ -24,6 +24,7 @@ import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.LeftToRightSplitterA
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_KeyboardDistance;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinGrapheme;
+import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinPhoneme;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_Litkey;
 import de.unidue.ltl.spelling.normalization.ApplyChanges;
 import de.unidue.ltl.spelling.normalization.ResultTester;
@@ -96,8 +97,7 @@ public class Experiment_usingComponentsDirectly {
 		SimplePipeline.runPipeline(reader, showText, segmenter, markSentenceBeginnings, numericAnnotator,
 				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
 //				dictionaryChecker2,
-				markTokensToCorrect, generateRank1, anomalyReplacer, changeApplier, segmenter,
-				testResult);
+				markTokensToCorrect, generateRank1, anomalyReplacer, changeApplier, segmenter, testResult);
 	}
 
 	public static void runGerman() throws UIMAException, IOException {
@@ -166,6 +166,22 @@ public class Experiment_usingComponentsDirectly {
 				"src/main/resources/matrixes/RDMatrix_substitution_DE.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_TRANSPOSITION,
 				"src/main/resources/matrixes/RDMatrix_transposition_DE.tsv");
+		AnalysisEngineDescription generateRankPhoneme = createEngineDescription(
+				GenerateAndRank_LevenshteinPhoneme.class, GenerateAndRank_LevenshteinPhoneme.PARAM_LANGUAGE, "deu-DE",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_DICTIONARIES,"",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_GRAPHEME_TO_PHONEME_FILE,
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_bas.txt",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true
+//				,
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_DELETION,
+//				"src/main/resources/matrixes/RDMatrix_deletion_Sampa.tsv",
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_INSERTION,
+//				"src/main/resources/matrixes/RDMatrix_insertion_Sampa.tsv",
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_SUBSTITUTION,
+//				"src/main/resources/matrixes/RDMatrix_substitution_Sampa.tsv",
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_TRANSPOSITION,
+//				"src/main/resources/matrixes/RDMatrix_transposition_Sampa.tsv"
+				);
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
 				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
@@ -177,8 +193,9 @@ public class Experiment_usingComponentsDirectly {
 //				dictionaryChecker2,
 				markTokensToCorrect,
 //				generateRankKeyboard,
-				generateRankLitkey,
+//				generateRankLitkey,
 //				generateRankLevenshtein,
+				generateRankPhoneme,
 				anomalyReplacer, changeApplier, segmenter, testResult);
 	}
 
