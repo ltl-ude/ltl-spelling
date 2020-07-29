@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.generateAndRank;
+package de.unidue.ltl.spelling.candidateselection;
 
 import static org.apache.uima.fit.util.JCasUtil.select;
 

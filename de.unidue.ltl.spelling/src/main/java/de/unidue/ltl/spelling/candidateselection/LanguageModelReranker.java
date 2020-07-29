@@ -13,7 +13,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.unidue.ltl.spelling.generateAndRank.CorrectionCandidateSelector;
 import de.unidue.ltl.spelling.resources.LanguageModelResource;
 
 public class LanguageModelReranker extends CorrectionCandidateSelector {
