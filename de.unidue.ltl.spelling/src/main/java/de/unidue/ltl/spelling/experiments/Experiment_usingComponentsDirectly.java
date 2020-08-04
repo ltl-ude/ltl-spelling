@@ -169,18 +169,17 @@ public class Experiment_usingComponentsDirectly {
 		AnalysisEngineDescription generateRankPhoneme = createEngineDescription(
 				GenerateAndRank_LevenshteinPhoneme.class, GenerateAndRank_LevenshteinPhoneme.PARAM_LANGUAGE, "deu-DE",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_DICTIONARIES,"",
-				GenerateAndRank_LevenshteinPhoneme.PARAM_GRAPHEME_TO_PHONEME_FILE,
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_bas.txt",
-				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true
-//				,
-//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_DELETION,
-//				"src/main/resources/matrixes/RDMatrix_deletion_Sampa.tsv",
-//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_INSERTION,
-//				"src/main/resources/matrixes/RDMatrix_insertion_Sampa.tsv",
-//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_SUBSTITUTION,
-//				"src/main/resources/matrixes/RDMatrix_substitution_Sampa.tsv",
-//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_TRANSPOSITION,
-//				"src/main/resources/matrixes/RDMatrix_transposition_Sampa.tsv"
+				GenerateAndRank_LevenshteinPhoneme.PARAM_GRAPHEME_TO_PHONEME_DICT_FILES,
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map.txt",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true,
+				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_DELETION,
+				"src/main/resources/matrixes/RDMatrix_deletion_Sampa.tsv",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_INSERTION,
+				"src/main/resources/matrixes/RDMatrix_insertion_Sampa.tsv",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_SUBSTITUTION,
+				"src/main/resources/matrixes/RDMatrix_substitution_Sampa.tsv",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_TRANSPOSITION,
+				"src/main/resources/matrixes/RDMatrix_transposition_Sampa.tsv"
 				);
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
 				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,

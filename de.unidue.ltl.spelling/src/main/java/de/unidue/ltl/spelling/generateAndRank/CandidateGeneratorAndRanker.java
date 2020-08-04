@@ -25,7 +25,8 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
 /**
- * Supertype for generate and rank - methods.
+ * Supertype for generate and rank methods Subtypes have to implement the
+ * calculateCost method
  */
 
 public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase {
@@ -33,14 +34,14 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 	public static final String PARAM_LANGUAGE = "language";
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
 	protected String language;
-	
+
 	/**
-	 * The dictionary based on which to generate the correction candidates.
+	 * The dictionaries based on which to generate the correction candidates.
 	 */
 	public static final String PARAM_DICTIONARIES = "dictionaries";
 	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
 	protected String[] dictionaries;
-	
+
 	/**
 	 * Number of candidates to be generated with this method. If there are more
 	 * candidates with the same rank as the n-th of the top n candidates these are
@@ -67,13 +68,12 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 			}
 		}
 	}
-	
+
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
 		for (SpellingAnomaly anomaly : JCasUtil.select(aJCas, SpellingAnomaly.class)) {
-			System.out.println();
-			String misspelling = anomaly.getCoveredText();
+			String misspelling = getStringToCorrectFromAnomaly(anomaly);
 			Map<Float, List<String>> rankedCandidates = new TreeMap<Float, List<String>>();
 
 			for (String word : dictionary) {
@@ -104,32 +104,34 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 
 			addSuggestedActions(aJCas, anomaly, tuples);
 		}
-		System.out.println();
 	}
 	
-	protected abstract float calculateCost(String misspelling, String correction); 
+	// To accommodate phonetic Levenshtein
+	protected String getStringToCorrectFromAnomaly(SpellingAnomaly anomaly) {
+		return anomaly.getCoveredText();
+	}
+
+	protected abstract float calculateCost(String misspelling, String correction);
 
 	// Create suggested actions for the generated candidates
-	// TODO: must ensure not to overwrite existing suggested actions!
 	protected void addSuggestedActions(JCas aJCas, SpellingAnomaly anomaly, SuggestionCostTuples tuples) {
 
-		int i = 0;
-		FSArray actions;
-		
-		// Copy whats there already
-		if (anomaly.getSuggestions() != null) {
-			int noOfAlreadyMadeSuggestions = anomaly.getSuggestions().size();
-			actions = new FSArray(aJCas, noOfAlreadyMadeSuggestions + tuples.size());
-			for (int s = 0; s < noOfAlreadyMadeSuggestions; s++) {
-				actions.set(s, anomaly.getSuggestions(s));
-			}
-			i = noOfAlreadyMadeSuggestions;
-		}
-		else {
-			actions = new FSArray(aJCas, tuples.size());
-		}
-		
 		if (tuples.size() > 0) {
+			int i = 0;
+			FSArray actions;
+
+			// Copy whats there already
+			if (anomaly.getSuggestions() != null) {
+				int noOfAlreadyMadeSuggestions = anomaly.getSuggestions().size();
+				actions = new FSArray(aJCas, noOfAlreadyMadeSuggestions + tuples.size());
+				for (int s = 0; s < noOfAlreadyMadeSuggestions; s++) {
+					actions.set(s, anomaly.getSuggestions(s));
+				}
+				i = noOfAlreadyMadeSuggestions;
+			} else {
+				actions = new FSArray(aJCas, tuples.size());
+			}
+
 			for (SuggestionCostTuple tuple : tuples) {
 				SuggestedAction action = new SuggestedAction(aJCas);
 				action.setReplacement(tuple.getSuggestion());

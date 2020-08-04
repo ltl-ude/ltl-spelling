@@ -27,9 +27,13 @@ import org.jsoup.select.Elements;
  */
 
 public class PhonemeUtils {
+	
+	public static void main(String[] args) {
+		System.out.println(getPhoneticTranscription("anerziehend","de"));
+	}
 
 	/**
-	 * To process a whole list of inputs.
+	 * To process a list of inputs.
 	 */
 	public static List<String> getPhonemes(List<String> graphemes, String language) throws IOException {
 
@@ -83,8 +87,8 @@ public class PhonemeUtils {
 		StringBody sb_tgitem = new StringBody("ort", ContentType.TEXT_PLAIN);
 		entity.addPart("tgitem", sb_tgitem);
 		
-//		StringBody sb_outsym = new StringBody("x-sampa", ContentType.TEXT_PLAIN);
-//		entity.addPart("outsym", sb_outsym);
+		StringBody sb_outsym = new StringBody("x-sampa", ContentType.TEXT_PLAIN);
+		entity.addPart("outsym", sb_outsym);
 
 		httppost.setEntity(entity.build());
 
@@ -118,7 +122,7 @@ public class PhonemeUtils {
 	/**
 	 * To process a single word.
 	 */
-	public static String getPhoneme(String grapheme, String language){
+	public static String getPhoneticTranscription(String grapheme, String language){
 
 		language = getG2PLanguageCode(language);
 		if (language.equals("")) {
@@ -172,6 +176,7 @@ public class PhonemeUtils {
 		StringBody sb_tgitem = new StringBody("ort", ContentType.TEXT_PLAIN);
 		entity.addPart("tgitem", sb_tgitem);
 		
+		// Before: sampa
 		StringBody sb_outsym = new StringBody("x-sampa", ContentType.TEXT_PLAIN);
 		entity.addPart("outsym", sb_outsym);
 
@@ -213,7 +218,8 @@ public class PhonemeUtils {
 			e.printStackTrace();
 		}
 		phoneticTranscription = phoneticTranscription.substring(phoneticTranscription.indexOf(";") + 1);
-
+		phoneticTranscription = phoneticTranscription.replaceAll("\n","");
+		
 		// Delete temp file containing graphemes
 		file.delete();
 
@@ -231,7 +237,7 @@ public class PhonemeUtils {
 
 	public static void writeStringToFile(String grapheme, String outputFileName) throws IOException {
 		FileWriter writer = new FileWriter(outputFileName);
-		writer.write(grapheme + System.lineSeparator());
+		writer.write(grapheme);
 		writer.close();
 	}
 
