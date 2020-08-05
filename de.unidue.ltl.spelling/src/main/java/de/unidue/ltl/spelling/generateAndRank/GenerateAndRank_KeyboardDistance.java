@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -34,7 +36,7 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 	public static final String PARAM_DICTIONARIES = "dictionaries";
 	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
 	protected String[] dictionaries;
-	
+
 	/**
 	 * A file containing tab-separated line-by-line entries of distances between
 	 * characters, e.g. "a\t b\t 5". Entries must be lowercase.
@@ -56,6 +58,13 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 	protected float defaultDistance;
 
 	/**
+	 * Distance cost to add if cases do not match, e.g. 'A' to 's' is 1.0 + penalty.
+	 */
+	public static final String PARAM_CAPITALIZATION_PENALTY = "capitalizationPenalty";
+	@ConfigurationParameter(name = PARAM_CAPITALIZATION_PENALTY, mandatory = true, defaultValue = "0.5")
+	protected float capitalizationPenalty;
+
+	/**
 	 * Whether to permit transposition as a modification operation, e.g. apply
 	 * Damerau-Levenshtein distance as opposed to standard Levenshtein Distance.
 	 */
@@ -65,6 +74,9 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 
 	private Map<Character, Map<Character, Float>> distanceMap = new HashMap<Character, Map<Character, Float>>();
 
+	// To keep track and alert only once if a certain distance was not provided
+	private Set<String> missingDistances = new HashSet<String>();
+
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
@@ -73,32 +85,76 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 	}
 
 	private void readKeyboardDistances(String distanceFile) {
-
+		boolean hasUpper = false;
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(new File(distanceFile)));
 			while (br.ready()) {
 				String line = br.readLine();
 				String[] distanceEntry = line.split("\t");
-				Map<Character, Float> currentCharacterMap = distanceMap.get(distanceEntry[0].toLowerCase().charAt(0));
-				if (currentCharacterMap == null) {
-					distanceMap.put(distanceEntry[0].toLowerCase().charAt(0), new HashMap<Character, Float>());
-					currentCharacterMap = distanceMap.get(distanceEntry[0].toLowerCase().charAt(0));
-				}
-				if (currentCharacterMap.get(distanceEntry[1].toLowerCase().charAt(0)) == null) {
-					currentCharacterMap.put(distanceEntry[1].toLowerCase().charAt(0),
-							Float.parseFloat(distanceEntry[2]));
-				} else {
+				if (distanceEntry.length != 3) {
 					getContext().getLogger().log(Level.WARNING,
-							"You provided two different weights for '" + distanceEntry[0] + "' to '" + distanceEntry[1]
-									+ "' (" + currentCharacterMap.get(distanceEntry[1].charAt(0)) + " and "
-									+ distanceEntry[2] + ") in File" + distanceFile + ". The former will be used.");
+							"Tab-separated triples of character, character and distance are expected, but file '"
+									+ distanceFile + "' contained the line '" + line + ", which will be ignored.");
+					continue;
 				}
+				if ((distanceEntry[0].length() != 1) || (distanceEntry[1].length() != 1)) {
+					getContext().getLogger().log(Level.WARNING, "You provided a distance for '" + distanceEntry[0]
+							+ "' to '" + distanceEntry[1]
+							+ "', but only weights for single chars are accepted. This entry of the distance file will be ignored.");
+					continue;
+				}
+				Character from = distanceEntry[0].charAt(0);
+				Character to = distanceEntry[1].charAt(0);
+				Float distance = 0.0f;
+				try {
+					distance = Float.parseFloat(distanceEntry[2]);
+				} catch (NumberFormatException e) {
+					getContext().getLogger().log(Level.WARNING, "You provided the distance '" + distanceEntry[2]
+							+ "' for '" + distanceEntry[0] + "' and '" + distanceEntry[1]
+							+ "', which cannot be parsed as a float. This entry of the distance file will be ignored.");
+					continue;
+				}
+				if (!hasUpper) {
+					if (Character.isUpperCase(from) || Character.isUpperCase(to)) {
+						hasUpper = true;
+					}
+				}
+
+				Map<Character, Float> currentCharacterMap = distanceMap.get(from);
+				if (currentCharacterMap == null) {
+					distanceMap.put(from, new HashMap<Character, Float>());
+					currentCharacterMap = distanceMap.get(from);
+				}
+				addDistance(from, to, distance, currentCharacterMap);
+
+				// Also put in the other way round, because distances are assumed to be
+				// symmetric
+				currentCharacterMap = distanceMap.get(to);
+				if (currentCharacterMap == null) {
+					distanceMap.put(to, new HashMap<Character, Float>());
+					currentCharacterMap = distanceMap.get(to);
+				}
+				addDistance(to, from, distance, currentCharacterMap);
 			}
 			br.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		if (hasUpper) {
+			getContext().getLogger().log(Level.INFO,
+					"You provided two at least one distance for an uppercased character. These distances will never be used.");
+		}
+	}
+
+	private void addDistance(char from, char to, float distance, Map<Character, Float> map) {
+		if (map.get(to) == null || map.get(to) == distance) {
+			map.put(to, distance);
+		} else {
+			getContext().getLogger().log(Level.WARNING,
+					"You provided two different distances for '" + from + "' and '" + to + "' (" + map.get(to) + " and "
+							+ distance + "), but distances are assumed to be symmetric. The former will be used.");
 		}
 	}
 
@@ -185,7 +241,24 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 			}
 			return distanceMap.get(Character.toLowerCase(a)).get(Character.toLowerCase(b)) + compareCases(a, b);
 		} catch (NullPointerException e) {
-//			System.out.println("Not found: " + a + b); 
+			String aString = Character.toString(a);
+			String bString = Character.toString(b);
+			if (!missingDistances.contains(aString) && !missingDistances.contains(bString)
+					&& !missingDistances.contains(aString + bString)) {
+				if (distanceMap.get(a) == null) {
+					missingDistances.add(aString);
+					getContext().getLogger().log(Level.INFO,
+							"No distances were provided for '" + a + "'. Applying default distance instead.");
+				} else if (distanceMap.get(b) == null) {
+					missingDistances.add(bString);
+					getContext().getLogger().log(Level.INFO,
+							"No distances were provided for '" + b + "'. Applying default distance instead.");
+				} else {
+					missingDistances.add(aString + bString);
+					getContext().getLogger().log(Level.INFO, "No distance was provided for '" + a + "' and '" + b
+							+ "'. Applying default distance instead.");
+				}
+			}
 			return defaultDistance + compareCases(a, b);
 		}
 	}
@@ -195,7 +268,7 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 		if (Character.isLowerCase(a) == Character.isLowerCase(b)) {
 			return 0.0f;
 		} else {
-			return 0.5f;
+			return capitalizationPenalty;
 		}
 	}
 

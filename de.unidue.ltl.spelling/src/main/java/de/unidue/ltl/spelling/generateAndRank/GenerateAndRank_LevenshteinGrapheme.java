@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.uima.UimaContext;
@@ -105,6 +107,9 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	private Map<Character, Map<Character, Float>> substitutionMap;
 	private Map<Character, Map<Character, Float>> transpositionMap;
 
+	// To keep track of missing weights and alert user only once
+	private Set<String> missingWeights = new HashSet<String>();
+
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
@@ -117,8 +122,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 			getContext().getLogger().log(Level.WARNING,
 					"Transposition was not chosen to be included in GenerateAndRank_LevenshteinGrapheme, but you provided the file'"
 							+ weightFileTransposition + "' with transposition weights. They will not be included.");
-		}
-		else {
+		} else {
 			transpositionMap = readWeights2D(weightFileTransposition);
 		}
 
@@ -163,7 +167,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 						continue;
 					}
 
-					if (!lowercase && !includesAtLeastOneWeightForUppercaseChar) {
+					if (!includesAtLeastOneWeightForUppercaseChar) {
 						if (!Character.isLowerCase(firstEntry) || !Character.isLowerCase(secondEntry)) {
 							includesAtLeastOneWeightForUppercaseChar = true;
 						}
@@ -187,7 +191,11 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 				br.close();
 				if (!lowercase && !includesAtLeastOneWeightForUppercaseChar) {
 					getContext().getLogger().log(Level.INFO,
-							"Parameter to process lowercased is disabled, but not a single weight including an uppercased char was provided. The defaultValue will be used as a penaly if cases do not match.");
+							"Parameter to process lowercased is disabled, but not a single weight including an uppercased char was provided. Uniform apitalization penalty will be applied if cases do not match.");
+				}
+				if (lowercase && includesAtLeastOneWeightForUppercaseChar) {
+					getContext().getLogger().log(Level.INFO,
+							"Parameter to process lowercased is enabled, but at least one weight including an uppercased char was provided. It will be ignored.");
 				}
 				return weightMap;
 			} catch (FileNotFoundException e) {
@@ -215,7 +223,6 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 								"Tab-separated pairs of characters and weights are expected, but file '" + weightFile
 										+ "' contained the line '" + line + ", which will be ignored.");
 						continue;
-
 					}
 					if (weightEntry[0].length() != 1) {
 						getContext().getLogger().log(Level.WARNING, "You provided a weight for '" + weightEntry[0]
@@ -233,7 +240,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 						continue;
 					}
 
-					if (!lowercase && !includesAtLeastOneWeightForUppercaseChar) {
+					if (!includesAtLeastOneWeightForUppercaseChar) {
 						if (!Character.isLowerCase(character)) {
 							includesAtLeastOneWeightForUppercaseChar = true;
 						}
@@ -252,7 +259,11 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 				br.close();
 				if (!lowercase && !includesAtLeastOneWeightForUppercaseChar) {
 					getContext().getLogger().log(Level.INFO,
-							"Parameter to process lowercased is disabled, but not a single weight including an uppercased char was provided. The defaultValue will be used as a penaly if cases do not match.");
+							"Parameter to process lowercased is disabled, but not a single weight including an uppercased char was provided. Uniform apitalization penalty will be applied if cases do not match.");
+				}
+				if (lowercase && includesAtLeastOneWeightForUppercaseChar) {
+					getContext().getLogger().log(Level.INFO,
+							"Parameter to process lowercased is enabled, but at least one weight including an uppercased char was provided. It will be ignored.");
 				}
 				return weightMap;
 			} catch (FileNotFoundException e) {
@@ -340,7 +351,9 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 
 	private float getInsertionWeight(char a) {
 
-		if (insertionMap == null || !StringUtils.isAlpha(a+"")) {
+		if (insertionMap == null
+//				|| !StringUtils.isAlpha(a + "")
+		) {
 			return defaultWeight;
 		} else {
 			try {
@@ -349,14 +362,20 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 				}
 				return insertionMap.get(a);
 			} catch (NullPointerException e) {
-				System.out.println("No insertion weight found for '" + a + "'. Applying default weight instead.");
+				if (!missingWeights.contains(Character.toString(a) + "ins")) {
+					missingWeights.add(Character.toString(a) + "ins");
+					getContext().getLogger().log(Level.INFO,
+							"No insertion weight was provided for '" + a + "'. Applying default weight instead.");
+				}
 				return defaultWeight;
 			}
 		}
 	}
 
 	private float getDeletionWeight(char a) {
-		if (deletionMap == null || !StringUtils.isAlpha(a+"")) {
+		if (deletionMap == null
+//				|| !StringUtils.isAlpha(a + "")
+		) {
 			return defaultWeight;
 		} else {
 			try {
@@ -365,7 +384,11 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 				}
 				return deletionMap.get(a);
 			} catch (NullPointerException e) {
-				System.out.println("No deletion weight found for '" + a + "'. Applying default weight instead.");
+				if (!missingWeights.contains(Character.toString(a) + "del")) {
+					missingWeights.add(Character.toString(a) + "del");
+					getContext().getLogger().log(Level.INFO,
+							"No deletion weight was provided for '" + a + "'. Applying default weight instead.");
+				}
 				return defaultWeight;
 			}
 		}
@@ -376,7 +399,9 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 		if (a == b || (lowercase && lowercasedCharsAreEqual(a, b))) {
 			return 0.0f;
 		}
-		if (substitutionMap == null || !StringUtils.isAlpha(a+"") || !StringUtils.isAlpha(b+"")) {
+		if (substitutionMap == null
+//				|| !StringUtils.isAlpha(a + "") || !StringUtils.isAlpha(b + "")
+		) {
 			// Did not provide weights, could still have said to punish upper
 			float result = 0.0f;
 			if (!lowercasedCharsAreEqual(a, b)) {
@@ -390,8 +415,20 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 			try {
 				return substitutionMap.get(a).get(b);
 			} catch (NullPointerException e) {
-				System.out.println("No substition weight found for chars " + a + " and " + b
-						+ ". Applying default weight (+ capitalization penalty if applicable) instead.");
+				String aString = Character.toString(a);
+				String bString = Character.toString(b);
+				if (!missingWeights.contains(aString + "sub") && !missingWeights.contains(aString + bString + "sub")) {
+					if (substitutionMap.get(a) == null) {
+						missingWeights.add(aString + "sub");
+						getContext().getLogger().log(Level.INFO, "No substition weights were  provided for '" + a
+								+ "'. Applying default weight (+ capitalization penalty if applicable) instead.");
+					} else {
+						missingWeights.add(aString + bString + "sub");
+						getContext().getLogger().log(Level.INFO, "No substition weight was provided for '" + a
+								+ "' and '" + b
+								+ "'. Applying default weight (+ capitalization penalty if applicable) instead.");
+					}
+				}
 				if (lowercase) {
 					return defaultWeight;
 				} else {
@@ -406,14 +443,29 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 		if (a == b || (lowercase && lowercasedCharsAreEqual(a, b))) {
 			return 0.0f;
 		}
-		if (transpositionMap == null || !StringUtils.isAlpha(a+"") || !StringUtils.isAlpha(b+"")) {
+		if (transpositionMap == null
+//				|| !StringUtils.isAlpha(a + "") || !StringUtils.isAlpha(b + "")
+		) {
 			return defaultWeight;
 		} else {
 			try {
 				return transpositionMap.get(a).get(b);
 			} catch (NullPointerException e) {
-				System.out.println("No transposition weight found for '" + a + "' and '" + b
-						+ ". Applying default weight instead.");
+				String aString = Character.toString(a);
+				String bString = Character.toString(b);
+				if (!missingWeights.contains(aString + "tran")
+						&& !missingWeights.contains(aString + bString + "tran")) {
+					if (transpositionMap.get(a) == null) {
+						missingWeights.add(aString + "tran");
+						getContext().getLogger().log(Level.INFO, "No transposition weights were provided for '" + a
+								+ "'. Applying default weight instead.");
+
+					} else {
+						missingWeights.add(aString + bString + "tran");
+						getContext().getLogger().log(Level.INFO, "No transposition weight was provided for '" + a
+								+ "' and '" + b + ". Applying default weight instead.");
+					}
+				}
 				return defaultWeight;
 			}
 		}

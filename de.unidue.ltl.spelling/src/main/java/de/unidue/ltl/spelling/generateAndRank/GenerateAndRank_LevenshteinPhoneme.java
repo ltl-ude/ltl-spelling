@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -93,6 +95,9 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 	private Map<String, Map<String, Float>> transpositionMap;
 
 	private Map<String, String> graphemeToPhonemeMap;
+
+	// To keep track of missing weights and alert user only once
+	private Set<String> missingWeights = new HashSet<String>();
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
@@ -205,7 +210,7 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 	}
 
 	@Override
-	protected String getStringToCorrectFromAnomaly(SpellingAnomaly anomaly) {	
+	protected String getStringToCorrectFromAnomaly(SpellingAnomaly anomaly) {
 		return PhonemeUtils.getPhoneticTranscription(anomaly.getCoveredText(), language);
 	}
 
@@ -220,7 +225,7 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 		String[] correctionArray = right.split(" ");
 
 //		System.out.println("Calculating cost for "+wrong+" and "+right);
-		
+
 		float[][] distanceMatrix = new float[misspellingArray.length + 1][correctionArray.length + 1];
 
 		// Worst case: cost of starting from scratch: inserting all chars (weighted
@@ -257,8 +262,8 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 				if (includeTransposition && wrongIndex > 1 && rightIndex > 1
 						&& (misspellingArray[wrongIndex - 1].equals(correctionArray[rightIndex - 2]))
 						&& (misspellingArray[wrongIndex - 2].equals(correctionArray[rightIndex - 1]))) {
-					float transposition = distanceMatrix[wrongIndex - 2][rightIndex - 2]
-							+ getTranspositionWeight(misspellingArray[wrongIndex - 2], misspellingArray[wrongIndex - 1]);
+					float transposition = distanceMatrix[wrongIndex - 2][rightIndex - 2] + getTranspositionWeight(
+							misspellingArray[wrongIndex - 2], misspellingArray[wrongIndex - 1]);
 					distanceMatrix[wrongIndex][rightIndex] = Math.min(deletion,
 							Math.min(insertion, Math.min(substitution, transposition)));
 				} else {
@@ -276,8 +281,8 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 //			}
 //			System.out.println();
 //		}
-		System.out.println("Cost from \t" + wrong + "\tto\t" + right + "\tis:\t"
-				+ distanceMatrix[misspellingArray.length][correctionArray.length]);
+//		System.out.println("Cost from \t" + wrong + "\tto\t" + right + "\tis:\t"
+//				+ distanceMatrix[misspellingArray.length][correctionArray.length]);
 
 		return distanceMatrix[misspellingArray.length][correctionArray.length];
 	}
@@ -290,7 +295,11 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 			try {
 				return insertionMap.get(stringToInsert);
 			} catch (NullPointerException e) {
-				System.out.println("No insertion weight found for '" + stringToInsert + "'. Applying default weight instead.");
+				if (!missingWeights.contains(stringToInsert + "ins")) {
+					missingWeights.add(stringToInsert + "ins");
+					getContext().getLogger().log(Level.INFO, "No insertion weight was provided for '" + stringToInsert
+							+ "'. Applying default weight instead.");
+				}
 				return defaultWeight;
 			}
 		}
@@ -303,7 +312,11 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 			try {
 				return deletionMap.get(stringToDelete);
 			} catch (NullPointerException e) {
-				System.out.println("No deletion weight found for '" + stringToDelete + "'. Applying default weight instead.");
+				if (!missingWeights.contains(stringToDelete + "del")) {
+					missingWeights.add(stringToDelete + "del");
+					getContext().getLogger().log(Level.INFO, "No deletion weight was prodived for '" + stringToDelete
+							+ "'. Applying default weight instead.");
+				}
 				return defaultWeight;
 			}
 		}
@@ -319,8 +332,19 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 			try {
 				return substitutionMap.get(toReplace).get(replacement);
 			} catch (NullPointerException e) {
-				System.out.println("No substition weight found for replacement of '" + toReplace + "' with '" + replacement
-						+ "'. Applying default weight instead.");
+				if (!missingWeights.contains(toReplace + "sub")
+						&& !missingWeights.contains(toReplace + replacement + "sub")) {
+					if (substitutionMap.get(toReplace) == null) {
+						missingWeights.add(toReplace + "sub");
+						getContext().getLogger().log(Level.INFO, "No substition weights were provided for '" + toReplace
+								+ ". Applying default weight instead.");
+					} else {
+						missingWeights.add(toReplace + replacement + "sub");
+						getContext().getLogger().log(Level.INFO,
+								"No substition weight was provided for replacement of '" + toReplace + "' with '"
+										+ replacement + "'. Applying default weight instead.");
+					}
+				}
 				return defaultWeight;
 			}
 		}
@@ -333,8 +357,18 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 			try {
 				return transpositionMap.get(leftString).get(rightString);
 			} catch (NullPointerException e) {
-				System.out.println("No transposition weight found for '" + leftString + "' and '" + rightString
-						+ "'. Applying default weight instead.");
+				if (!missingWeights.contains(leftString + "tran")
+						&& !missingWeights.contains(leftString + rightString + "tran")) {
+					if (transpositionMap.get(leftString) == null) {
+						missingWeights.add(leftString + "tran");
+						getContext().getLogger().log(Level.INFO, "No transposition weights were provided for '"
+								+ leftString + "'. Applying default weight instead.");
+					} else {
+						missingWeights.add(leftString + rightString + "tran");
+						getContext().getLogger().log(Level.INFO, "No transposition weight was provided for '"
+								+ leftString + "' and '" + rightString + "'. Applying default weight instead.");
+					}
+				}
 				return defaultWeight;
 			}
 		}
