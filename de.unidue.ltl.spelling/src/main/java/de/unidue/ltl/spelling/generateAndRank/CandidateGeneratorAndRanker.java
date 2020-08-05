@@ -36,13 +36,6 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 	protected String language;
 
 	/**
-	 * The dictionaries based on which to generate the correction candidates.
-	 */
-	public static final String PARAM_DICTIONARIES = "dictionaries";
-	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
-	protected String[] dictionaries;
-
-	/**
 	 * Number of candidates to be generated with this method. If there are more
 	 * candidates with the same rank as the n-th of the top n candidates these are
 	 * included as well.

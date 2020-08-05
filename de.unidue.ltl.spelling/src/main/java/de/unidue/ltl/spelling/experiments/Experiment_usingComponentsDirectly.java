@@ -157,18 +157,18 @@ public class Experiment_usingComponentsDirectly {
 		AnalysisEngineDescription generateRankLevenshtein = createEngineDescription(
 				GenerateAndRank_LevenshteinGrapheme.class, GenerateAndRank_LevenshteinGrapheme.PARAM_LANGUAGE, "de",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES, hunspell_de,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_LOWERCASE, false,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_INCLUDE_TRANSPOSITION, true,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_DELETION,
-				"src/main/resources/matrixes/RDMatrix_deletion_DE.tsv",
+				"src/main/resources/matrixes/RDMatrix_deletion_DE_withUpper.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_INSERTION,
-				"src/main/resources/matrixes/RDMatrix_insertion_DE.tsv",
+				"src/main/resources/matrixes/RDMatrix_insertion_DE_withUpper.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_SUBSTITUTION,
-				"src/main/resources/matrixes/RDMatrix_substitution_DE.tsv",
+				"src/main/resources/matrixes/RDMatrix_substitution_DE_withUpper.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_TRANSPOSITION,
-				"src/main/resources/matrixes/RDMatrix_transposition_DE.tsv");
+				"src/main/resources/matrixes/RDMatrix_transposition_DE_withUpper.tsv");
 		AnalysisEngineDescription generateRankPhoneme = createEngineDescription(
 				GenerateAndRank_LevenshteinPhoneme.class, GenerateAndRank_LevenshteinPhoneme.PARAM_LANGUAGE, "deu-DE",
-				GenerateAndRank_LevenshteinPhoneme.PARAM_DICTIONARIES,"",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_GRAPHEME_TO_PHONEME_DICT_FILES,
 				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map.txt",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true,
@@ -193,8 +193,8 @@ public class Experiment_usingComponentsDirectly {
 				markTokensToCorrect,
 //				generateRankKeyboard,
 //				generateRankLitkey,
-//				generateRankLevenshtein,
-				generateRankPhoneme,
+				generateRankLevenshtein,
+//				generateRankPhoneme,
 				anomalyReplacer, changeApplier, segmenter, testResult);
 	}
 

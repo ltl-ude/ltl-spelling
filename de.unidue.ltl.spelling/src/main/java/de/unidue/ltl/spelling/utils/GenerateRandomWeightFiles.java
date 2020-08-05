@@ -11,24 +11,21 @@ public class GenerateRandomWeightFiles {
 	private final static String path = "src/main/resources/matrixes";
 	private final static Character[] alphabet_EN = new Character[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
 			'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+	private final static Character[] alphabet_DE = new Character[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+			'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ä', 'ö', 'ü', 'ß', 'è', 'é',
+			'ê', 'ç', 'ñ', 'à', 'á', 'â' };
 	private final static Character[] alphabet_EN_upper = new Character[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
 			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
 			'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
-	private final static Character[] alphabet_DE = new Character[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
-			'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ä', 'ö', 'ü', 'ß', 'A',
-			'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-			'X', 'Y', 'Z', 'Ä', 'Ö', 'Ü' };
 	private final static Character[] alphabet_DE_upper = new Character[] { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
-			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ä', 'ö', 'ü', 'ß' };
-	private final static String[] alphabet_Sampa = new String[] {
-			"A", "C", "I", "E", "M", "N", "O", "Q", "S", "T", "U", "V", "Y", "Z",
-			"a", "b", "d", "i", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "v", "x", "y", "z",
-			"1", "2", "3", "6", "7", "8", "9", "O6", "66", "96", "2:",
-			"@", "{", "}", "&", "?",
-			"a:", "E:", "e:", "i:", "o:", "u:", "y:",
-			"a~", "aI", "aU", "dZ", "OY", "tS", "ts",
-			"a6", "E6", "i6", "I6", "U6", "u6", "o6", "Y6", "y6", "@6",
-			"a:6", "E:6", "e:6", "i:6", "o:6", "u:6", "y:6", "2:6" };
+			'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'ä', 'ö', 'ü', 'ß',
+			'è', 'é', 'ê', 'ç', 'ñ', 'à', 'á', 'â', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+			'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Ä', 'Ö', 'Ü' };
+	private final static String[] alphabet_Sampa = new String[] { "A", "C", "I", "E", "M", "N", "O", "Q", "S", "T", "U",
+			"V", "Y", "Z", "a", "b", "d", "i", "e", "f", "g", "h", "j", "k", "l", "m", "n", "o", "p", "r", "s", "t",
+			"u", "v", "x", "y", "z", "1", "2", "3", "6", "7", "8", "9", "O6", "66", "96", "2:", "@", "{", "}", "&", "?",
+			"a:", "E:", "e:", "i:", "o:", "u:", "y:", "a~", "aI", "aU", "dZ", "OY", "tS", "ts", "a6", "E6", "i6", "I6",
+			"U6", "u6", "o6", "Y6", "y6", "@6", "a:6", "E:6", "e:6", "i:6", "o:6", "u:6", "y:6", "2:6" };
 
 	public static void main(String[] args) throws IOException {
 

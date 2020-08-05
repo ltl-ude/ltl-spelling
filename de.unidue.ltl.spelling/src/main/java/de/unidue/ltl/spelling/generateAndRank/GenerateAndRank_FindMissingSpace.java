@@ -2,6 +2,7 @@ package de.unidue.ltl.spelling.generateAndRank;
 
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
+import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.uimafit.util.JCasUtil;
@@ -15,6 +16,13 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 // TODO: include insertion of more than one whitespace?
 public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanker {
 
+	/**
+	 * The dictionaries based on which to generate the correction candidates.
+	 */
+	public static final String PARAM_DICTIONARIES = "dictionaries";
+	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
+	protected String[] dictionaries;
+	
 	// TODO: should this be accessible?
 	private final int spaceCost = 4;
 

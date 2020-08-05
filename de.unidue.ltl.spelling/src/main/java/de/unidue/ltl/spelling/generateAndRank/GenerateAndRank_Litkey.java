@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
+import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
@@ -34,6 +35,13 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
  */
 public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
+	/**
+	 * The dictionaries based on which to generate the correction candidates.
+	 */
+	public static final String PARAM_DICTIONARIES = "dictionaries";
+	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
+	protected String[] dictionaries;
+	
 	// Location of the temporarily saved file containing pairs of misspellings and
 	// correction
 	// candidates

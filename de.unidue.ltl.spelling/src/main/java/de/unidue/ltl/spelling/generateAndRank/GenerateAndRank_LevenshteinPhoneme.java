@@ -103,7 +103,7 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 		deletionMap = readWeights(weightFileDeletion);
 		insertionMap = readWeights(weightFileInsertion);
 		substitutionMap = readWeights2D(weightFileSubstitution);
-		if (includeTransposition && weightFileTransposition != null) {
+		if (!includeTransposition && weightFileTransposition != null) {
 			getContext().getLogger().log(Level.WARNING,
 					"Transposition was not chosen to be included in GenerateAndRank_LevenshteinGrapheme, but you provided the file'"
 							+ weightFileTransposition + "' with transposition weights. They will not be included.");
@@ -111,10 +111,10 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 			transpositionMap = readWeights2D(weightFileTransposition);
 		}
 
-		System.out.println(deletionMap);
-		System.out.println(insertionMap);
-		System.out.println(substitutionMap);
-		System.out.println(transpositionMap);
+//		System.out.println(deletionMap);
+//		System.out.println(insertionMap);
+//		System.out.println(substitutionMap);
+//		System.out.println(transpositionMap);
 	}
 
 	private Map<String, String> readG2PMap(String[] mapFiles) {
@@ -276,8 +276,8 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 //			}
 //			System.out.println();
 //		}
-//		System.out.println("Distance between\t" + wrong + "\tand\t" + right + "\tis:\t"
-//				+ distanceMatrix[wrong.length()][right.length()]);
+		System.out.println("Cost from \t" + wrong + "\tto\t" + right + "\tis:\t"
+				+ distanceMatrix[misspellingArray.length][correctionArray.length]);
 
 		return distanceMatrix[misspellingArray.length][correctionArray.length];
 	}

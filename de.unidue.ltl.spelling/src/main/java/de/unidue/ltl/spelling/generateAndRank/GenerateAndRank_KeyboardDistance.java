@@ -29,6 +29,13 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanker {
 
 	/**
+	 * The dictionaries based on which to generate the correction candidates.
+	 */
+	public static final String PARAM_DICTIONARIES = "dictionaries";
+	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
+	protected String[] dictionaries;
+	
+	/**
 	 * A file containing tab-separated line-by-line entries of distances between
 	 * characters, e.g. "a\t b\t 5". Entries must be lowercase.
 	 */
