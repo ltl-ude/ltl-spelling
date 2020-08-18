@@ -28,14 +28,7 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 @TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" },
 		// No real outputs, just SuggestedActions as entries to the SpellingAnomalies?
 		outputs = { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
-public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanker {
-
-	/**
-	 * The dictionaries based on which to generate the correction candidates.
-	 */
-	public static final String PARAM_DICTIONARIES = "dictionaries";
-	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
-	protected String[] dictionaries;
+public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanker_LevenshteinBased {
 
 	/**
 	 * A file containing tab-separated line-by-line entries of distances between
@@ -63,14 +56,6 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 	public static final String PARAM_CAPITALIZATION_PENALTY = "capitalizationPenalty";
 	@ConfigurationParameter(name = PARAM_CAPITALIZATION_PENALTY, mandatory = true, defaultValue = "0.5")
 	protected float capitalizationPenalty;
-
-	/**
-	 * Whether to permit transposition as a modification operation, e.g. apply
-	 * Damerau-Levenshtein distance as opposed to standard Levenshtein Distance.
-	 */
-	public static final String PARAM_INCLUDE_TRANSPOSITION = "includeTransposition";
-	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "True")
-	protected boolean includeTransposition;
 
 	private Map<Character, Map<Character, Float>> distanceMap = new HashMap<Character, Map<Character, Float>>();
 

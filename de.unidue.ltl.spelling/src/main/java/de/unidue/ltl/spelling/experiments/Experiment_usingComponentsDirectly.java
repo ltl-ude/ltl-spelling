@@ -146,7 +146,6 @@ public class Experiment_usingComponentsDirectly {
 //				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_1_de, DictionaryChecker.PARAM_LANGUAGE, "de");
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		AnalysisEngineDescription generateRankKeyboard = createEngineDescription(GenerateAndRank_KeyboardDistance.class,
-				GenerateAndRank_KeyboardDistance.PARAM_LANGUAGE, "de",
 				GenerateAndRank_KeyboardDistance.PARAM_DICTIONARIES, hunspell_de,
 				GenerateAndRank_KeyboardDistance.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10,
 				GenerateAndRank_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE,
@@ -156,7 +155,7 @@ public class Experiment_usingComponentsDirectly {
 				GenerateAndRank_Litkey.PARAM_LANGUAGE, "de", GenerateAndRank_Litkey.PARAM_DICTIONARIES, hunspell_de,
 				GenerateAndRank_Litkey.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, 5);
 		AnalysisEngineDescription generateRankLevenshtein = createEngineDescription(
-				GenerateAndRank_LevenshteinGrapheme.class, GenerateAndRank_LevenshteinGrapheme.PARAM_LANGUAGE, "de",
+				GenerateAndRank_LevenshteinGrapheme.class,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES, hunspell_de,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_LOWERCASE, false,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10,
@@ -173,7 +172,7 @@ public class Experiment_usingComponentsDirectly {
 				);
 		AnalysisEngineDescription generateRankPhoneme = createEngineDescription(
 				GenerateAndRank_LevenshteinPhoneme.class, GenerateAndRank_LevenshteinPhoneme.PARAM_LANGUAGE, "deu-DE",
-				GenerateAndRank_LevenshteinPhoneme.PARAM_GRAPHEME_TO_PHONEME_DICT_FILES,
+				GenerateAndRank_LevenshteinPhoneme.PARAM_DICTIONARIES,
 				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map.txt",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true,
 				GenerateAndRank_LevenshteinPhoneme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10
@@ -198,9 +197,9 @@ public class Experiment_usingComponentsDirectly {
 //				dictionaryChecker2,
 				markTokensToCorrect,
 //				generateRankKeyboard,
-				generateRankLitkey,
+//				generateRankLitkey,
 //				generateRankLevenshtein,
-//				generateRankPhoneme,
+				generateRankPhoneme,
 				anomalyReplacer, changeApplier, segmenter, testResult);
 	}
 

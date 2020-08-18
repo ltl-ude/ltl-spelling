@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.uima.UimaContext;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
@@ -30,14 +29,7 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 @TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" },
 		// No real outputs, just SuggestedActions as entries to the SpellingAnomalies?
 		outputs = { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
-public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRanker {
-
-	/**
-	 * The dictionaries based on which to generate the correction candidates.
-	 */
-	public static final String PARAM_DICTIONARIES = "dictionaries";
-	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
-	protected String[] dictionaries;
+public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRanker_LevenshteinBased {
 
 	/**
 	 * Whether to process everything lowercased
@@ -93,14 +85,6 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	public static final String PARAM_DEFAULT_WEIGHT = "defaultWeight";
 	@ConfigurationParameter(name = PARAM_DEFAULT_WEIGHT, mandatory = true, defaultValue = "1.0")
 	protected float defaultWeight;
-
-	/**
-	 * Whether to permit transposition as a modification operation, e.g. apply
-	 * Damerau-Levenshtein distance as opposed to standard Levenshtein Distance.
-	 */
-	public static final String PARAM_INCLUDE_TRANSPOSITION = "includeTransposition";
-	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "False")
-	protected boolean includeTransposition;
 
 	private Map<Character, Float> deletionMap;
 	private Map<Character, Float> insertionMap;

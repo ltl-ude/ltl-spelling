@@ -194,7 +194,10 @@ public class PhonemeUtils {
 		Document doc = null;
 		try {
 			doc = Jsoup.parse(EntityUtils.toString(response.getEntity(), Charset.forName("UTF-8")));
-		} catch (ParseException | IOException e) {
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -213,7 +216,11 @@ public class PhonemeUtils {
 		String phoneticTranscription = null;
 		try {
 			phoneticTranscription = EntityUtils.toString(result.getEntity(), Charset.forName("UTF-8"));
-		} catch (ParseException | IOException e) {
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

@@ -31,8 +31,12 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 @TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" },
 		// No real outputs, just SuggestedActions as entries to the SpellingAnomalies?
 		outputs = { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
-public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRanker {
+public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRanker_LevenshteinBased {
 
+	public static final String PARAM_LANGUAGE = "language";
+	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
+	protected String language;
+	
 	/**
 	 * File containing tab-separated line-by-line entries of deletion costs for
 	 * SAMPA symbols, e.g. "a\t 5".
@@ -73,21 +77,14 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 	@ConfigurationParameter(name = PARAM_DEFAULT_WEIGHT, mandatory = true, defaultValue = "1.0")
 	protected float defaultWeight;
 
-	/**
-	 * Whether to permit transposition as a modification operation, e.g. apply
-	 * Damerau-Levenshtein distance as opposed to standard Levenshtein Distance.
-	 */
-	public static final String PARAM_INCLUDE_TRANSPOSITION = "includeTransposition";
-	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "False")
-	protected boolean includeTransposition;
-
-	/**
-	 * Files containing line-by-line tab-separated entries of grapheme and phoneme
-	 * versions of dictionary words.
-	 */
-	public static final String PARAM_GRAPHEME_TO_PHONEME_DICT_FILES = "graphemeToPhonemeDictFiles";
-	@ConfigurationParameter(name = PARAM_GRAPHEME_TO_PHONEME_DICT_FILES, mandatory = true)
-	protected String[] graphemeToPhonemeDictFiles;
+	// Replaced with PARAM_DICTIONARIES of supertype
+//	/**
+//	 * Files containing line-by-line tab-separated entries of grapheme and phoneme
+//	 * versions of dictionary words.
+//	 */
+//	public static final String PARAM_GRAPHEME_TO_PHONEME_DICT_FILES = "graphemeToPhonemeDictFiles";
+//	@ConfigurationParameter(name = PARAM_GRAPHEME_TO_PHONEME_DICT_FILES, mandatory = true)
+//	protected String[] graphemeToPhonemeDictFiles;
 
 	private Map<String, Float> deletionMap;
 	private Map<String, Float> insertionMap;
@@ -102,7 +99,7 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
-		graphemeToPhonemeMap = readG2PMap(graphemeToPhonemeDictFiles);
+		graphemeToPhonemeMap = readG2PMap(dictionaries);
 		sortedDictionary = fillDictionary(graphemeToPhonemeMap);
 
 		deletionMap = readWeights(weightFileDeletion);

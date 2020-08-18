@@ -34,18 +34,13 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
  */
 public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
-	/**
-	 * The dictionaries based on which to generate the correction candidates.
-	 */
-	public static final String PARAM_DICTIONARIES = "dictionaries";
-	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
-	protected String[] dictionaries;
+	public static final String PARAM_LANGUAGE = "language";
+	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
+	protected String language;
 
 	// Location of the temporarily saved file containing pairs of misspellings and
 	// correction candidates
 	private final String pathToTempFile = "src/main/resources/bodu-spell/temp.tsv";
-
-	private List<String> dictionaryList = new ArrayList<String>();
 
 	// Map indicating whether an error type is classified as systematic
 	private final String pathToSystematicMap = "src/main/resources/bodu-spell/litkey_type_map_systematic.tsv";
@@ -74,9 +69,6 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
 		readDictionaries(dictionaries);
 		readSystematicMap(pathToSystematicMap, systematicMap);
-		for (int key : sortedDictionary.keySet()) {
-			dictionaryList.addAll(sortedDictionary.get(key));
-		}
 	}
 
 	private void readSystematicMap(String path, Map<String, Boolean> map) {
@@ -106,12 +98,6 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 		}
 	}
 
-//	For single error - correction - pair: not needed in this implementation as we want to batch-process multiple candidates at once.
-	@Override
-	protected float calculateCost(String misspelling, String candidate) {
-		return 0.0f;
-	}
-
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
@@ -121,37 +107,23 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 			String misspelling = anomaly.getCoveredText();
 			List<String> litkeyResultEntries = new ArrayList<String>();
 
-			// Just in case an upper limit is to be imposed on the number of candidates
-			// processed by Litkey script
-			int batchSize = dictionaryList.size();
-			int wordsInFile = 0;
+			FileWriter fw = null;
+			File file = new File(pathToTempFile);
 
-			int dictIndex = 0;
-			while (dictIndex < dictionaryList.size()) {
-
-				FileWriter fw = null;
-				File file = new File(pathToTempFile);
-
-				try {
-					fw = new FileWriter(file);
-					while (wordsInFile < batchSize && dictIndex < dictionaryList.size()) {
-						String word = dictionaryList.get(dictIndex);
-						if (!errorWillBeDiffuse(misspelling, word)) {
-							fw.write(misspelling + "\t" + word + System.lineSeparator());
-							wordsInFile += 1;
-						}
-						dictIndex++;
+			try {
+				fw = new FileWriter(file);
+				for (String word : dictionary) {
+					if (!errorWillBeDiffuse(misspelling, word)) {
+						fw.write(misspelling + "\t" + word + System.lineSeparator());
 					}
-					fw.close();
-				} catch (IOException e1) {
-					e1.printStackTrace();
 				}
-
-				litkeyResultEntries.addAll(runLitkeyScript(file));
-
-				wordsInFile = 0;
-				file.delete();
+				fw.close();
+			} catch (IOException e1) {
+				e1.printStackTrace();
 			}
+
+			litkeyResultEntries.addAll(runLitkeyScript(file));
+			file.delete();
 
 			for (String entry : litkeyResultEntries) {
 				String[] wordAndErrors = entry.split("\t");
