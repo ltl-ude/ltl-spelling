@@ -166,7 +166,11 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 								+ ", which cannot be parsed as a float. This entry of the weight file will be ignored.");
 						continue;
 					}
-
+					if (weight < 1) {
+						getContext().getLogger().log(Level.WARNING, "You provided the weight '" + weightEntry[2]
+								+ "' for '" + weightEntry[0] + "' and '" + weightEntry[1]
+								+ "'. In order for candidate generation to work properly please scale your distances to where the smallest distance is at least 1.0.");
+					}
 					if (!includesAtLeastOneWeightForUppercaseChar) {
 						if (!Character.isLowerCase(firstEntry) || !Character.isLowerCase(secondEntry)) {
 							includesAtLeastOneWeightForUppercaseChar = true;
@@ -182,7 +186,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 						currentCharacterMap.put(secondEntry, weight);
 					} else {
 						getContext().getLogger().log(Level.WARNING,
-								"You provided two different weights for '" + weightEntry[0] + "' to '" + weightEntry[1]
+								"You provided two weights for '" + weightEntry[0] + "' to '" + weightEntry[1]
 										+ "' (" + currentCharacterMap.get(weightEntry[1].toLowerCase().charAt(0))
 										+ " and " + weightEntry[2] + ") in File" + weightFile
 										+ ". The former will be used.");
@@ -239,7 +243,11 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 								+ "', which cannot be parsed as a float. This entry of the weight file will be ignored.");
 						continue;
 					}
-
+					if (weight < 1) {
+						getContext().getLogger().log(Level.WARNING, "You provided the weight '" + weightEntry[1]
+								+ "' for '" + weightEntry[0]
+								+ "'. In order for candidate generation to work properly please scale your distances to where the smallest distance is at least 1.0.");
+					}
 					if (!includesAtLeastOneWeightForUppercaseChar) {
 						if (!Character.isLowerCase(character)) {
 							includesAtLeastOneWeightForUppercaseChar = true;
@@ -252,7 +260,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 					} else {
 						// Warn that there is double info for this char
 						getContext().getLogger().log(Level.WARNING,
-								"You provided two different weights for '" + character + "' (" + currentWeight + " and "
+								"You provided two weights for '" + character + "' (" + currentWeight + " and "
 										+ weight + ") in File" + weightFile + ". The former will be used.");
 					}
 				}

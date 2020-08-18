@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -41,10 +40,9 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 	public static final String PARAM_DICTIONARIES = "dictionaries";
 	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
 	protected String[] dictionaries;
-	
+
 	// Location of the temporarily saved file containing pairs of misspellings and
-	// correction
-	// candidates
+	// correction candidates
 	private final String pathToTempFile = "src/main/resources/bodu-spell/temp.tsv";
 
 	private List<String> dictionaryList = new ArrayList<String>();
@@ -76,7 +74,9 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
 		readDictionaries(dictionaries);
 		readSystematicMap(pathToSystematicMap, systematicMap);
-		dictionaryList.addAll(dictionary);
+		for (int key : sortedDictionary.keySet()) {
+			dictionaryList.addAll(sortedDictionary.get(key));
+		}
 	}
 
 	private void readSystematicMap(String path, Map<String, Boolean> map) {
@@ -121,15 +121,6 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 			String misspelling = anomaly.getCoveredText();
 			List<String> litkeyResultEntries = new ArrayList<String>();
 
-			// For development:
-			System.out.println();
-			System.out.println("Litkey processing anomaly: " + anomaly.getCoveredText());
-			int consideredWords = 0;
-			int nonDiffuse = 0;
-			int lengthDeviation = 2;
-			int batch = 1;
-			LocalTime startTime = java.time.LocalTime.now();
-
 			// Just in case an upper limit is to be imposed on the number of candidates
 			// processed by Litkey script
 			int batchSize = dictionaryList.size();
@@ -138,9 +129,6 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 			int dictIndex = 0;
 			while (dictIndex < dictionaryList.size()) {
 
-//				System.out.println("Batch " + batch);
-//				System.out.println("Starting from dict index " + dictIndex);
-
 				FileWriter fw = null;
 				File file = new File(pathToTempFile);
 
@@ -148,13 +136,8 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 					fw = new FileWriter(file);
 					while (wordsInFile < batchSize && dictIndex < dictionaryList.size()) {
 						String word = dictionaryList.get(dictIndex);
-//						if (word.length() <= misspelling.length() + lengthDeviation
-//								&& word.length() >= misspelling.length() - lengthDeviation) {
 						if (!errorWillBeDiffuse(misspelling, word)) {
-//							System.out.println("Writing to file: "+misspelling + "\t" + word);
 							fw.write(misspelling + "\t" + word + System.lineSeparator());
-
-							consideredWords += 1;
 							wordsInFile += 1;
 						}
 						dictIndex++;
@@ -166,21 +149,17 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 
 				litkeyResultEntries.addAll(runLitkeyScript(file));
 
-				batch++;
 				wordsInFile = 0;
 				file.delete();
 			}
 
 			for (String entry : litkeyResultEntries) {
-//				System.out.println("Entry: "+entry);
 				String[] wordAndErrors = entry.split("\t");
 				if (wordAndErrors.length < 2) {
 					System.out.println("No result for: " + entry);
 				} else {
 					float cost = evaluateErrors(wordAndErrors[1]);
-					// TODO: can be simplified if we avoid diffuse errors
 					if (cost < diffuseCost) {
-						nonDiffuse += 1;
 						List<String> rankList = rankedCandidates.get(cost);
 						if (rankList == null) {
 							rankedCandidates.put(cost, new ArrayList<String>());
@@ -192,35 +171,10 @@ public class GenerateAndRank_Litkey extends CandidateGeneratorAndRanker {
 				}
 			}
 
-			// For development:
-			LocalTime endTime = java.time.LocalTime.now();
-//			System.out.println("Deviation: " + lengthDeviation);
-			System.out.println("Considered: " + consideredWords);
-			System.out.println("Non-diffuse: " + nonDiffuse);
-//			System.out.println("Result entries: " + litkeyResultEntries.size());
-			System.out.println("Start: " + startTime);
-			System.out.println("End: " + endTime);
-
 			Iterator<Entry<Float, List<String>>> entries = rankedCandidates.entrySet().iterator();
-			SuggestionCostTuples tuples = new SuggestionCostTuples();
-
-			while (tuples.size() < numberOfCandidatesToGenerate) {
-				if (entries.hasNext()) {
-					Entry<Float, List<String>> entry = entries.next();
-					List<String> currentRankList = entry.getValue();
-					float rank = entry.getKey();
-					for (int j = 0; j < currentRankList.size(); j++) {
-						tuples.addTuple(currentRankList.get(j), rank);
-					}
-				} else {
-					break;
-				}
-			}
-
+			SuggestionCostTuples tuples = getSuggestionCostTuples(entries);
 			addSuggestedActions(aJCas, anomaly, tuples);
 		}
-		System.out.println();
-		System.exit(0);
 	}
 
 	// Calculate Litkey error sum from a JSONArray of errors

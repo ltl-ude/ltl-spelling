@@ -1,5 +1,13 @@
 package de.unidue.ltl.spelling.generateAndRank;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -13,7 +21,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
  * Generates candidates based on inserting a space into a token.
  */
 
-// TODO: include insertion of more than one whitespace?
 public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanker {
 
 	/**
@@ -23,13 +30,32 @@ public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanke
 	@ConfigurationParameter(name = PARAM_DICTIONARIES, mandatory = true)
 	protected String[] dictionaries;
 	
+	private Set<String> dictionary = new HashSet<String>();
+	
 	// TODO: should this be accessible?
-	private final int spaceCost = 4;
+	private final int spaceCost = 4; 
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
 		readDictionaries(dictionaries);
+	}
+	
+	@Override
+	protected void readDictionaries(String[] dictionaryPaths) {
+		for (String path : dictionaries) {
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(new File(path)));
+				while (br.ready()) {
+					dictionary.add(br.readLine());
+				}
+				br.close();
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override

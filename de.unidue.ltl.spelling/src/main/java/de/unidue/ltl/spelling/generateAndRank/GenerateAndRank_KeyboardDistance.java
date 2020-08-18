@@ -114,6 +114,11 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 							+ "', which cannot be parsed as a float. This entry of the distance file will be ignored.");
 					continue;
 				}
+				if (distance < 1) {
+					getContext().getLogger().log(Level.WARNING, "You provided the distance '" + distanceEntry[2]
+							+ "' for '" + distanceEntry[0] + "' and '" + distanceEntry[1]
+							+ "'. In order for candidate generation to work properly please scale your distances to where the smallest distance is at least 1.0.");
+				}
 				if (!hasUpper) {
 					if (Character.isUpperCase(from) || Character.isUpperCase(to)) {
 						hasUpper = true;

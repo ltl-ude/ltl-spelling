@@ -148,6 +148,7 @@ public class Experiment_usingComponentsDirectly {
 		AnalysisEngineDescription generateRankKeyboard = createEngineDescription(GenerateAndRank_KeyboardDistance.class,
 				GenerateAndRank_KeyboardDistance.PARAM_LANGUAGE, "de",
 				GenerateAndRank_KeyboardDistance.PARAM_DICTIONARIES, hunspell_de,
+				GenerateAndRank_KeyboardDistance.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10,
 				GenerateAndRank_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE,
 				"src/main/resources/matrixes/keyboardDistance_DE-manual.txt",
 				GenerateAndRank_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, true);
@@ -158,7 +159,9 @@ public class Experiment_usingComponentsDirectly {
 				GenerateAndRank_LevenshteinGrapheme.class, GenerateAndRank_LevenshteinGrapheme.PARAM_LANGUAGE, "de",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES, hunspell_de,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_LOWERCASE, false,
-				GenerateAndRank_LevenshteinGrapheme.PARAM_INCLUDE_TRANSPOSITION, true,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_INCLUDE_TRANSPOSITION, true
+				,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_DELETION,
 				"src/main/resources/matrixes/RDMatrix_deletion_DE_withUpper.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_INSERTION,
@@ -166,12 +169,15 @@ public class Experiment_usingComponentsDirectly {
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_SUBSTITUTION,
 				"src/main/resources/matrixes/RDMatrix_substitution_DE_withUpper.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_TRANSPOSITION,
-				"src/main/resources/matrixes/RDMatrix_transposition_DE_withUpper.tsv");
+				"src/main/resources/matrixes/RDMatrix_transposition_DE_withUpper.tsv"
+				);
 		AnalysisEngineDescription generateRankPhoneme = createEngineDescription(
 				GenerateAndRank_LevenshteinPhoneme.class, GenerateAndRank_LevenshteinPhoneme.PARAM_LANGUAGE, "deu-DE",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_GRAPHEME_TO_PHONEME_DICT_FILES,
 				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map.txt",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true,
+				GenerateAndRank_LevenshteinPhoneme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10
+				,
 				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_DELETION,
 				"src/main/resources/matrixes/RDMatrix_deletion_Sampa.tsv",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_INSERTION,
@@ -192,8 +198,8 @@ public class Experiment_usingComponentsDirectly {
 //				dictionaryChecker2,
 				markTokensToCorrect,
 //				generateRankKeyboard,
-//				generateRankLitkey,
-				generateRankLevenshtein,
+				generateRankLitkey,
+//				generateRankLevenshtein,
 //				generateRankPhoneme,
 				anomalyReplacer, changeApplier, segmenter, testResult);
 	}

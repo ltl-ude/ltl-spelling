@@ -103,7 +103,7 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
 		graphemeToPhonemeMap = readG2PMap(graphemeToPhonemeDictFiles);
-		dictionary = graphemeToPhonemeMap.keySet();
+		sortedDictionary = fillDictionary(graphemeToPhonemeMap);
 
 		deletionMap = readWeights(weightFileDeletion);
 		insertionMap = readWeights(weightFileInsertion);
@@ -120,6 +120,20 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 //		System.out.println(insertionMap);
 //		System.out.println(substitutionMap);
 //		System.out.println(transpositionMap);
+	}
+
+	private Map<Integer, Set<String>> fillDictionary(Map<String, String> graphemeToPhoneme) {
+		Map<Integer, Set<String>> dictionaryMap = new HashMap<Integer, Set<String>>();
+		for (String word : graphemeToPhoneme.keySet()) {
+			int lengthOfTranscriptionOfCurrentWord = graphemeToPhoneme.get(word).split(" ").length;
+			Set<String> wordsOfThisLength = dictionaryMap.get(lengthOfTranscriptionOfCurrentWord);
+			if (wordsOfThisLength == null) {
+				dictionaryMap.put(lengthOfTranscriptionOfCurrentWord, new HashSet<String>());
+				wordsOfThisLength = dictionaryMap.get(lengthOfTranscriptionOfCurrentWord);
+			}
+			wordsOfThisLength.add(word);
+		}
+		return dictionaryMap;
 	}
 
 	private Map<String, String> readG2PMap(String[] mapFiles) {
@@ -153,18 +167,34 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 				while (br.ready()) {
 					String line = br.readLine();
 					String[] weightEntry = line.split("\t");
+					if (weightEntry.length != 3) {
+						getContext().getLogger().log(Level.WARNING,
+								"Tab-separated triples of character, character, and weight are expected, but file '"
+										+ weightFile + "' contained the line '" + line + ", which will be ignored.");
+						continue;
+					}
+					Float weight = 0.0f;
+					try {
+						weight = Float.parseFloat(weightEntry[2]);
+					} catch (NumberFormatException e) {
+						getContext().getLogger().log(Level.WARNING, "You provided the weight '" + weightEntry[2]
+								+ "' for '" + weightEntry[0] + "' and '" + weightEntry[1]
+								+ ", which cannot be parsed as a float. This entry of the weight file will be ignored.");
+						continue;
+					}
+
 					Map<String, Float> currentMap = weightMap.get(weightEntry[0]);
 					if (currentMap == null) {
 						weightMap.put(weightEntry[0], new HashMap<String, Float>());
 						currentMap = weightMap.get(weightEntry[0]);
 					}
 					if (currentMap.get(weightEntry[1]) == null) {
-						currentMap.put(weightEntry[1], Float.parseFloat(weightEntry[2]));
+						currentMap.put(weightEntry[1], weight);
 					} else {
 						getContext().getLogger().log(Level.WARNING,
-								"You provided two different weights for '" + weightEntry[0] + "' to '" + weightEntry[1]
-										+ "' (" + currentMap.get(weightEntry[1]) + " and " + weightEntry[2]
-										+ ") in File" + weightFile + ". The former weight will be used.");
+								"You provided two weights for '" + weightEntry[0] + "' to '" + weightEntry[1] + "' ("
+										+ currentMap.get(weightEntry[1]) + " and " + weightEntry[2] + ") in File"
+										+ weightFile + ". The former weight will be used.");
 					}
 				}
 				br.close();
@@ -187,14 +217,30 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 				while (br.ready()) {
 					String line = br.readLine();
 					String[] weightEntry = line.split("\t");
-					Float currentWeight = weightMap.get(weightEntry[0]);
-					if (currentWeight == null) {
-						weightMap.put(weightEntry[0], Float.parseFloat(weightEntry[1]));
+					if (weightEntry.length != 2) {
+						getContext().getLogger().log(Level.WARNING,
+								"Tab-separated pairs of characters and weights are expected, but file '" + weightFile
+										+ "' contained the line '" + line + ", which will be ignored.");
+						continue;
+					}
+
+					Float weightFromFile = 0.0f;
+					try {
+						weightFromFile = Float.parseFloat(weightEntry[1]);
+					} catch (NumberFormatException e) {
+						getContext().getLogger().log(Level.WARNING, "You provided the weight '" + weightEntry[1]
+								+ "' for '" + weightEntry[0]
+								+ "', which cannot be parsed as a float. This entry of the weight file will be ignored.");
+						continue;
+					}
+					Float weightInMap = weightMap.get(weightEntry[0]);
+					if (weightInMap == null) {
+						weightMap.put(weightEntry[0], weightFromFile);
 					} else {
 						// Warn that there is double info for this char
 						getContext().getLogger().log(Level.WARNING,
-								"You provided two different weights for '" + weightEntry[0] + "' (" + currentWeight
-										+ " and " + weightEntry[1] + ") in File" + weightFile
+								"You provided two weights for '" + weightEntry[0] + "' (" + weightInMap + " and "
+										+ weightEntry[1] + ") in File" + weightFile
 										+ ". The former weight will be used.");
 					}
 				}
@@ -212,6 +258,11 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 	@Override
 	protected String getStringToCorrectFromAnomaly(SpellingAnomaly anomaly) {
 		return PhonemeUtils.getPhoneticTranscription(anomaly.getCoveredText(), language);
+	}
+
+	@Override
+	protected int getLengthOfMisspelling(String misspelling) {
+		return misspelling.split(" ").length;
 	}
 
 	// Assumes performing operations on 'wrong' to turn it into 'right'

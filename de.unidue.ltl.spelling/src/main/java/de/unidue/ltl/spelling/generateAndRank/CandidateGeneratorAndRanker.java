@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -25,8 +26,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 
 /**
- * Supertype for generate and rank methods Subtypes have to implement the
- * calculateCost method
+ * Supertype for generate and rank methods
  */
 
 public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase {
@@ -44,14 +44,21 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 	@ConfigurationParameter(name = PARAM_NUM_OF_CANDIDATES_TO_GENERATE, mandatory = true, defaultValue = "5")
 	protected int numberOfCandidatesToGenerate;
 
-	protected Set<String> dictionary = new HashSet<String>();
+	protected Map<Integer, Set<String>> sortedDictionary = new HashMap<Integer, Set<String>>();
 
 	protected void readDictionaries(String[] dictionaries) {
 		for (String path : dictionaries) {
 			try {
 				BufferedReader br = new BufferedReader(new FileReader(new File(path)));
 				while (br.ready()) {
-					dictionary.add(br.readLine());
+					String word = br.readLine();
+					int lengthOfCurrentWord = word.length();
+					Set<String> wordsOfThisLength = sortedDictionary.get(lengthOfCurrentWord);
+					if (wordsOfThisLength == null) {
+						sortedDictionary.put(lengthOfCurrentWord, new HashSet<String>());
+						wordsOfThisLength = sortedDictionary.get(lengthOfCurrentWord);
+					}
+					wordsOfThisLength.add(word);
 				}
 				br.close();
 			} catch (FileNotFoundException e1) {
@@ -67,41 +74,87 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 
 		for (SpellingAnomaly anomaly : JCasUtil.select(aJCas, SpellingAnomaly.class)) {
 			String misspelling = getStringToCorrectFromAnomaly(anomaly);
+			int lengthOfMisspelling = getLengthOfMisspelling(misspelling);
 			Map<Float, List<String>> rankedCandidates = new TreeMap<Float, List<String>>();
 
-			for (String word : dictionary) {
-				float cost = calculateCost(misspelling, word);
-				List<String> rankList = rankedCandidates.get(cost);
-				if (rankList == null) {
-					rankedCandidates.put(cost, new ArrayList<String>());
-					rankList = rankedCandidates.get(cost);
-				}
-				rankList.add(word);
-			}
+			// First: only take words of same length as candidate
+			calculateCostsForDict(sortedDictionary.get(lengthOfMisspelling), misspelling, rankedCandidates);
 
+			// Second: see what the max cost is to fill the number of required candidates
+			// Repeat cost calculation with candidates +- this length
 			Iterator<Entry<Float, List<String>>> entries = rankedCandidates.entrySet().iterator();
-			SuggestionCostTuples tuples = new SuggestionCostTuples();
-
-			while (tuples.size() < numberOfCandidatesToGenerate) {
+			int testNumberOfCandidates = 0;
+			float maxCostRequiredToFillCandidates = 0;
+			while (testNumberOfCandidates < numberOfCandidatesToGenerate) {
 				if (entries.hasNext()) {
 					Entry<Float, List<String>> entry = entries.next();
-					List<String> currentRankList = entry.getValue();
-					float rank = entry.getKey();
-					for (int j = 0; j < currentRankList.size(); j++) {
-						tuples.addTuple(currentRankList.get(j), rank);
-					}
+					testNumberOfCandidates += entry.getValue().size();
+					maxCostRequiredToFillCandidates = entry.getKey();
 				} else {
 					break;
 				}
 			}
+			Set<String> subDict = new HashSet<String>();
+			int plusMinusLength = (int) maxCostRequiredToFillCandidates;
+			for (int i = -plusMinusLength; i <= plusMinusLength; i++) {
+				if (i != 0) {
+					if (lengthOfMisspelling + i > 0) {
+						Set<String> entriesWithThisLength = sortedDictionary.get(lengthOfMisspelling + i);
+						if (entriesWithThisLength != null) {
+							subDict.addAll(entriesWithThisLength);
+						}
+					}
+				}
+			}
+			calculateCostsForDict(subDict, misspelling, rankedCandidates);
 
+			// Select the top n candidates
+			entries = rankedCandidates.entrySet().iterator();
+			SuggestionCostTuples tuples = getSuggestionCostTuples(entries);
 			addSuggestedActions(aJCas, anomaly, tuples);
 		}
 	}
 	
+	protected SuggestionCostTuples getSuggestionCostTuples(Iterator<Entry<Float, List<String>>> entries) {
+		SuggestionCostTuples tuples = new SuggestionCostTuples();
+
+		while (tuples.size() < numberOfCandidatesToGenerate) {
+
+			if (entries.hasNext()) {
+				Entry<Float, List<String>> entry = entries.next();
+
+				List<String> currentRankList = entry.getValue();
+				float rank = entry.getKey();
+				for (int j = 0; j < currentRankList.size(); j++) {
+					tuples.addTuple(currentRankList.get(j), rank);
+				}
+			} else {
+				break;
+			}
+		}
+		
+		return tuples;
+	}
+
 	// To accommodate phonetic Levenshtein
 	protected String getStringToCorrectFromAnomaly(SpellingAnomaly anomaly) {
 		return anomaly.getCoveredText();
+	}
+	protected int getLengthOfMisspelling(String misspelling) {
+		return misspelling.length();
+	}
+
+	private void calculateCostsForDict(Set<String> dictionary, String misspelling,
+			Map<Float, List<String>> rankedCandidates) {
+		for (String word : dictionary) {
+			float cost = calculateCost(misspelling, word);
+			List<String> rankList = rankedCandidates.get(cost);
+			if (rankList == null) {
+				rankedCandidates.put(cost, new ArrayList<String>());
+				rankList = rankedCandidates.get(cost);
+			}
+			rankList.add(word);
+		}
 	}
 
 	protected abstract float calculateCost(String misspelling, String correction);
