@@ -3,7 +3,6 @@ package de.unidue.ltl.spelling.experiments;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
@@ -11,22 +10,16 @@ import org.apache.uima.collection.CollectionReader;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.ResourceInitializationException;
-import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 import org.dkpro.core.io.text.TextReader;
 
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.Dictionary;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.LinkingMorphemes;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.SimpleDictionary;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.BananaSplitterAlgorithm;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.DataDrivenSplitterAlgorithm;
-import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.LeftToRightSplitterAlgorithm;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_KeyboardDistance;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinGrapheme;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinPhoneme;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_Litkey;
 import de.unidue.ltl.spelling.normalization.ApplyChanges;
+import de.unidue.ltl.spelling.normalization.RandomSpellingAnomalyReplacer;
 import de.unidue.ltl.spelling.normalization.ResultTester;
 import de.unidue.ltl.spelling.normalization.SpellingAnomalyReplacer;
 import de.unidue.ltl.spelling.preprocessing.DictionaryChecker;
@@ -97,7 +90,9 @@ public class Experiment_usingComponentsDirectly {
 		SimplePipeline.runPipeline(reader, showText, segmenter, markSentenceBeginnings, numericAnnotator,
 				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
 //				dictionaryChecker2,
-				markTokensToCorrect, generateRank1, anomalyReplacer, changeApplier, segmenter, testResult);
+				markTokensToCorrect,
+				generateRank1,
+				anomalyReplacer, changeApplier, segmenter, testResult);
 	}
 
 	public static void runGerman() throws UIMAException, IOException {
@@ -189,6 +184,9 @@ public class Experiment_usingComponentsDirectly {
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
 				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
+		AnalysisEngineDescription anomalyReplacer_random = createEngineDescription(RandomSpellingAnomalyReplacer.class,
+				RandomSpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
+				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
 		AnalysisEngineDescription changeApplier = createEngineDescription(ApplyChanges.class);
 		AnalysisEngineDescription testResult = createEngineDescription(ResultTester.class);
 
@@ -200,7 +198,9 @@ public class Experiment_usingComponentsDirectly {
 //				generateRankLitkey,
 //				generateRankLevenshtein,
 				generateRankPhoneme,
-				anomalyReplacer, changeApplier, segmenter, testResult);
+//				anomalyReplacer,
+				anomalyReplacer_random,
+				changeApplier, segmenter, testResult);
 	}
 
 	public static CollectionReader getReader(String path, String language) throws ResourceInitializationException {

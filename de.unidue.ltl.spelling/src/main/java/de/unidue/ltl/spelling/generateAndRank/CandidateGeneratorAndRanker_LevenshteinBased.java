@@ -33,7 +33,7 @@ public abstract class CandidateGeneratorAndRanker_LevenshteinBased extends Candi
 	 * Damerau-Levenshtein distance as opposed to standard Levenshtein Distance.
 	 */
 	public static final String PARAM_INCLUDE_TRANSPOSITION = "includeTransposition";
-	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "False")
+	@ConfigurationParameter(name = PARAM_INCLUDE_TRANSPOSITION, mandatory = true, defaultValue = "True")
 	protected boolean includeTransposition;
 
 	protected Map<Integer, Set<String>> sortedDictionary;

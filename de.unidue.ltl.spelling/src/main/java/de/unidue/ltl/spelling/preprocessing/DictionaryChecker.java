@@ -115,6 +115,7 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 		if (dictionaryWords.contains(currentWord)
 				|| (alsoCheckLowercase && dictionaryWords.contains(currentWord.toLowerCase()))) {
 			KnownWord word = new KnownWord(aJCas);
+			word.setPathToDictItWasFoundIn(dictionaryPath);
 			word.setBegin(token.getBegin());
 			word.setEnd(token.getEnd());
 			word.addToIndexes();

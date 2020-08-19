@@ -11,7 +11,7 @@ import org.apache.uima.jcas.tcas.Annotation;
 
 
 /** 
- * Updated by JCasGen Tue Jun 30 21:13:38 CEST 2020
+ * Updated by JCasGen Tue Aug 18 12:52:23 CEST 2020
  * XML source: /Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/desc/type/Spelling.xml
  * @generated */
 public class KnownWord extends Annotation {
@@ -74,6 +74,26 @@ public class KnownWord extends Annotation {
    */
   private void readObject() {/*default - does nothing empty block */}
      
-}
+  //*--------------*
+  //* Feature: pathToDictItWasFoundIn
+
+  /** getter for pathToDictItWasFoundIn - gets 
+   * @generated
+   * @return value of the feature 
+   */
+  public String getPathToDictItWasFoundIn() {
+    if (KnownWord_Type.featOkTst && ((KnownWord_Type)jcasType).casFeat_pathToDictItWasFoundIn == null)
+      jcasType.jcas.throwFeatMissing("pathToDictItWasFoundIn", "de.unidue.ltl.spelling.types.KnownWord");
+    return jcasType.ll_cas.ll_getStringValue(addr, ((KnownWord_Type)jcasType).casFeatCode_pathToDictItWasFoundIn);}
+    
+  /** setter for pathToDictItWasFoundIn - sets  
+   * @generated
+   * @param v value to set into the feature 
+   */
+  public void setPathToDictItWasFoundIn(String v) {
+    if (KnownWord_Type.featOkTst && ((KnownWord_Type)jcasType).casFeat_pathToDictItWasFoundIn == null)
+      jcasType.jcas.throwFeatMissing("pathToDictItWasFoundIn", "de.unidue.ltl.spelling.types.KnownWord");
+    jcasType.ll_cas.ll_setStringValue(addr, ((KnownWord_Type)jcasType).casFeatCode_pathToDictItWasFoundIn, v);}    
+  }
 
     

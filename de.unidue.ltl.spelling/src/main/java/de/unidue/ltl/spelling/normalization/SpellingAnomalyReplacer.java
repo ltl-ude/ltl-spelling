@@ -15,6 +15,10 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
 import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 import de.unidue.ltl.spelling.types.StartOfSentence;
 
+/**
+ * In case of multiple candidates with an equally well score, pick the one that came up first
+ */
+
 public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase {
 
 	@Override
@@ -27,17 +31,17 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 
 				for (int i = 0; i < suggestions.size(); i++) {
 					SuggestedAction action = anomaly.getSuggestions(i);
-					Float certainty = action.getCertainty();
-					if (certainty < minCost) {
+					Float cost = action.getCertainty();
+					if (cost < minCost) {
 						bestReplacements.clear();
-						minCost = certainty;
+						minCost = cost;
 						bestReplacements.add(action.getReplacement());
-					} else if (certainty == minCost) {
+					} else if (Math.abs(cost - minCost) < 0.00001) {
 						bestReplacements.add(action.getReplacement());
 					}
 				}
 
-				String replacement = bestReplacements.get(0);
+				String replacement = getBestReplacement(bestReplacements);
 				if (!JCasUtil.selectCovered(StartOfSentence.class, anomaly).isEmpty()) {
 					replacement = replacement.substring(0, 1).toUpperCase() + replacement.substring(1);
 				}
@@ -47,5 +51,9 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 				anomaly.setCorrected(true);
 			}
 		}
+	}
+
+	protected String getBestReplacement(List<String> replacements) {
+		return replacements.get(0);
 	}
 }

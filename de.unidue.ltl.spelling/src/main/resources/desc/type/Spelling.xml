@@ -39,6 +39,13 @@
       <name>de.unidue.ltl.spelling.types.KnownWord</name>
       <description/>
       <supertypeName>uima.tcas.Annotation</supertypeName>
+    <features>
+        <featureDescription>
+          <name>pathToDictItWasFoundIn</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>
     </typeDescription>
     <typeDescription>
       <name>de.unidue.ltl.spelling.types.TokenToConsider</name>
