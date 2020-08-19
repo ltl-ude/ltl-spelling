@@ -1,17 +1,22 @@
 package de.unidue.ltl.spelling.experiments;
 
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
+import static org.apache.uima.fit.factory.ExternalResourceFactory.createExternalResourceDescription;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.apache.uima.UIMAException;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.collection.CollectionReader;
+import org.apache.uima.fit.descriptor.ExternalResource;
 import org.apache.uima.fit.factory.CollectionReaderFactory;
 import org.apache.uima.fit.pipeline.SimplePipeline;
+import org.apache.uima.resource.ExternalResourceDescription;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.dkpro.core.io.text.TextReader;
 
+import candidateReranking.LanguageModelReranker;
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_KeyboardDistance;
@@ -29,6 +34,9 @@ import de.unidue.ltl.spelling.preprocessing.MarkTokensToCorrect;
 import de.unidue.ltl.spelling.preprocessing.NumericAnnotator;
 import de.unidue.ltl.spelling.preprocessing.PrintText;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
+import de.unidue.ltl.spelling.resources.FrequencyDistributionLanguageModel;
+import de.unidue.ltl.spelling.resources.LanguageModelResource;
+import de.unidue.ltl.spelling.resources.Web1TLanguageModel;
 import de.unidue.ltl.spelling.types.Numeric;
 
 public class Experiment_usingComponentsDirectly {
@@ -90,9 +98,7 @@ public class Experiment_usingComponentsDirectly {
 		SimplePipeline.runPipeline(reader, showText, segmenter, markSentenceBeginnings, numericAnnotator,
 				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
 //				dictionaryChecker2,
-				markTokensToCorrect,
-				generateRank1,
-				anomalyReplacer, changeApplier, segmenter, testResult);
+				markTokensToCorrect, generateRank1, anomalyReplacer, changeApplier, segmenter, testResult);
 	}
 
 	public static void runGerman() throws UIMAException, IOException {
@@ -123,6 +129,9 @@ public class Experiment_usingComponentsDirectly {
 //		System.out.println(splitter.split("Lehrstelle").getAllSplits());
 //		System.exit(0);
 
+		ExternalResourceDescription defaultLM = createExternalResourceDescription(Web1TLanguageModel.class,
+				Web1TLanguageModel.PARAM_MODEL_FILES, "");
+
 		CollectionReader reader = getReader("de-testData", "de");
 		AnalysisEngineDescription showText = createEngineDescription(PrintText.class);
 		AnalysisEngineDescription segmenter = createEngineDescription(CoreNlpSegmenter.class);
@@ -142,7 +151,7 @@ public class Experiment_usingComponentsDirectly {
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		AnalysisEngineDescription generateRankKeyboard = createEngineDescription(GenerateAndRank_KeyboardDistance.class,
 				GenerateAndRank_KeyboardDistance.PARAM_DICTIONARIES, hunspell_de,
-				GenerateAndRank_KeyboardDistance.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10,
+				GenerateAndRank_KeyboardDistance.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, 10,
 				GenerateAndRank_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE,
 				"src/main/resources/matrixes/keyboardDistance_DE-manual.txt",
 				GenerateAndRank_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, true);
@@ -150,12 +159,10 @@ public class Experiment_usingComponentsDirectly {
 				GenerateAndRank_Litkey.PARAM_LANGUAGE, "de", GenerateAndRank_Litkey.PARAM_DICTIONARIES, hunspell_de,
 				GenerateAndRank_Litkey.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, 5);
 		AnalysisEngineDescription generateRankLevenshtein = createEngineDescription(
-				GenerateAndRank_LevenshteinGrapheme.class,
-				GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES, hunspell_de,
-				GenerateAndRank_LevenshteinGrapheme.PARAM_LOWERCASE, false,
-				GenerateAndRank_LevenshteinGrapheme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10,
-				GenerateAndRank_LevenshteinGrapheme.PARAM_INCLUDE_TRANSPOSITION, true
-				,
+				GenerateAndRank_LevenshteinGrapheme.class, GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES,
+				hunspell_de, GenerateAndRank_LevenshteinGrapheme.PARAM_LOWERCASE, false,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, 10,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_INCLUDE_TRANSPOSITION, true,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_DELETION,
 				"src/main/resources/matrixes/RDMatrix_deletion_DE_withUpper.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_INSERTION,
@@ -163,15 +170,13 @@ public class Experiment_usingComponentsDirectly {
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_SUBSTITUTION,
 				"src/main/resources/matrixes/RDMatrix_substitution_DE_withUpper.tsv",
 				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_TRANSPOSITION,
-				"src/main/resources/matrixes/RDMatrix_transposition_DE_withUpper.tsv"
-				);
+				"src/main/resources/matrixes/RDMatrix_transposition_DE_withUpper.tsv");
 		AnalysisEngineDescription generateRankPhoneme = createEngineDescription(
 				GenerateAndRank_LevenshteinPhoneme.class, GenerateAndRank_LevenshteinPhoneme.PARAM_LANGUAGE, "deu-DE",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_DICTIONARIES,
 				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map.txt",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true,
-				GenerateAndRank_LevenshteinPhoneme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,10
-				,
+				GenerateAndRank_LevenshteinPhoneme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, 10,
 				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_DELETION,
 				"src/main/resources/matrixes/RDMatrix_deletion_Sampa.tsv",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_INSERTION,
@@ -179,8 +184,11 @@ public class Experiment_usingComponentsDirectly {
 				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_SUBSTITUTION,
 				"src/main/resources/matrixes/RDMatrix_substitution_Sampa.tsv",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_TRANSPOSITION,
-				"src/main/resources/matrixes/RDMatrix_transposition_Sampa.tsv"
-				);
+				"src/main/resources/matrixes/RDMatrix_transposition_Sampa.tsv");
+		AnalysisEngineDescription lmReranker = createEngineDescription(LanguageModelReranker.class,
+				LanguageModelReranker.PARAM_DEFAULT_LANGUAGE_MODEL, defaultLM,
+				LanguageModelReranker.PARAM_CUSTOM_LANGUAGE_MODEL, defaultLM, 
+				LanguageModelReranker.PARAM_NGRAM_SIZE, 3);
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
 				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
@@ -199,8 +207,8 @@ public class Experiment_usingComponentsDirectly {
 //				generateRankLevenshtein,
 				generateRankPhoneme,
 //				anomalyReplacer,
-				anomalyReplacer_random,
-				changeApplier, segmenter, testResult);
+//				lmReranker,
+				anomalyReplacer_random, changeApplier, segmenter, testResult);
 	}
 
 	public static CollectionReader getReader(String path, String language) throws ResourceInitializationException {

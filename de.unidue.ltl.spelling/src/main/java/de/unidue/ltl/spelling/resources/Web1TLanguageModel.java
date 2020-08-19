@@ -31,12 +31,12 @@ public class Web1TLanguageModel extends LanguageModelResource {
 		return true;
 	}
 
-	public double getFrequency(String[] ngram) {
+	public float getFrequency(String[] ngram) {
 		String ngramToQuery = String.join(" ", ngram);
-		double count = 0.0;
+		float count = 0.0f;
 		try {
-			count = (web1tSearcher.getFrequency(ngramToQuery) * 1.0);
-			System.out.println("Freuqency of " + ngramToQuery + ": " + count);
+			count = (float) (web1tSearcher.getFrequency(ngramToQuery) * 1.0);
+			System.out.println("Frequency of " + ngramToQuery + ": " + count);
 			// TODO: This returns -1, something must be wrong with the web1t index files
 			// (ENGLISH)
 //					/web1tSearcher.getNrOfDistinctNgrams(1);

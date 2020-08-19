@@ -10,6 +10,6 @@ public abstract class LanguageModelResource extends Resource_ImplBase{
 	protected String modelFile;
     
     // Should return normalized token frequency (probability) 
-    public abstract double getFrequency(String[] ngram);
+    public abstract float getFrequency(String[] ngram);
   
 }

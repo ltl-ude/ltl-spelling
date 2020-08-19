@@ -77,12 +77,12 @@ public class FrequencyDistributionLanguageModel extends LanguageModelResource {
 	}
 
 	@Override
-	public double getFrequency(String[] ngram) {
+	public float getFrequency(String[] ngram) {
 		String ngramJoined = String.join(" ", ngram);
 		int ngramSize = StringUtils.countMatches(ngramJoined, " ");
-		double result = cfd.getCount(ngramSize, ngramJoined);
+		float result = cfd.getCount(ngramSize, ngramJoined);
 		if (result == 0) {
-			result = 1.0 / cfd.getFrequencyDistribution(ngramSize).getN();
+			result = (float) (1.0 / cfd.getFrequencyDistribution(ngramSize).getN());
 		}
 		System.out.println("Looking up "+ngram);
 		return result;
