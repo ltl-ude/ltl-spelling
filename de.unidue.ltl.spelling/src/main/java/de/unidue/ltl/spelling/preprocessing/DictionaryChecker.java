@@ -93,6 +93,7 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 		splitter = new LeftToRightSplitterAlgorithm();
 		splitter.setDictionary(dict);
 		splitter.setLinkingMorphemes(linkingMorphemesDE);
+		splitter.setMinWordLength(2);
 	}
 
 	@Override
@@ -133,12 +134,12 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 //			System.out.println(
 //					"Example split of\t" + currentWord + "\tis\t" + splitter.split(currentWord).getSplits().get(0));
 
-			KnownWord word = new KnownWord(aJCas);
-			word.setBegin(token.getBegin());
-			word.setEnd(token.getEnd());
-			word.addToIndexes();
-			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(compound of words found in "
-					+ dictionaryPath + ")");
+//			KnownWord word = new KnownWord(aJCas);
+//			word.setBegin(token.getBegin());
+//			word.setEnd(token.getEnd());
+//			word.addToIndexes();
+//			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(compound of words found in "
+//					+ dictionaryPath + ")");
 		}
 	}
 }

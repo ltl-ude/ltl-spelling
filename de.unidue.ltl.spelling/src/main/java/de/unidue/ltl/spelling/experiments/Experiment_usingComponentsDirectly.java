@@ -19,6 +19,7 @@ import org.dkpro.core.io.text.TextReader;
 import candidateReranking.LanguageModelReranker;
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
+import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_FindMissingSpace;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_KeyboardDistance;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinGrapheme;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinPhoneme;
@@ -185,6 +186,8 @@ public class Experiment_usingComponentsDirectly {
 				"src/main/resources/matrixes/RDMatrix_substitution_Sampa.tsv",
 				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_TRANSPOSITION,
 				"src/main/resources/matrixes/RDMatrix_transposition_Sampa.tsv");
+		AnalysisEngineDescription findMissingSpaces = createEngineDescription(GenerateAndRank_FindMissingSpace.class,
+				GenerateAndRank_FindMissingSpace.PARAM_DICTIONARIES, hunspell_de);
 		AnalysisEngineDescription lmReranker = createEngineDescription(LanguageModelReranker.class,
 				LanguageModelReranker.PARAM_DEFAULT_LANGUAGE_MODEL, defaultLM,
 				LanguageModelReranker.PARAM_CUSTOM_LANGUAGE_MODEL, defaultLM, 
@@ -202,10 +205,11 @@ public class Experiment_usingComponentsDirectly {
 				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
 //				dictionaryChecker2,
 				markTokensToCorrect,
+				findMissingSpaces,
 //				generateRankKeyboard,
 //				generateRankLitkey,
 //				generateRankLevenshtein,
-				generateRankPhoneme,
+//				generateRankPhoneme,
 //				anomalyReplacer,
 //				lmReranker,
 				anomalyReplacer_random, changeApplier, segmenter, testResult);
