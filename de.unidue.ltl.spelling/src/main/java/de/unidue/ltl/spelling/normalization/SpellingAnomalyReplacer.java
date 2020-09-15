@@ -16,7 +16,8 @@ import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
 import de.unidue.ltl.spelling.types.StartOfSentence;
 
 /**
- * In case of multiple candidates with an equally well score, pick the one that came up first
+ * In case of multiple candidates with an equally well score, pick the one that
+ * came up first
  */
 
 public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase {
@@ -42,18 +43,26 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 				}
 
 				String replacement = getBestReplacement(bestReplacements);
-				if (!JCasUtil.selectCovered(StartOfSentence.class, anomaly).isEmpty()) {
-					replacement = replacement.substring(0, 1).toUpperCase() + replacement.substring(1);
+				if (replacement != null) {
+					if (!JCasUtil.selectCovered(StartOfSentence.class, anomaly).isEmpty()) {
+						replacement = replacement.substring(0, 1).toUpperCase() + replacement.substring(1);
+					}
+					System.out.println(
+							"Replacing anomaly:\t'" + anomaly.getCoveredText() + "'\twith\t'" + replacement + "'.");
+					replace(anomaly.getBegin(), anomaly.getEnd(), replacement);
+					anomaly.setCorrected(true);
 				}
-				System.out.println(
-						"Replacing anomaly:\t'" + anomaly.getCoveredText() + "'\twith\t'" + replacement + "'.");
-				replace(anomaly.getBegin(), anomaly.getEnd(), replacement);
-				anomaly.setCorrected(true);
 			}
 		}
 	}
 
 	protected String getBestReplacement(List<String> replacements) {
+		try {
 		return replacements.get(0);
+		}
+		catch(IndexOutOfBoundsException e) {
+			System.err.println("Cost of all correction candidates is infinite, not choosing any.");
+			return null;
+		}
 	}
 }

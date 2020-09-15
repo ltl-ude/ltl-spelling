@@ -11,11 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.uima.UimaContext;
-import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
 import org.apache.uima.fit.descriptor.TypeCapability;
-import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.util.Level;
 
@@ -101,7 +99,7 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 							+ "', which cannot be parsed as a float. This entry of the distance file will be ignored.");
 					continue;
 				}
-				if (distance < 1) {
+				if (distance < 1 && distance > 0) {
 					getContext().getLogger().log(Level.WARNING, "You provided the distance '" + distanceEntry[2]
 							+ "' for '" + distanceEntry[0] + "' and '" + distanceEntry[1]
 							+ "'. In order for candidate generation to work properly please scale your distances to where the smallest distance is at least 1.0.");

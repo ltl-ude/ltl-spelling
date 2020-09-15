@@ -31,9 +31,13 @@ public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanke
 	public static final String PARAM_MIN_WORD_LENGTH = "minWordLength";
 	@ConfigurationParameter(name = PARAM_MIN_WORD_LENGTH, mandatory = true, defaultValue = "3")
 	protected int minWordLength;
-
-	// TODO: should this be accessible?
-	private final int spaceCost = 4;
+	
+	/**
+	 * The dictionaries based on which to generate the correction candidates.
+	 */
+	public static final String PARAM_SPACE_INSERTION_COST = "spaceInsertionCost";
+	@ConfigurationParameter(name = PARAM_SPACE_INSERTION_COST, mandatory = true, defaultValue = "4")
+	protected int spaceInsertionCost;
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
@@ -80,7 +84,7 @@ public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanke
 			}
 
 			for (String solution : solutionSet) {
-				float cost = spaceCost * StringUtils.countMatches(solution, " ");
+				float cost = spaceInsertionCost * StringUtils.countMatches(solution, " ");
 				List<String> entriesForThisCost = rankedCandidates.get(cost);
 				if (entriesForThisCost == null) {
 					rankedCandidates.put(cost * 1.0f, new ArrayList<String>());
