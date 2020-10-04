@@ -5,45 +5,26 @@ import java.util.Iterator;
 
 import org.apache.commons.lang3.StringUtils;
 import org.dkpro.core.api.frequency.provider.FrequencyCountProvider;
+import org.dkpro.core.api.frequency.provider.FrequencyCountProviderBase;
 import org.dkpro.core.api.frequency.util.ConditionalFrequencyDistribution;
 
-public class CFDFrequencyCountProvider implements FrequencyCountProvider {
+public class CFDFrequencyCountProvider extends FrequencyCountProviderBase implements FrequencyCountProvider {
 
 	ConditionalFrequencyDistribution<Integer, String> cfd;
+	String language;
 
-	public CFDFrequencyCountProvider(ConditionalFrequencyDistribution<Integer, String> cfd) {
+	public CFDFrequencyCountProvider(ConditionalFrequencyDistribution<Integer, String> cfd, String language) {
 		this.cfd = cfd;
-	}
-
-	@Override
-	public long getFrequency(String phrase) throws IOException {
-		try {
-			return cfd.getFrequencyDistribution(StringUtils.countMatches(phrase, " ")).getCount(phrase);
-		} catch (NullPointerException e) {
-			return -1;
-		}
-	}
-
-	@Override
-	public double getProbability(String phrase) throws IOException {
-		int n = StringUtils.countMatches(phrase, " ");
-		try {
-			return (1.0 * cfd.getFrequencyDistribution(n).getCount(phrase)) / ((1.0) * getNrOfNgrams(n));
-		} catch (NullPointerException e) {
-			return -1;
-		}
-	}
-
-	@Override
-	public double getLogProbability(String phrase) throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
+		this.language = language;
 	}
 
 	@Override
 	public long getNrOfTokens() throws IOException {
-		// TODO Auto-generated method stub
-		return 0;
+		try {
+			return cfd.getFrequencyDistribution(1).getN();
+		} catch (NullPointerException e) {
+			return 0;
+		}
 	}
 
 	@Override
@@ -69,13 +50,15 @@ public class CFDFrequencyCountProvider implements FrequencyCountProvider {
 
 	@Override
 	public String getLanguage() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		return this.language;
 	}
 
 	@Override
-	public String getID() {
-		return cfd.toString();
+	protected long getFrequencyFromProvider(String phrase) throws IOException {
+		try {
+			return cfd.getFrequencyDistribution(StringUtils.countMatches(phrase, " ")).getCount(phrase);
+		} catch (NullPointerException e) {
+			return -1;
+		}
 	}
-
 }

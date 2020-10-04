@@ -32,7 +32,7 @@ public class PunctuationAnnotator extends JCasAnnotator_ImplBase {
 
 		for (Token token : tokens) {
 
-			if (token.getCoveredText().matches("^[;!?.,\"'\\-´`']+$")) {
+			if (token.getCoveredText().matches("^[;:!?.,\"'\\-´`'()]+$")) {
 				System.out.println("Found punctuation:\t" + token.getCoveredText());
 				Punctuation punct = new Punctuation(aJCas);
 				punct.setBegin(token.getBegin());

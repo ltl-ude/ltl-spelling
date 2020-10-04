@@ -20,6 +20,7 @@ import org.apache.uima.jcas.cas.FSArray;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction;
+import de.unidue.ltl.spelling.types.SuggestedActionWithOrigin;
 
 /**
  * Supertype for generate and rank methods
@@ -69,7 +70,6 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 		SuggestionCostTuples tuples = new SuggestionCostTuples();
 
 		while (tuples.size() < numberOfCandidatesToGenerate) {
-
 			if (entries.hasNext()) {
 				Entry<Float, List<String>> entry = entries.next();
 
@@ -82,7 +82,6 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 				break;
 			}
 		}
-		
 		return tuples;
 	}
 
@@ -106,12 +105,13 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 			}
 
 			for (SuggestionCostTuple tuple : tuples) {
-				SuggestedAction action = new SuggestedAction(aJCas);
+				SuggestedActionWithOrigin action = new SuggestedActionWithOrigin(aJCas);
 				action.setReplacement(tuple.getSuggestion());
 				action.setCertainty(tuple.getCost());
+				action.setMethodThatGeneratedThisSuggestion(this.getClass().getSimpleName());
 				actions.set(i, action);
 				i++;
-				System.out.println("Added new correction candidate:\t" + anomaly.getCoveredText() + "\t"
+				System.out.println("Added new correction candidate ("+this.getClass().getSimpleName()+"):\t" + anomaly.getCoveredText() + "\t"
 						+ action.getReplacement() + "\t" + action.getCertainty());
 			}
 			anomaly.setSuggestions(actions);

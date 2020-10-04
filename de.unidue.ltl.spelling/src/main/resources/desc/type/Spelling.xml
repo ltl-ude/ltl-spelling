@@ -33,6 +33,21 @@
           <description/>
           <rangeTypeName>uima.cas.String</rangeTypeName>
         </featureDescription>
+      <featureDescription>
+          <name>methodThatGeneratedTheCorrection</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      <featureDescription>
+          <name>goldStandardCorrection</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+        <featureDescription>
+          <name>spellingEngineCorrection</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
       </features>
     </typeDescription>
   <typeDescription>
@@ -56,6 +71,30 @@
       <name>de.unidue.ltl.spelling.types.StartOfSentence</name>
       <description/>
       <supertypeName>uima.tcas.Annotation</supertypeName>
+    </typeDescription>
+  <typeDescription>
+      <name>de.unidue.ltl.spelling.types.SuggestedActionWithOrigin</name>
+      <description/>
+      <supertypeName>de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction</supertypeName>
+      <features>
+        <featureDescription>
+          <name>methodThatGeneratedThisSuggestion</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>
+    </typeDescription>
+  <typeDescription>
+      <name>de.unidue.ltl.spelling.types.SpellingText</name>
+      <description/>
+      <supertypeName>uima.tcas.Annotation</supertypeName>
+      <features>
+        <featureDescription>
+          <name>id</name>
+          <description/>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>
     </typeDescription>
   </types>
 </typeSystemDescription>

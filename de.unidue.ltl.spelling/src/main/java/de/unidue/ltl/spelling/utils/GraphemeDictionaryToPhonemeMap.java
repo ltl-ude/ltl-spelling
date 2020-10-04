@@ -15,15 +15,20 @@ public class GraphemeDictionaryToPhonemeMap {
 	public static void main(String[] args) throws IOException {
 		
 		//deu-DE OR eng-US
-		processDictionary(
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE.txt",
-				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map_noHyphens.txt",
-				"deu-DE");
+//		processDictionary(
+//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE.txt",
+//				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_DE_phoneme_map_noHyphens.txt",
+//				"deu-DE");
 		
 //		processDictionary(
 //				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US.txt",
 //				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_en_US_phoneme_map.txt",
 //				"deu-DE");
+		
+		processDictionary(
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_Czech_dict.txt",
+				"/Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/dictionaries/hunspell_Czech_phoneme_map.txt",
+				"cze-CZ");
 	}
 	
 	private static void processDictionary(String path,String outputFileName, String language) throws IOException {
@@ -43,6 +48,7 @@ public class GraphemeDictionaryToPhonemeMap {
 		int stepSize = 10000;
 		int numSteps = (int) Math.floor(graphemes.size()/stepSize);
 		for(int i = 0; i<=numSteps; i++) {
+			System.out.println("Step: "+i+"/"+numSteps);
 			if(i == numSteps) {
 				subList = graphemes.subList(i*stepSize, graphemes.size()-1);
 			}

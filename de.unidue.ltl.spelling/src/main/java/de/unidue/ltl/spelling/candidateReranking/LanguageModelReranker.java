@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -14,7 +13,6 @@ import org.apache.uima.fit.descriptor.ExternalResource;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSArray;
-import org.apache.uima.resource.ResourceInitializationException;
 import org.dkpro.core.api.frequency.provider.FrequencyCountProvider;
 
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
@@ -41,15 +39,12 @@ public class LanguageModelReranker extends JCasAnnotator_ImplBase {
 	@ConfigurationParameter(name = PARAM_SPECIFIC_LM_WEIGHT, mandatory = false, defaultValue = "0.5f")
 	private float specificLMweight;
 
-//	@Override
-//	public void initialize(UimaContext context) throws ResourceInitializationException {
-//		super.initialize(context);
-//	};
-
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
-		//Index to lookup the sentence an anomaly is contained in
+		System.out.println("SPECIFIC: "+fcp_specific.getID());
+		
+		// Index to lookup the sentence an anomaly is contained in
 		Map<SpellingAnomaly, Collection<Sentence>> index = JCasUtil.indexCovering(aJCas, SpellingAnomaly.class,
 				Sentence.class);
 
@@ -80,7 +75,7 @@ public class LanguageModelReranker extends JCasAnnotator_ImplBase {
 
 				int minIndex = -1;
 				int maxIndex = -1;
-				
+
 				// Should never happen
 				if (anomalyIndex == -1) {
 					System.out.println("Could not find anomaly " + anomaly.getCoveredText() + " in sentence "
@@ -123,25 +118,27 @@ public class LanguageModelReranker extends JCasAnnotator_ImplBase {
 								}
 							}
 							try {
-								System.out.println("Probability of " + ngram + " in main LM: " + fcp.getProbability(ngram));
+//								System.out.println("Probability of " + ngram + " in main LM: " + fcp.getProbability(ngram));
 								double defaultLMprob = fcp.getProbability(ngram);
 								if (defaultLMprob > 0) {
 									probabilityInDefaultLM = probabilityInDefaultLM * defaultLMprob;
 								} else {
-									probabilityInDefaultLM = probabilityInDefaultLM * 1/fcp.getNrOfNgrams(ngramSizeToConsider);
+									probabilityInDefaultLM = probabilityInDefaultLM * 1
+											/ fcp.getNrOfNgrams(ngramSizeToConsider);
 								}
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
 							if (!(fcp_specific instanceof DummyFrequencyCountProvider)) {
 								try {
-									System.out.println("Probability of " + ngram + " in specific LM: " + fcp_specific.getProbability(ngram));
+//									System.out.println("Probability of " + ngram + " in specific LM: " + fcp_specific.getProbability(ngram));
 									double specificLMprob = fcp_specific.getProbability(ngram);
-									if(specificLMprob > 0) {
-									probabilityInCustomLM = probabilityInCustomLM * fcp_specific.getProbability(ngram);
-									}
-									else {
-										probabilityInCustomLM = probabilityInCustomLM * 1/fcp_specific.getNrOfNgrams(ngramSizeToConsider);
+									if (specificLMprob > 0) {
+										probabilityInCustomLM = probabilityInCustomLM
+												* fcp_specific.getProbability(ngram);
+									} else {
+										probabilityInCustomLM = probabilityInCustomLM * 1
+												/ fcp_specific.getNrOfNgrams(ngramSizeToConsider);
 									}
 								} catch (IOException e) {
 									e.printStackTrace();
@@ -157,7 +154,8 @@ public class LanguageModelReranker extends JCasAnnotator_ImplBase {
 						} else {
 							probability = probabilityInDefaultLM;
 						}
-						System.out.println("Putting probability for "+anomaly.getSuggestions(k)+": "+probability);
+//						System.out.println("Putting probability for " + anomaly.getSuggestions(k).getReplacement()
+//								+ ": " + probability);
 						LMProbabilities.put(anomaly.getSuggestions(k), (float) probability);
 						if (probability > maxProbability) {
 							maxProbability = probability;
@@ -166,7 +164,9 @@ public class LanguageModelReranker extends JCasAnnotator_ImplBase {
 				}
 
 				for (SuggestedAction suggestedAction : LMProbabilities.keySet()) {
-					System.out.println("Final probability: " + LMProbabilities.get(suggestedAction));
+//					System.out.println("Final probability of " + suggestedAction.getReplacement() + ": "
+//							+ LMProbabilities.get(suggestedAction) + " (normalized: "
+//							+ (float) maxProbability / LMProbabilities.get(suggestedAction) + ")");
 					suggestedAction.setCertainty((float) maxProbability / LMProbabilities.get(suggestedAction));
 				}
 			}

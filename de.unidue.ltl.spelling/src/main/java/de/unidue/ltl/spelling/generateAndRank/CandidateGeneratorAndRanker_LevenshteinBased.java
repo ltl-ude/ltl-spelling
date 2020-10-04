@@ -27,7 +27,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly;
  */
 
 public abstract class CandidateGeneratorAndRanker_LevenshteinBased extends CandidateGeneratorAndRanker {
-	
+
 	/**
 	 * Whether to permit transposition as a modification operation, e.g. apply
 	 * Damerau-Levenshtein distance as opposed to standard Levenshtein Distance.
@@ -72,10 +72,25 @@ public abstract class CandidateGeneratorAndRanker_LevenshteinBased extends Candi
 			Map<Float, List<String>> rankedCandidates = new TreeMap<Float, List<String>>();
 
 			// First: only take words of same length as candidate
-			calculateCostsForDict(sortedDictionary.get(lengthOfMisspelling), misspelling, rankedCandidates);
+			try {
+				calculateCostsForDict(sortedDictionary.get(lengthOfMisspelling), misspelling, rankedCandidates);
+			} catch (NullPointerException e) {
+				Set<String> subDict = new HashSet<String>();
+				if (lengthOfMisspelling - 1 > 0) {
+					try {
+						subDict.addAll(sortedDictionary.get(lengthOfMisspelling - 1));
+					} catch (NullPointerException f) {
+					}
+				}
+				try {
+					subDict.addAll(sortedDictionary.get(lengthOfMisspelling + 1));
+				} catch (NullPointerException g) {
+				}
+			}
 
 			// Second: see what the max cost is to fill the number of required candidates
 			// Repeat cost calculation with candidates +- this length
+			// TODO: Handle case of no candidates having been found at this point
 			Iterator<Entry<Float, List<String>>> entries = rankedCandidates.entrySet().iterator();
 			int testNumberOfCandidates = 0;
 			float maxCostRequiredToFillCandidates = 0;
