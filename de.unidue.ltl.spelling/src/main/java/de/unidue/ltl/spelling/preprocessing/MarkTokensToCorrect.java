@@ -29,13 +29,14 @@ public class MarkTokensToCorrect extends JCasAnnotator_ImplBase {
 
 			if (!JCasUtil.selectCovered(TokenToConsider.class, token).isEmpty()
 					&& JCasUtil.selectCovered(KnownWord.class, token).isEmpty()) {
+
 				ExtendedSpellingAnomaly anomaly = new ExtendedSpellingAnomaly(aJCas);
 				anomaly.setBegin(token.getBegin());
 				anomaly.setEnd(token.getEnd());
 				anomaly.setCorrected(false);
 				anomaly.setMisspelledTokenText(token.getCoveredText());
 				anomaly.addToIndexes();
-				System.out.println("Marked as SpellingAnomaly:\t" + token.getCoveredText());
+//				System.out.println("Marked as SpellingAnomaly:\t" + token.getCoveredText());
 			}
 		}
 	}

@@ -1,7 +1,5 @@
 package de.unidue.ltl.spelling.preprocessing;
 
-import java.util.Collection;
-
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
@@ -28,11 +26,9 @@ public class NumericAnnotator extends JCasAnnotator_ImplBase {
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
-		Collection<Token> tokens = JCasUtil.select(aJCas, Token.class);
-
-		for (Token token : tokens) {
+		for (Token token : JCasUtil.select(aJCas, Token.class)) {
 			if (token.getCoveredText().matches("[:0-9-\\+\\*\\.,=x/\\\\]*[0-9]+[:0-9-\\+\\*\\.,=x/\\\\]*")) {
-				System.out.println("Found a number:\t" + token.getCoveredText());
+//				System.out.println("Found a number:\t" + token.getCoveredText());
 				Numeric numeric = new Numeric(aJCas);
 				numeric.setBegin(token.getBegin());
 				numeric.setEnd(token.getEnd());

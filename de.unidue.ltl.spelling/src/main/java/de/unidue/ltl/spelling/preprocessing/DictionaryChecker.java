@@ -27,11 +27,10 @@ import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.SimpleDictionary;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.DecompoundedWord;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.Fragment;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.splitter.LeftToRightSplitterAlgorithm;
-import de.unidue.ltl.spelling.resources.LeftToRightSplitterAlgorithm_NotLowercasing;
 import de.unidue.ltl.spelling.types.KnownWord;
 import de.unidue.ltl.spelling.types.StartOfSentence;
 import de.unidue.ltl.spelling.types.TokenToConsider;
-import edu.stanford.nlp.util.StringUtils;
+
 import eu.openminted.share.annotations.api.DocumentationResource;
 
 /**
@@ -46,29 +45,25 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 
 public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
-	// Language model to resolve compounds (only for German)
-	// TODO: As of now, a dummy must be put in place in case no model shall be used
+//	Language model to resolve compounds (only used for German)
+//	TODO: Dummy must be put in place in case no model shall be used
 	public static final String RES_LANGUAGE_MODEL_FOR_COMPOUND_LOOKUP = "languageModelForCompoundChecking";
 	@ExternalResource(key = RES_LANGUAGE_MODEL_FOR_COMPOUND_LOOKUP)
 	private FrequencyCountProvider fcp;
 
-	/**
-	 * Language of processed content.
-	 */
 	public static final String PARAM_LANGUAGE = "language";
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
 	private String language;
 
 	/**
-	 * Path to a dictionary against which to check the TokensToConsider. Must
-	 * contain one word per line.
+	 * Path to a dictionary against which to check the TokensToConsider.
 	 */
 	public static final String PARAM_DICTIONARY_FILE = "dictionaryPath";
 	@ConfigurationParameter(name = PARAM_DICTIONARY_FILE, mandatory = true)
 	private String dictionaryPath;
 	
 	/**
-	 * Path to an auxiliary dictionary. Must contain one word per line.
+	 * Path to an auxiliary dictionary (optional).
 	 */
 	public static final String PARAM_AUXILIARY_DICTIONARY_FILE = "auxiliaryDictionaryPath";
 	@ConfigurationParameter(name = PARAM_AUXILIARY_DICTIONARY_FILE, mandatory = false)
@@ -76,12 +71,9 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 	private Set<String> dictionaryWords = new HashSet<String>();
 
-	// If German is being processed, check for compounds
+//	If German is being processed, check for compounds
 	LeftToRightSplitterAlgorithm splitter = null;
 	LinkingMorphemes linkingMorphemesDE = new LinkingMorphemes(new String[] { "e", "s", "es", "n", "en", "er", "ens" });
-
-//	private final String defaultDictEN = "src/main/resources/dictionaries/hunspell_en_US.txt";
-//	private final String defaultDictDE = "src/main/resources/dictionaries/hunspell_DE.txt";
 
 	@Override
 	public void initialize(UimaContext context) throws ResourceInitializationException {
@@ -93,8 +85,6 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 		if (language.equals("de")) {
 			initializeCompoundSplitter(dictionaryPath);
 		}
-		
-
 	};
 
 	private void readDictionary(String dictionaryPath) {
@@ -122,12 +112,12 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		System.out.println();
+
 		for (TokenToConsider consider : JCasUtil.select(aJCas, TokenToConsider.class)) {
 
-			// If token is beginning of a new sentence: process in lowercase as well
+//			 If token is beginning of a new sentence: process lowercased as well
 			if (!JCasUtil.selectCovered(StartOfSentence.class, consider).isEmpty()) {
-				System.out.println("Also checking in lowercase, because\t" + consider.getCoveredText() + "\t is BOS");
+//				System.out.println("Also checking in lowercase, because\t" + consider.getCoveredText() + "\t is BOS");
 				checkIfWordIsKnown(aJCas, consider, true);
 			} else {
 				checkIfWordIsKnown(aJCas, consider, false);
@@ -144,7 +134,7 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 			word.setBegin(token.getBegin());
 			word.setEnd(token.getEnd());
 			word.addToIndexes();
-			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
+//			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
 		}
 		else if (language.equals("it") && currentWord.contains("'")) {
 			String[] wordParts = currentWord.split("'");
@@ -155,18 +145,16 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 					word.setBegin(token.getBegin());
 					word.setEnd(token.getEnd());
 					word.addToIndexes();
-					System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
+//					System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
 				}
 			}
 		}
 		// Only for German: if splitter finds a compound: is also a KnownWord.
 		else if (language.equals("de")) {
 
-			// errors where a space was omitted ("heuteAbend") are marked
+			// errors where a space was omitted ("heuteAbend") are returned
 			// as compounds, therefore include LM probability check: only accept compound if
 			// it is less probable to be observed separated than written as a compound
-
-			System.out.println("Current word to split: "+currentWord);
 			
 			if (splitter.split(currentWord).getSplits().get(0).isCompound()) {
 
@@ -175,7 +163,6 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 //					System.out.println(currentWord + "\tin LM:\t" + fcp.getFrequency(currentWord));
 					freqAsCompound = fcp.getFrequency(currentWord);
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
@@ -183,6 +170,7 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 				for (DecompoundedWord split : splitter.split(currentWord).getSplits()) {
 					String phraseToCheck = "";
+					
 					for (Fragment subword : split.getSplits()) {
 						String word = subword.getWordWithMorpheme();
 						if(!currentWord.contains(word)) {
@@ -191,14 +179,12 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 						}
 						phraseToCheck = phraseToCheck + " " + word;
 					}
-//					System.out.println("phrase to check: "+phraseToCheck);
+					
 					double freqDecompounded = 0;
-
 					try {
 //						System.out.println(phraseToCheck + "\tin LM:\t" + fcp.getFrequency(phraseToCheck));
 						freqDecompounded = fcp.getFrequency(phraseToCheck);
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					
@@ -208,15 +194,17 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 				}
 
 				if (isCompound) {
+					
 					KnownWord word = new KnownWord(aJCas);
 					word.setBegin(token.getBegin());
 					word.setEnd(token.getEnd());
 					word.addToIndexes();
-					System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(compound of words found in "
-							+ dictionaryPath + ")");
-				} else {
-					System.out.println("Did consider, but is not a compound: " + currentWord);
-				}
+//					System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(compound of words found in "
+//							+ dictionaryPath + ")");
+				} 
+//				else {
+//					System.out.println("Did consider, but is not a compound: " + currentWord);
+//				}
 			}
 		}
 	}

@@ -1,7 +1,5 @@
 package de.unidue.ltl.spelling.preprocessing;
 
-import java.util.Collection;
-
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
@@ -28,12 +26,10 @@ public class PunctuationAnnotator extends JCasAnnotator_ImplBase {
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
-		Collection<Token> tokens = JCasUtil.select(aJCas, Token.class);
-
-		for (Token token : tokens) {
+		for (Token token : JCasUtil.select(aJCas, Token.class)) {
 
 			if (token.getCoveredText().matches("^[\\[\\];:!?.,\"'\\-´`'()<>\\+]+$")) {
-				System.out.println("Found punctuation:\t" + token.getCoveredText());
+//				System.out.println("Found punctuation:\t" + token.getCoveredText());
 				Punctuation punct = new Punctuation(aJCas);
 				punct.setBegin(token.getBegin());
 				punct.setEnd(token.getEnd());

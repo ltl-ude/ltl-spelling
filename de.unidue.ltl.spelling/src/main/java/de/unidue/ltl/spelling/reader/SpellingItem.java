@@ -3,7 +3,7 @@ package de.unidue.ltl.spelling.reader;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SpellingItem{
+public class SpellingItem {
 
 	private String corpusName;
 	private String id;
@@ -15,23 +15,24 @@ public class SpellingItem{
 		return this.text;
 	}
 
-	public String getId(){
+	public String getId() {
 		return this.id;
 	}
-	
+
 	public String getCorpusName() {
 		return this.corpusName;
 	}
-	
+
 	public Map<String, String> getCorrections() {
 		return this.corrections;
 	}
-	
-	public Map<String, String> getGrammarCorrections(){
+
+	public Map<String, String> getGrammarCorrections() {
 		return this.grammarCorrections;
 	}
 
-	public SpellingItem(String corpusName, String id, String text, Map<String, String> correctionMap, Map<String, String> grammarCorrectionMap){
+	public SpellingItem(String corpusName, String id, String text, Map<String, String> correctionMap,
+			Map<String, String> grammarCorrectionMap) {
 		this.text = text;
 		this.id = id;
 		this.corpusName = corpusName;

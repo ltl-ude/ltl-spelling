@@ -22,7 +22,6 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 
 @ResourceMetaData(name = "")
 @DocumentationResource("")
-// Input unclear as user is free to pass any desired types
 @TypeCapability(inputs = { "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token" }, outputs = {
 		"de.unidue.ltl.spelling.types.TokenToConsider" })
 
@@ -40,20 +39,17 @@ public class MarkTokensToConsider extends JCasAnnotator_ImplBase {
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
-		boolean ignoreToken = false;
 		for (Token token : JCasUtil.select(aJCas, Token.class)) {
-			ignoreToken = false;
+			boolean ignoreToken = false;
 			// Check if token has annotation of any of the types to be excluded
 			for (String type : typesToIgnore) {
 				try {
 					@SuppressWarnings("unchecked")
 					Class<? extends Annotation> typeToIgnore = (Class<? extends Annotation>) Class.forName(type);
 					if (JCasUtil.contains(aJCas, token, typeToIgnore)) {
-						System.out.println("Ignoring:\t" + token.getCoveredText()
-								+ "\t because it was annotated with type '" + type + "'.");
+//						System.out.println("Ignoring:\t" + token.getCoveredText() + "\t because it was annotated with type '" + type + "'.");
 						ignoreToken = true;
 					}
-					// Never thrown as JCasUtil.contains throws an exception first
 				} catch (ClassCastException e) {
 					getContext().getLogger().log(Level.WARNING, "Type '" + type
 							+ "' was passed as a type to be ignored, but it does not extend 'org.apache.uima.jcas.tcas.Annotation'.");
@@ -66,11 +62,12 @@ public class MarkTokensToConsider extends JCasAnnotator_ImplBase {
 			}
 			// If none of the types matched, mark token as one to consider
 			if (!ignoreToken) {
+
 				TokenToConsider consider = new TokenToConsider(aJCas);
 				consider.setBegin(token.getBegin());
 				consider.setEnd(token.getEnd());
 				consider.addToIndexes();
-				System.out.println("Considering:\t" + token.getCoveredText());
+//				System.out.println("Considering:\t" + token.getCoveredText());
 			}
 		}
 	}

@@ -10,7 +10,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 
 public class POStoNEAnnotator extends JCasAnnotator_ImplBase {
-	
+
 	/**
 	 * POS tag to be considered a NE.
 	 */
@@ -20,20 +20,17 @@ public class POStoNEAnnotator extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		
-		for(Token token : JCasUtil.select(aJCas, Token.class)) {
-			
-			if(token.getPosValue().contentEquals(nePosTag)) {
-				
+
+		for (Token token : JCasUtil.select(aJCas, Token.class)) {
+
+			if (token.getPosValue().contentEquals(nePosTag)) {
+
 				NamedEntity ne = new NamedEntity(aJCas);
 				ne.setBegin(token.getBegin());
 				ne.setEnd(token.getEnd());
 				ne.addToIndexes();
-				
-			}
-			
-		}
-		
-	}
 
+			}
+		}
+	}
 }
