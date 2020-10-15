@@ -84,7 +84,7 @@ public class EvaluateErrorDetection extends JCasAnnotator_ImplBase {
 	public void collectionProcessComplete() throws AnalysisEngineProcessException {
 
 		try {
-			String eval_dir = SpellingConstants.EVALUATION_DATA_PATH + configName;
+			String eval_dir = SpellingConstants.EVALUATION_DATA_PATH + "ErrorDetection_" + configName;
 			File dir = new File(eval_dir);
 			dir.mkdir();
 
