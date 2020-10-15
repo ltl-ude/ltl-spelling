@@ -66,6 +66,13 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 	public static final String PARAM_DICTIONARY_FILE = "dictionaryPath";
 	@ConfigurationParameter(name = PARAM_DICTIONARY_FILE, mandatory = true)
 	private String dictionaryPath;
+	
+	/**
+	 * Path to an auxiliary dictionary. Must contain one word per line.
+	 */
+	public static final String PARAM_AUXILIARY_DICTIONARY_FILE = "auxiliaryDictionaryPath";
+	@ConfigurationParameter(name = PARAM_AUXILIARY_DICTIONARY_FILE, mandatory = false)
+	private String auxiliaryDictionaryPath;
 
 	private Set<String> dictionaryWords = new HashSet<String>();
 
@@ -80,9 +87,14 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 	public void initialize(UimaContext context) throws ResourceInitializationException {
 		super.initialize(context);
 		readDictionary(dictionaryPath);
+		if(auxiliaryDictionaryPath != null) {
+			readDictionary(auxiliaryDictionaryPath);
+		}
 		if (language.equals("de")) {
 			initializeCompoundSplitter(dictionaryPath);
 		}
+		
+
 	};
 
 	private void readDictionary(String dictionaryPath) {
@@ -134,42 +146,62 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 			word.addToIndexes();
 			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
 		}
+		else if (language.equals("it") && currentWord.contains("'")) {
+			String[] wordParts = currentWord.split("'");
+			if(wordParts.length == 2) {
+				if(dictionaryWords.contains(wordParts[0]) && dictionaryWords.contains(wordParts[1])) {
+					KnownWord word = new KnownWord(aJCas);
+					word.setPathToDictItWasFoundIn(dictionaryPath);
+					word.setBegin(token.getBegin());
+					word.setEnd(token.getEnd());
+					word.addToIndexes();
+					System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
+				}
+			}
+		}
 		// Only for German: if splitter finds a compound: is also a KnownWord.
 		else if (language.equals("de")) {
 
-			// TODO: as of now, errors where a space was omitted ("heuteAbend") are marked
+			// errors where a space was omitted ("heuteAbend") are marked
 			// as compounds, therefore include LM probability check: only accept compound if
 			// it is less probable to be observed separated than written as a compound
 
+			System.out.println("Current word to split: "+currentWord);
+			
 			if (splitter.split(currentWord).getSplits().get(0).isCompound()) {
 
-				boolean isCompound = true;
+				double freqAsCompound = 0;
+				try {
+//					System.out.println(currentWord + "\tin LM:\t" + fcp.getFrequency(currentWord));
+					freqAsCompound = fcp.getFrequency(currentWord);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				
+				boolean isCompound = true;
+
 				for (DecompoundedWord split : splitter.split(currentWord).getSplits()) {
-					System.out.println("Splits: " + split.getSplits() + " for " + currentWord);
 					String phraseToCheck = "";
-					for(Fragment subword : split.getSplits()) {
-						String word = subword.getWord();
-						System.out.println(word);
+					for (Fragment subword : split.getSplits()) {
+						String word = subword.getWordWithMorpheme();
+						if(!currentWord.contains(word)) {
+							// Assume it is uppercased in the original word
+							word = word.substring(0,1).toUpperCase() + word.substring(1);
+						}
 						phraseToCheck = phraseToCheck + " " + word;
 					}
-					double freqAsCompound = 0;
+//					System.out.println("phrase to check: "+phraseToCheck);
 					double freqDecompounded = 0;
 
 					try {
-						System.out.println(phraseToCheck + "\tin LM:\t" + fcp.getFrequency(phraseToCheck));
+//						System.out.println(phraseToCheck + "\tin LM:\t" + fcp.getFrequency(phraseToCheck));
 						freqDecompounded = fcp.getFrequency(phraseToCheck);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					try {
-						System.out.println(currentWord + "\tin LM:\t" + fcp.getFrequency(currentWord));
-						freqAsCompound = fcp.getFrequency(currentWord);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					
 					if (freqAsCompound <= freqDecompounded) {
 						isCompound = false;
 					}
@@ -182,9 +214,8 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 					word.addToIndexes();
 					System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(compound of words found in "
 							+ dictionaryPath + ")");
-				}
-				else {
-					System.out.println("Did consider, but is not a compound: "+currentWord);
+				} else {
+					System.out.println("Did consider, but is not a compound: " + currentWord);
 				}
 			}
 		}

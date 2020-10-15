@@ -31,8 +31,7 @@ public class NumericAnnotator extends JCasAnnotator_ImplBase {
 		Collection<Token> tokens = JCasUtil.select(aJCas, Token.class);
 
 		for (Token token : tokens) {
-			if (token.getCoveredText().matches("[0-9-]+")) {
-
+			if (token.getCoveredText().matches("[:0-9-\\+\\*\\.,=x/\\\\]*[0-9]+[:0-9-\\+\\*\\.,=x/\\\\]*")) {
 				System.out.println("Found a number:\t" + token.getCoveredText());
 				Numeric numeric = new Numeric(aJCas);
 				numeric.setBegin(token.getBegin());

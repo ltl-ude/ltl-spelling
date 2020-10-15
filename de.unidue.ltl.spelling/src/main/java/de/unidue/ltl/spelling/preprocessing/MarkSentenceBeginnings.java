@@ -31,7 +31,7 @@ public class MarkSentenceBeginnings extends JCasAnnotator_ImplBase{
 			startOfSentence.setBegin(first.getBegin());
 			startOfSentence.setEnd(first.getEnd());
 			startOfSentence.addToIndexes();
-			System.out.println("Marked\t"+first.getCoveredText()+"\t as sentence beginning.");
+//			System.out.println("Marked\t"+first.getCoveredText()+"\t as sentence beginning.");
 		}
 	}
 }

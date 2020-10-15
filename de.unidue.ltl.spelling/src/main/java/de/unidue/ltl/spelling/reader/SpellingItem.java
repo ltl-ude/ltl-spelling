@@ -9,6 +9,7 @@ public class SpellingItem{
 	private String id;
 	private String text;
 	Map<String, String> corrections = new HashMap<String, String>();
+	Map<String, String> grammarCorrections = new HashMap<String, String>();
 
 	public String getText() {
 		return this.text;
@@ -25,11 +26,16 @@ public class SpellingItem{
 	public Map<String, String> getCorrections() {
 		return this.corrections;
 	}
+	
+	public Map<String, String> getGrammarCorrections(){
+		return this.grammarCorrections;
+	}
 
-	public SpellingItem(String corpusName, String id, String text, Map<String, String> correctionMap){
+	public SpellingItem(String corpusName, String id, String text, Map<String, String> correctionMap, Map<String, String> grammarCorrectionMap){
 		this.text = text;
 		this.id = id;
 		this.corpusName = corpusName;
 		this.corrections = correctionMap;
+		this.grammarCorrections = grammarCorrectionMap;
 	}
 }

@@ -134,7 +134,24 @@
     <artifactId>de.tudarmstadt.ukp.dkpro.core.opennlp-model-token-it-maxent</artifactId>
     <version>20130618.0</version>
 	</dependency>
-
+	
+	<dependency>
+    <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+    <artifactId>de.tudarmstadt.ukp.dkpro.core.opennlp-model-tagger-de-perceptron</artifactId>
+    <version>20120616.1</version>
+	</dependency>
+	
+	<dependency>
+    <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+    <artifactId>de.tudarmstadt.ukp.dkpro.core.treetagger-asl</artifactId>
+    <version>1.10.0</version>
+	</dependency>
+	
+	<dependency>
+    <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
+    <artifactId>de.tudarmstadt.ukp.dkpro.core.api.ner-asl</artifactId>
+    <version>1.10.0</version>
+	</dependency>
   	
   </dependencies>
   
