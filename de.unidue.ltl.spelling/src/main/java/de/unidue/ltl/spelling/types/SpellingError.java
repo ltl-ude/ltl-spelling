@@ -11,7 +11,7 @@ import org.apache.uima.jcas.tcas.Annotation;
 
 
 /** 
- * Updated by JCasGen Wed Oct 14 16:47:11 CEST 2020
+ * Updated by JCasGen Thu Oct 22 15:32:28 CEST 2020
  * XML source: /Users/mariebexte/ltl-spelling/de.unidue.ltl.spelling/src/main/resources/desc/type/Spelling.xml
  * @generated */
 public class SpellingError extends Annotation {
@@ -94,6 +94,28 @@ public class SpellingError extends Annotation {
     if (SpellingError_Type.featOkTst && ((SpellingError_Type)jcasType).casFeat_correction == null)
       jcasType.jcas.throwFeatMissing("correction", "de.unidue.ltl.spelling.types.SpellingError");
     jcasType.ll_cas.ll_setStringValue(addr, ((SpellingError_Type)jcasType).casFeatCode_correction, v);}    
+   
+    
+  //*--------------*
+  //* Feature: errorType
+
+  /** getter for errorType - gets 
+   * @generated
+   * @return value of the feature 
+   */
+  public String getErrorType() {
+    if (SpellingError_Type.featOkTst && ((SpellingError_Type)jcasType).casFeat_errorType == null)
+      jcasType.jcas.throwFeatMissing("errorType", "de.unidue.ltl.spelling.types.SpellingError");
+    return jcasType.ll_cas.ll_getStringValue(addr, ((SpellingError_Type)jcasType).casFeatCode_errorType);}
+    
+  /** setter for errorType - sets  
+   * @generated
+   * @param v value to set into the feature 
+   */
+  public void setErrorType(String v) {
+    if (SpellingError_Type.featOkTst && ((SpellingError_Type)jcasType).casFeat_errorType == null)
+      jcasType.jcas.throwFeatMissing("errorType", "de.unidue.ltl.spelling.types.SpellingError");
+    jcasType.ll_cas.ll_setStringValue(addr, ((SpellingError_Type)jcasType).casFeatCode_errorType, v);}    
   }
 
     

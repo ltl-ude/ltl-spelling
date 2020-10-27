@@ -13,25 +13,61 @@ import de.unidue.ltl.spelling.types.StartOfSentence;
 import eu.openminted.share.annotations.api.DocumentationResource;
 
 /**
- * Marks first token of each sentence to enable treating sentence beginnings differently.
+ * Marks first token of each sentence to enable treating sentence beginnings
+ * differently.
  */
 
 @ResourceMetaData(name = "")
 @DocumentationResource("")
-@TypeCapability(inputs = { "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token" }, outputs = {
-		"de.unidue.ltl.spelling.types.StartOfSentence" })
+@TypeCapability(inputs = { "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence",
+		"de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token" }, outputs = {
+				"de.unidue.ltl.spelling.types.StartOfSentence" })
 
-public class MarkSentenceBeginnings extends JCasAnnotator_ImplBase{
+public class MarkSentenceBeginnings extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		for(Sentence sentence : JCasUtil.select(aJCas, Sentence.class)) {
+		for (Sentence sentence : JCasUtil.select(aJCas, Sentence.class)) {
 			Token first = JCasUtil.selectCovered(Token.class, sentence).get(0);
 			StartOfSentence startOfSentence = new StartOfSentence(aJCas);
 			startOfSentence.setBegin(first.getBegin());
 			startOfSentence.setEnd(first.getEnd());
 			startOfSentence.addToIndexes();
-//			System.out.println("Marked\t"+first.getCoveredText()+"\t as sentence beginning.");
+//			System.out.println("Marked\t"+first.getCoveredText()+"\t as sentence beginning, because it is the first token of a sentence.");
+		}
+
+		boolean previousTokenWasPunctuation = false;
+		boolean foundClosingPunctuation = true;
+		for (Token token : JCasUtil.select(aJCas, Token.class)) {
+			if (token.getCoveredText().matches("[\"]")) {
+				if (foundClosingPunctuation) {
+					previousTokenWasPunctuation = true;
+					foundClosingPunctuation = false;
+				} else {
+					foundClosingPunctuation = true;
+				}
+			} else if (previousTokenWasPunctuation) {
+				StartOfSentence startOfSentence = new StartOfSentence(aJCas);
+				startOfSentence.setBegin(token.getBegin());
+				startOfSentence.setEnd(token.getEnd());
+				startOfSentence.addToIndexes();
+				previousTokenWasPunctuation = false;
+//				System.out.println("Marked\t"+token.getCoveredText()+"\t as sentence beginning, because of the previous token.");
+			}
+		}
+
+		previousTokenWasPunctuation = false;
+		for (Token token : JCasUtil.select(aJCas, Token.class)) {
+			if (token.getCoveredText().matches("[:„]")) {
+				previousTokenWasPunctuation = true;
+			} else if (previousTokenWasPunctuation) {
+				StartOfSentence startOfSentence = new StartOfSentence(aJCas);
+				startOfSentence.setBegin(token.getBegin());
+				startOfSentence.setEnd(token.getEnd());
+				startOfSentence.addToIndexes();
+				previousTokenWasPunctuation = false;
+//				System.out.println("*** Marked\t"+token.getCoveredText()+"\t as sentence beginning, because of the previous token.");
+			}
 		}
 	}
 }

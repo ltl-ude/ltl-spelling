@@ -29,7 +29,6 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 @ResourceMetaData(name = "")
 @DocumentationResource("")
 @TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" },
-		// No real outputs, just SuggestedActions as entries to the SpellingAnomalies?
 		outputs = { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
 public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRanker_LevenshteinBased {
 
@@ -93,7 +92,7 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 
 	private Map<String, String> graphemeToPhonemeMap;
 
-	// To keep track of missing weights and alert user only once
+	// To keep track of missing weights and alert user only once in case something is missing
 	private Set<String> missingWeights = new HashSet<String>();
 
 	@Override

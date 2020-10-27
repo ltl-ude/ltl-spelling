@@ -29,7 +29,9 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 	@Override
 	public void process(JCas aInput, JCas aOutput) throws AnalysisEngineProcessException {
 		for (ExtendedSpellingAnomaly anomaly : select(aInput, ExtendedSpellingAnomaly.class)) {
+			
 			if (anomaly.getSuggestions() != null) {
+				
 				FSArray suggestions = anomaly.getSuggestions();
 				Float minCost = Float.MAX_VALUE;
 				Map<String,String> bestReplacements = new TreeMap<String,String>();
@@ -55,7 +57,7 @@ public class SpellingAnomalyReplacer extends JCasTransformerChangeBased_ImplBase
 						replacement = replacement.substring(0, 1).toUpperCase() + replacement.substring(1);
 					}
 					System.out.println(
-							"Replacing anomaly:\t'" + anomaly.getCoveredText() + "'\twith\t'" + replacement + "'.");
+							"Replacing anomaly:\t'" + anomaly.getCoveredText() + "'\twith\t'" + replacement + "' (cost: "+minCost+").");
 					replace(anomaly.getBegin(), anomaly.getEnd(), replacement);
 					anomaly.setCorrected(true);
 					anomaly.setMethodThatGeneratedTheCorrection(replacementEntry.getValue());

@@ -12,19 +12,30 @@ import org.apache.uima.resource.ResourceInitializationException;
 import org.uimafit.pipeline.SimplePipeline;
 
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.unidue.ltl.spelling.evaluation.OverlapOfCorrectionsWithDictionary;
-import de.unidue.ltl.spelling.normalization.TextPrinter;
+import de.unidue.ltl.spelling.normalization.ErrorRatePrinter;
+import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
 import de.unidue.ltl.spelling.reader.SpellingReader;
 
 public class CorpusStatisticsExperiment {
 
 	public static void main(String[] args) throws UIMAException, IOException {
 		
-		System.out.println("CItA");
-		evalCItA();
-		System.out.println();
-		System.out.println("Litkey");
-		evalLitkey();
+//		System.out.println("CItA");
+//		evalCItA();
+//		System.out.println();
+//		System.out.println("Litkey");
+//		evalLitkey();
+//		System.out.println();
+//		System.out.println("Merlin DE");
+//		evalMerlinDE();
+//		System.out.println();
+//		System.out.println("Merlin IT");
+//		evalMerlinIT();
+//		System.out.println();
+//		System.out.println("Merlin CZ");
+		evalMerlinCZ();
 	}
 
 	public static void evalCItA() throws UIMAException, IOException {
@@ -42,18 +53,51 @@ public class CorpusStatisticsExperiment {
 		getErrorRate(litkey_lang, litkey_corpus);
 		getOverlapBetweenCorrectionsAndDict(litkey_lang, litkey_corpus, litkey_dict);
 	}
+	
+	public static void evalMerlinDE() throws UIMAException, IOException {
+		String merlin_lang = "de";
+		String merlin_corpus = "src/main/resources/corpora/merlin_spelling.xml";
+		String merlin_dict = "src/main/resources/dictionaries/hunspell_DE.txt";
+		getErrorRate(merlin_lang, merlin_corpus);
+		getOverlapBetweenCorrectionsAndDict(merlin_lang, merlin_corpus, merlin_dict);
+	}
+	
+	//TODO: include aux dict?
+	public static void evalMerlinIT() throws UIMAException, IOException {
+		String merlin_lang = "it";
+		String merlin_corpus = "src/main/resources/corpora/merlin_spelling.xml";
+		String merlin_dict = "src/main/resources/dictionaries/hunspell_Italian_dict.txt";
+		getErrorRate(merlin_lang, merlin_corpus);
+		getOverlapBetweenCorrectionsAndDict(merlin_lang, merlin_corpus, merlin_dict);
+	}
+	
+	public static void evalMerlinCZ() throws UIMAException, IOException {
+		String merlin_lang = "cz";
+		String merlin_corpus = "src/main/resources/corpora/merlin_spelling.xml";
+		String merlin_dict = "src/main/resources/dictionaries/hunspell_Czech_dict.txt";
+		getErrorRate(merlin_lang, merlin_corpus);
+		getOverlapBetweenCorrectionsAndDict(merlin_lang, merlin_corpus, merlin_dict);
+	}
+	
+	
 
 	public static void getErrorRate(String lang, String corpus_path) throws UIMAException, IOException {
 
 		CollectionReader reader = getReader(corpus_path, lang);
 		AnalysisEngineDescription segmenter;
-		if (lang.equals("it")) {
-			segmenter = createEngineDescription(CoreNlpSegmenter.class, CoreNlpSegmenter.PARAM_LANGUAGE, "en");
-		} else {
-			segmenter = createEngineDescription(CoreNlpSegmenter.class);
-		}
-		AnalysisEngineDescription textPrinter = createEngineDescription(TextPrinter.class);
-		SimplePipeline.runPipeline(reader, segmenter, textPrinter);
+			if(lang.equals("it")) {
+				segmenter = createEngineDescription(OpenNlpSegmenter.class);
+			}
+			else if (lang.equals("cz")) {
+				segmenter = createEngineDescription(CoreNlpSegmenter.class,
+						CoreNlpSegmenter.PARAM_LANGUAGE, "en");
+			} else {
+				segmenter = createEngineDescription(CoreNlpSegmenter.class);
+			}
+//		Do not count punctuation
+		AnalysisEngineDescription punctuationAnnotator = createEngineDescription(PunctuationAnnotator.class);
+		AnalysisEngineDescription textPrinter = createEngineDescription(ErrorRatePrinter.class);
+		SimplePipeline.runPipeline(reader, segmenter, punctuationAnnotator, textPrinter);
 	}
 
 	public static void getOverlapBetweenCorrectionsAndDict(String lang, String corpus_path, String dict_path)
@@ -66,7 +110,9 @@ public class CorpusStatisticsExperiment {
 
 	public static CollectionReader getReader(String path, String language) throws ResourceInitializationException {
 
-		return CollectionReaderFactory.createReader(SpellingReader.class, SpellingReader.PARAM_SOURCE_FILE, path,
-				SpellingReader.PARAM_LANGUAGE_CODE, language, SpellingReader.PARAM_FOR_ERROR_DETECTION, false);
+		return CollectionReaderFactory.createReader(SpellingReader.class,
+				SpellingReader.PARAM_SOURCE_FILE, path,
+				SpellingReader.PARAM_LANGUAGE_CODE, language,
+				SpellingReader.PARAM_FOR_ERROR_DETECTION, true);
 	}
 }

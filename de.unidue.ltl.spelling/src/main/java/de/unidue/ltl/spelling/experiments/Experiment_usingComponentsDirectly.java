@@ -26,9 +26,12 @@ import org.dkpro.core.io.text.TextReader;
 import org.uimafit.factory.AnalysisEngineFactory;
 
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
+import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
+import de.tudarmstadt.ukp.dkpro.core.treetagger.TreeTaggerPosTagger;
 import de.unidue.ltl.spelling.candidateReranking.LanguageModelReranker;
+import de.unidue.ltl.spelling.evaluation.EvaluateErrorDetection;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_FindMissingSpace;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_KeyboardDistance;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinGrapheme;
@@ -36,7 +39,6 @@ import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinPhoneme
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_Litkey;
 import de.unidue.ltl.spelling.normalization.ApplyChanges;
 import de.unidue.ltl.spelling.normalization.RandomSpellingAnomalyReplacer;
-import de.unidue.ltl.spelling.normalization.TextPrinter;
 import de.unidue.ltl.spelling.normalization.SpellingAnomalyReplacer;
 import de.unidue.ltl.spelling.preprocessing.DictionaryChecker;
 import de.unidue.ltl.spelling.preprocessing.MarkSentenceBeginnings;
@@ -44,6 +46,7 @@ import de.unidue.ltl.spelling.preprocessing.MarkTokensToConsider;
 import de.unidue.ltl.spelling.preprocessing.MarkTokensToCorrect;
 import de.unidue.ltl.spelling.preprocessing.NumericAnnotator;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
+import de.unidue.ltl.spelling.preprocessing.SimpleNamedEntityRecognizer;
 import de.unidue.ltl.spelling.reader.SpellingReader;
 import de.unidue.ltl.spelling.resources.CFDFrequencyCountProvider;
 import de.unidue.ltl.spelling.resources.DummyFrequencyCountProvider;
@@ -60,62 +63,113 @@ public class Experiment_usingComponentsDirectly {
 	}
 
 	public static void runCita_errorDetection() throws UIMAException, IOException {
+		String lang_code = "it";
 		String corpus = "src/main/resources/corpora/cita_spelling.xml";
 //		String citaEx = "src/main/resources/corpora/cita_example.xml";
 		String hunspell_it = "src/main/resources/dictionaries/hunspell_unmunched.txt";
-		String web1tPath = "/Volumes/Marie2/web1t_it/";
+		String web1tPath = System.getenv("DKPRO_HOME") + "web1t_it/";
 
 		// Create web1t language model to set via parameter
 		ExternalResourceDescription web1t = createExternalResourceDescription(Web1TFrequencyCountResource.class,
-				Web1TFrequencyCountResource.PARAM_LANGUAGE, "en", Web1TFrequencyCountResource.PARAM_MIN_NGRAM_LEVEL,
+				Web1TFrequencyCountResource.PARAM_LANGUAGE, "it", Web1TFrequencyCountResource.PARAM_MIN_NGRAM_LEVEL,
 				"1", Web1TFrequencyCountResource.PARAM_MAX_NGRAM_LEVEL, "5",
 				Web1TFrequencyCountResource.PARAM_INDEX_PATH, web1tPath);
 
-		CollectionReader reader = getReader(corpus, "it");
+		CollectionReader reader = getReader(corpus, lang_code);
 		AnalysisEngineDescription segmenter = createEngineDescription(OpenNlpSegmenter.class);
+		// Get NEs via POS tagging
+		AnalysisEngineDescription posTagger = createEngineDescription(OpenNlpPosTagger.class);
+//		AnalysisEngineDescription posTagger = createEngineDescription(TreeTaggerPosTagger.class);
+		AnalysisEngineDescription namedEntityRecognizer = createEngineDescription(SimpleNamedEntityRecognizer.class);
 		AnalysisEngineDescription markSentenceBeginnings = createEngineDescription(MarkSentenceBeginnings.class);
 		AnalysisEngineDescription numericAnnotator = createEngineDescription(NumericAnnotator.class);
 		AnalysisEngineDescription punctuationAnnotator = createEngineDescription(PunctuationAnnotator.class);
-		AnalysisEngineDescription namedEntityAnnotator = createEngineDescription(StanfordNamedEntityRecognizer.class);
+		// TODO: Find/create named entity component for Italian
+//		AnalysisEngineDescription namedEntityAnnotator = createEngineDescription(StanfordNamedEntityRecognizer.class);
 		AnalysisEngineDescription markTokensToConsider = createEngineDescription(MarkTokensToConsider.class);
 		AnalysisEngineDescription dictionaryChecker = createEngineDescription(DictionaryChecker.class,
-				DictionaryChecker.PARAM_LANGUAGE, "it",
-				DictionaryChecker.PARAM_DICTIONARY_FILE, hunspell_it,
+				DictionaryChecker.PARAM_LANGUAGE, "it", DictionaryChecker.PARAM_DICTIONARY_FILE, hunspell_it,
 				DictionaryChecker.RES_LANGUAGE_MODEL_FOR_COMPOUND_LOOKUP, web1t);
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		// TODO: Engine to evaluate
+		AnalysisEngineDescription evaluate = createEngineDescription(EvaluateErrorDetection.class);
 
-		SimplePipeline.runPipeline(reader, segmenter, markSentenceBeginnings, numericAnnotator, punctuationAnnotator,
-				namedEntityAnnotator, markTokensToConsider, dictionaryChecker, markTokensToCorrect);
+		SimplePipeline.runPipeline(reader, segmenter, markSentenceBeginnings, namedEntityRecognizer
+//				posTagger, 
+//				textPrinter
+//				, 
+//				markSentenceBeginnings, numericAnnotator, punctuationAnnotator,
+////				namedEntityAnnotator,
+//				markTokensToConsider, dictionaryChecker, markTokensToCorrect, evaluate
+		);
 	}
 
 	public static void runCita_errorCorrection() throws UIMAException, IOException {
+		String lang_code = "it";
 		String corpus = "src/main/resources/corpora/cita_spelling.xml";
 //		String citaEx = "src/main/resources/corpora/cita_example.xml";
-		String hunspell_it = "src/main/resources/dictionaries/hunspell_it.txt";
-		String web1tPath = "/Volumes/Marie2/web1t_it/";
+		String hunspell_it = "src/main/resources/dictionaries/hunspell_unmunched_it.txt";
+		String hunspell_it_phoneme = "";
+		String italian_keyboard_distances = "";
+		String web1tPath = System.getenv("DKPRO_HOME") + "web1t_it/";
+		int numberOfCandidatesPerMethod = 3;
 
 		// Create web1t language model to set via parameter
 		ExternalResourceDescription web1t = createExternalResourceDescription(Web1TFrequencyCountResource.class,
-				Web1TFrequencyCountResource.PARAM_LANGUAGE, "en", Web1TFrequencyCountResource.PARAM_MIN_NGRAM_LEVEL,
+				Web1TFrequencyCountResource.PARAM_LANGUAGE, "it", Web1TFrequencyCountResource.PARAM_MIN_NGRAM_LEVEL,
 				"1", Web1TFrequencyCountResource.PARAM_MAX_NGRAM_LEVEL, "5",
 				Web1TFrequencyCountResource.PARAM_INDEX_PATH, web1tPath);
 
-		CollectionReader reader = getReader(corpus, "it");
-		AnalysisEngineDescription segmenter = createEngineDescription(OpenNlpSegmenter.class);
-		AnalysisEngineDescription markSentenceBeginnings = createEngineDescription(MarkSentenceBeginnings.class);
-		AnalysisEngineDescription numericAnnotator = createEngineDescription(NumericAnnotator.class);
-		AnalysisEngineDescription punctuationAnnotator = createEngineDescription(PunctuationAnnotator.class);
-		AnalysisEngineDescription namedEntityAnnotator = createEngineDescription(StanfordNamedEntityRecognizer.class);
-		AnalysisEngineDescription markTokensToConsider = createEngineDescription(MarkTokensToConsider.class);
-		AnalysisEngineDescription dictionaryChecker = createEngineDescription(DictionaryChecker.class,
-				DictionaryChecker.PARAM_DICTIONARY_FILE, hunspell_it,
-				DictionaryChecker.RES_LANGUAGE_MODEL_FOR_COMPOUND_LOOKUP, web1t);
-		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
+		CollectionReader reader = getReader(corpus, lang_code);
+		AnalysisEngineDescription generateRankLevenshtein = createEngineDescription(
+				GenerateAndRank_LevenshteinGrapheme.class, GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES,
+				hunspell_it, GenerateAndRank_LevenshteinGrapheme.PARAM_LOWERCASE, false,
+				GenerateAndRank_LevenshteinGrapheme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, numberOfCandidatesPerMethod,
+//				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_DELETION,
+//				"src/main/resources/matrixes/RDMatrix_deletion_EN.tsv",
+//				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_INSERTION,
+//				"src/main/resources/matrixes/RDMatrix_insertion_EN.tsv",
+//				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_SUBSTITUTION,
+//				"src/main/resources/matrixes/RDMatrix_substitution_EN.tsv",
+//				GenerateAndRank_LevenshteinGrapheme.PARAM_WEIGHT_FILE_TRANSPOSITION,
+//				"src/main/resources/matrixes/RDMatrix_transposition_EN.tsv");
+				GenerateAndRank_LevenshteinGrapheme.PARAM_INCLUDE_TRANSPOSITION, true);
+		AnalysisEngineDescription generateRankPhoneme = createEngineDescription(
+				GenerateAndRank_LevenshteinPhoneme.class, GenerateAndRank_LevenshteinPhoneme.PARAM_DICTIONARIES,
+				hunspell_it_phoneme, GenerateAndRank_LevenshteinPhoneme.PARAM_LANGUAGE, lang_code,
+				GenerateAndRank_LevenshteinPhoneme.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, numberOfCandidatesPerMethod,
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_DELETION,
+//				"src/main/resources/matrixes/RDMatrix_deletion_Sampa.tsv",
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_INSERTION,
+//				"src/main/resources/matrixes/RDMatrix_insertion_Sampa.tsv",
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_SUBSTITUTION,
+//				"src/main/resources/matrixes/RDMatrix_substitution_Sampa.tsv",
+//				GenerateAndRank_LevenshteinPhoneme.PARAM_WEIGHT_FILE_TRANSPOSITION,
+//				"src/main/resources/matrixes/RDMatrix_transposition_Sampa.tsv",
+				GenerateAndRank_LevenshteinPhoneme.PARAM_INCLUDE_TRANSPOSITION, true);
+		AnalysisEngineDescription generateRankKeyboard = createEngineDescription(GenerateAndRank_KeyboardDistance.class,
+				GenerateAndRank_KeyboardDistance.PARAM_DICTIONARIES, hunspell_it,
+				GenerateAndRank_KeyboardDistance.PARAM_KEYBOARD_DISTANCES_FILE, italian_keyboard_distances,
+				GenerateAndRank_KeyboardDistance.PARAM_NUM_OF_CANDIDATES_TO_GENERATE, numberOfCandidatesPerMethod,
+				GenerateAndRank_KeyboardDistance.PARAM_INCLUDE_TRANSPOSITION, true);
+		AnalysisEngineDescription generateRankMissingSpaces = createEngineDescription(
+				GenerateAndRank_FindMissingSpace.class, GenerateAndRank_FindMissingSpace.PARAM_DICTIONARIES,
+				hunspell_it, GenerateAndRank_FindMissingSpace.PARAM_NUM_OF_CANDIDATES_TO_GENERATE,
+				numberOfCandidatesPerMethod);
+		AnalysisEngineDescription lmReranker = createEngineDescription(LanguageModelReranker.class,
+				LanguageModelReranker.RES_LANGUAGE_MODEL, web1t,
+				LanguageModelReranker.RES_LANGUAGE_MODEL_PROMPT_SPECIFIC, web1t, LanguageModelReranker.PARAM_NGRAM_SIZE,
+				3);
+//		AnalysisEngineDescription anomalyReplacer = createEngineDescription(SpellingAnomalyReplacer.class,
+//				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
+//				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
+		AnalysisEngineDescription anomalyReplacer_random = createEngineDescription(RandomSpellingAnomalyReplacer.class,
+				RandomSpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
+				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
+		AnalysisEngineDescription changeApplier = createEngineDescription(ApplyChanges.class);
 		// TODO: Engine to evaluate
 
-		SimplePipeline.runPipeline(reader, segmenter, markSentenceBeginnings, numericAnnotator, punctuationAnnotator,
-				namedEntityAnnotator, markTokensToConsider, dictionaryChecker, markTokensToCorrect);
+//		SimplePipeline.runPipeline(reader, );
 	}
 
 	public static void runEnglish() throws UIMAException, IOException {
@@ -202,7 +256,6 @@ public class Experiment_usingComponentsDirectly {
 				RandomSpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
 		AnalysisEngineDescription changeApplier = createEngineDescription(ApplyChanges.class);
-		AnalysisEngineDescription textPrinter = createEngineDescription(TextPrinter.class);
 		AnalysisEngineDescription lmReranker = createEngineDescription(LanguageModelReranker.class,
 				LanguageModelReranker.RES_LANGUAGE_MODEL, web1t,
 				LanguageModelReranker.RES_LANGUAGE_MODEL_PROMPT_SPECIFIC, web1t, LanguageModelReranker.PARAM_NGRAM_SIZE,
@@ -238,8 +291,7 @@ public class Experiment_usingComponentsDirectly {
 //				anomalyReplacer,
 ////				anomalyReplacer_random,
 //				changeApplier,
-//				segmenter,
-//				textPrinter);
+//				segmenter);
 //		AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(spellingCorrector, null, null);
 //		while (reader.hasNext()) {
 //			CAS cas = ae.newCAS();
@@ -247,13 +299,13 @@ public class Experiment_usingComponentsDirectly {
 //			ae.process(cas);
 //		}
 
-		SimplePipeline.runPipeline(reader, textPrinter, segmenter, markSentenceBeginnings, numericAnnotator,
-				punctuationAnnotator, namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
+		SimplePipeline.runPipeline(reader, segmenter, markSentenceBeginnings, numericAnnotator, punctuationAnnotator,
+				namedEntityAnnotator, markTokensToConsider, dictionaryChecker1,
 //				dictionaryChecker2,
 				markTokensToCorrect, generateRankMissingSpaces, generateRankKeyboard, generateRankLevenshtein,
 				generateRankPhoneme, lmReranker, anomalyReplacer,
 //				anomalyReplacer_random,
-				changeApplier, segmenter, textPrinter);
+				changeApplier, segmenter);
 	}
 
 	public static void runGerman() throws UIMAException, IOException {
@@ -348,7 +400,6 @@ public class Experiment_usingComponentsDirectly {
 				RandomSpellingAnomalyReplacer.PARAM_TYPES_TO_COPY,
 				new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
 		AnalysisEngineDescription changeApplier = createEngineDescription(ApplyChanges.class);
-		AnalysisEngineDescription textPrinter = createEngineDescription(TextPrinter.class);
 
 		// Add language model resources
 //		CFDFrequencyCountProvider CFD_LM = new CFDFrequencyCountProvider(cfd, "de");
@@ -365,8 +416,8 @@ public class Experiment_usingComponentsDirectly {
 //		lmReranker.setResourceManagerConfiguration(config);
 
 		// Create spelling corrector engine
-		AnalysisEngineDescription spellingCorrector = AnalysisEngineFactory.createAggregateDescription(textPrinter,
-				segmenter, markSentenceBeginnings, numericAnnotator, punctuationAnnotator, namedEntityAnnotator,
+		AnalysisEngineDescription spellingCorrector = AnalysisEngineFactory.createAggregateDescription(segmenter,
+				markSentenceBeginnings, numericAnnotator, punctuationAnnotator, namedEntityAnnotator,
 				markTokensToConsider, dictionaryChecker1,
 //				dictionaryChecker2,
 				markTokensToCorrect,
@@ -378,7 +429,7 @@ public class Experiment_usingComponentsDirectly {
 //				lmReranker,
 				anomalyReplacer,
 //				anomalyReplacer_random,
-				changeApplier, segmenter, textPrinter);
+				changeApplier, segmenter);
 		AnalysisEngine ae = UIMAFramework.produceAnalysisEngine(spellingCorrector, null, null);
 //		while (reader.hasNext()) {
 		CAS cas = ae.newCAS();
@@ -407,8 +458,7 @@ public class Experiment_usingComponentsDirectly {
 //				anomalyReplacer,
 ////				anomalyReplacer_random,
 //				changeApplier,
-//				segmenter,
-//				textPrinter);
+//				segmenter);
 	}
 
 	public static CollectionReader getReader(String path, String language) throws ResourceInitializationException {

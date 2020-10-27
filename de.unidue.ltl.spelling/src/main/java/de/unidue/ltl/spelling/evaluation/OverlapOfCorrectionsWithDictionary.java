@@ -16,7 +16,7 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.uimafit.util.JCasUtil;
 
-import de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly;
+import de.unidue.ltl.spelling.types.SpellingError;
 
 public class OverlapOfCorrectionsWithDictionary extends JCasAnnotator_ImplBase {
 
@@ -25,8 +25,8 @@ public class OverlapOfCorrectionsWithDictionary extends JCasAnnotator_ImplBase {
 	private String dictionaryPath;
 
 	private Set<String> dictionaryWords = new HashSet<String>();
-	
-	int numberOfAnomalies = 0;
+
+	int numberOfErrors = 0;
 	int numberOfCorrectionsInDict = 0;
 
 	@Override
@@ -52,19 +52,22 @@ public class OverlapOfCorrectionsWithDictionary extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-		
-		for(ExtendedSpellingAnomaly anomaly : JCasUtil.select(aJCas, ExtendedSpellingAnomaly.class)) {
-			numberOfAnomalies++;
-			
-			if(dictionaryWords.contains(anomaly.getGoldStandardCorrection())) {
-				numberOfCorrectionsInDict++;
+
+		for (SpellingError error : JCasUtil.select(aJCas, SpellingError.class)) {
+			if (!error.getErrorType().contains("merge_middle") && !error.getErrorType().contains("merge_right")) {
+				numberOfErrors++;
+
+				if (dictionaryWords.contains(error.getCorrection())) {
+					numberOfCorrectionsInDict++;
+				}
 			}
 		}
 	}
 
 	@Override
 	public void collectionProcessComplete() throws AnalysisEngineProcessException {
-		System.out.println("Total number of anomalies:\t"+numberOfAnomalies);
-		System.out.println("Number of corrections that are found in dict:\t"+numberOfCorrectionsInDict);
+		System.out.println("Number of spelling errors without merge_middle and merge_right:\t" + numberOfErrors);
+		System.out.println("Number of errors whose corrections are found in dict:\t" + numberOfCorrectionsInDict);
+		System.out.println("Overlap:\t"+ (numberOfCorrectionsInDict*1.0)/(numberOfErrors*1.0));
 	}
 }

@@ -12,8 +12,8 @@ import de.unidue.ltl.spelling.types.Punctuation;
 import eu.openminted.share.annotations.api.DocumentationResource;
 
 /**
- * Annotator matching and marking all tokens that are made up of nothing
- * but punctuation.
+ * Annotator matching and marking all tokens that are made up of nothing but
+ * punctuation.
  */
 
 @ResourceMetaData(name = "")
@@ -28,7 +28,7 @@ public class PunctuationAnnotator extends JCasAnnotator_ImplBase {
 
 		for (Token token : JCasUtil.select(aJCas, Token.class)) {
 
-			if (token.getCoveredText().matches("^[\\[\\];:!?.,\"'\\-´`'()<>\\+]+$")) {
+			if (token.getCoveredText().matches("^[\\[\\];:!?\\.,=\\*\"'\\-´`'()<>\\+/\\\\]+$")) {
 //				System.out.println("Found punctuation:\t" + token.getCoveredText());
 				Punctuation punct = new Punctuation(aJCas);
 				punct.setBegin(token.getBegin());

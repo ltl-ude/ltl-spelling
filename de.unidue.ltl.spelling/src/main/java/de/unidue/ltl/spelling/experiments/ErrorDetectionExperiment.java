@@ -19,7 +19,6 @@ import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpPosTagger;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.stanfordnlp.StanfordNamedEntityRecognizer;
 import de.unidue.ltl.spelling.evaluation.EvaluateErrorDetection;
-import de.unidue.ltl.spelling.normalization.TextPrinter;
 import de.unidue.ltl.spelling.preprocessing.DictionaryChecker;
 import de.unidue.ltl.spelling.preprocessing.MarkSentenceBeginnings;
 import de.unidue.ltl.spelling.preprocessing.MarkTokensToConsider;
@@ -35,9 +34,11 @@ public class ErrorDetectionExperiment {
 	public static void main(String[] args) throws UIMAException, IOException {
 		
 		runCItA();
-		runLitkey();		
-		//Merlin
-		//ASAP	
+//		runLitkey();		
+//		runMerlinDE();
+//		runMerlinIT();
+//		runMerlinCZ();
+	
 	}
 	
 	private static void runLitkey() throws UIMAException, IOException {
@@ -45,8 +46,9 @@ public class ErrorDetectionExperiment {
 		String litkey_lang = "de";
 		String litkey_path = "src/main/resources/corpora/litkey_spelling.xml";
 		String hunspell_de = "src/main/resources/dictionaries/hunspell_DE.txt";
-		String web1t_path_de = System.getenv("DKPRO_HOME") + "/web1t_de_fixed/data";
+		String web1t_path_de = System.getenv("DKPRO_HOME") + "/web1t_de/data";
 		runErrorDetection("Litkey_hunspell_web1t", litkey_lang, litkey_path, hunspell_de, null, web1t_path_de, false);	
+//		runErrorDetection("Litkey_hunspell_web1t_lowercase", litkey_lang, litkey_path, hunspell_de, null, web1t_path_de, true);	
 	}
 	
 	private static void runCItA() throws UIMAException, IOException {
@@ -56,10 +58,42 @@ public class ErrorDetectionExperiment {
 		String hunspell_it = "src/main/resources/dictionaries/hunspell_Italian_dict.txt";
 		String italian_aux_dict = "src/main/resources/dictionaries/italian_include.txt";
 		String web1t_path_it = System.getenv("DKPRO_HOME") + "web1t_it/";
-		runErrorDetection("CItA_hunspell_auxiliary_web1t_POSNE_CoreNLPen", cita_lang, cita_path, hunspell_it, italian_aux_dict, web1t_path_it, true);	
+		runErrorDetection("CItA_hunspell_web1t_POSNE_OpenNLPit", cita_lang, cita_path, hunspell_it, italian_aux_dict, web1t_path_it, false);
+//		runErrorDetection("CItA_hunspell_web1t_POSNE_OpenNLPit_lowercase", cita_lang, cita_path, hunspell_it, italian_aux_dict, web1t_path_it, true);
 	}
+	
+	private static void runMerlinDE() throws UIMAException, IOException {
 		
-	private static void runErrorDetection(String config_name, String lang, String corpus_path, String dict_path, String aux_dict_path, String web1t_path, boolean use_simple_ne_detector) throws UIMAException, IOException {
+		String merlin_lang = "de";
+		String merlin_path = "src/main/resources/corpora/merlin_spelling.xml";
+		String hunspell_de = "src/main/resources/dictionaries/hunspell_DE.txt";
+		String web1t_path_de = System.getenv("DKPRO_HOME") + "web1t_de/data";
+		runErrorDetection("MerlinDE_hunspell_web1t", merlin_lang, merlin_path, hunspell_de, null, web1t_path_de, false);	
+//		runErrorDetection("MerlinDE_hunspell_web1t_lowercase", merlin_lang, merlin_path, hunspell_de, null, web1t_path_de, true);	
+	}
+	
+	private static void runMerlinIT() throws UIMAException, IOException {
+		
+		String merlin_lang = "it";
+		String merlin_path = "src/main/resources/corpora/merlin_spelling.xml";
+		String hunspell_it = "src/main/resources/dictionaries/hunspell_Italian_dict.txt";
+		String italian_aux_dict = "src/main/resources/dictionaries/italian_include.txt";
+		String web1t_path_it = System.getenv("DKPRO_HOME") + "web1t_it/";
+		runErrorDetection("MerlinIT_hunspell_web1t_POSNE_OpenNLPit", merlin_lang, merlin_path, hunspell_it, italian_aux_dict, web1t_path_it, false);
+//		runErrorDetection("MerlinIT_hunspell_web1t_POSNE_OpenNLPit_lowercase", merlin_lang, merlin_path, hunspell_it, italian_aux_dict, web1t_path_it, true);
+	}
+	
+	private static void runMerlinCZ() throws UIMAException, IOException {
+		
+		String merlin_lang = "cz";
+		String merlin_path = "src/main/resources/corpora/merlin_spelling.xml";
+		String hunspell_cz = "src/main/resources/dictionaries/hunspell_Czech_dict.txt";
+		String web1t_path_cz = System.getenv("DKPRO_HOME") + "web1t_cz/";
+		runErrorDetection("MerlinCZ_hunspell_web1t_StanfordNEen_CoreNLPen_sensitiveSentenceBeginnings", merlin_lang, merlin_path, hunspell_cz, null, web1t_path_cz, false);
+//		runErrorDetection("MerlinCZ_hunspell_web1t_StanfordNEen_CoreNLPen_sensitiveSentenceBeginnings_lowercase", merlin_lang, merlin_path, hunspell_cz, null, web1t_path_cz, true);
+	}
+	
+	private static void runErrorDetection(String config_name, String lang, String corpus_path, String dict_path, String aux_dict_path, String web1t_path, boolean lowercase) throws UIMAException, IOException {
 
 		// Create web1t language model to set via parameter
 		ExternalResourceDescription web1t = createExternalResourceDescription(Web1TFrequencyCountResource.class,
@@ -70,7 +104,10 @@ public class ErrorDetectionExperiment {
 
 		CollectionReader reader = getReader(corpus_path, lang);
 		AnalysisEngineDescription segmenter;
-			if(lang.equals("it")){
+			if(lang.equals("it")) {
+				segmenter = createEngineDescription(OpenNlpSegmenter.class);
+			}
+			else if (lang.equals("cz")){
 				segmenter = createEngineDescription(CoreNlpSegmenter.class, CoreNlpSegmenter.PARAM_LANGUAGE, "en");
 			}
 			else {
@@ -86,8 +123,9 @@ public class ErrorDetectionExperiment {
 						POStoNEAnnotator.PARAM_NE_POS_TAG, "SP");
 				namedEntityRecognizer = createEngineDescription(posTagger, posToNeAnnotator);
 			}
-			else if(use_simple_ne_detector) {
-				namedEntityRecognizer = createEngineDescription(SimpleNamedEntityRecognizer.class);
+			else if(lang.equals("cz")) {
+				namedEntityRecognizer = createEngineDescription(StanfordNamedEntityRecognizer.class,
+						StanfordNamedEntityRecognizer.PARAM_LANGUAGE, "en");
 			}
 			else {
 				namedEntityRecognizer = createEngineDescription(StanfordNamedEntityRecognizer.class);
@@ -97,7 +135,8 @@ public class ErrorDetectionExperiment {
 				DictionaryChecker.PARAM_LANGUAGE, lang,
 				DictionaryChecker.PARAM_DICTIONARY_FILE, dict_path,
 				DictionaryChecker.PARAM_AUXILIARY_DICTIONARY_FILE, aux_dict_path,
-				DictionaryChecker.RES_LANGUAGE_MODEL_FOR_COMPOUND_LOOKUP, web1t);
+				DictionaryChecker.RES_LANGUAGE_MODEL_FOR_COMPOUND_LOOKUP, web1t,
+				DictionaryChecker.PARAM_LOWERCASE, lowercase);
 		AnalysisEngineDescription markTokensToCorrect = createEngineDescription(MarkTokensToCorrect.class);
 		AnalysisEngineDescription evaluate = createEngineDescription(EvaluateErrorDetection.class,
 				EvaluateErrorDetection.PARAM_CONFIG_NAME, config_name);

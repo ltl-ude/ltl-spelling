@@ -9,6 +9,10 @@ import org.uimafit.util.JCasUtil;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 
+/**
+ * Annotates NamedEntities over all tokens whose POS tags correspond to a
+ * certain value.
+ */
 public class POStoNEAnnotator extends JCasAnnotator_ImplBase {
 
 	/**
@@ -23,13 +27,12 @@ public class POStoNEAnnotator extends JCasAnnotator_ImplBase {
 
 		for (Token token : JCasUtil.select(aJCas, Token.class)) {
 
-			if (token.getPosValue().contentEquals(nePosTag)) {
+			if (token.getPosValue().equals(nePosTag)) {
 
 				NamedEntity ne = new NamedEntity(aJCas);
 				ne.setBegin(token.getBegin());
 				ne.setEnd(token.getEnd());
 				ne.addToIndexes();
-
 			}
 		}
 	}

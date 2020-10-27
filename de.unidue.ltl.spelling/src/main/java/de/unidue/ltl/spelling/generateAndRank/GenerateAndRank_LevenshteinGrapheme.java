@@ -27,15 +27,15 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 @ResourceMetaData(name = "")
 @DocumentationResource("")
 @TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" },
-		// No real outputs, just SuggestedActions as entries to the SpellingAnomalies?
 		outputs = { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
+
 public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRanker_LevenshteinBased {
 
 	/**
 	 * Whether to process everything lowercased
 	 */
 	public static final String PARAM_LOWERCASE = "lowercase";
-	@ConfigurationParameter(name = PARAM_LOWERCASE, mandatory = true, defaultValue = "False")
+	@ConfigurationParameter(name = PARAM_LOWERCASE, mandatory = true, defaultValue = "false")
 	protected boolean lowercase;
 
 	/**
@@ -79,7 +79,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	protected float capitalizationPenalty;
 
 	/**
-	 * Sets the distance to apply when no weights were supplied for a certain
+	 * Sets the weight to apply when no weights were supplied for a certain
 	 * operation.
 	 */
 	public static final String PARAM_DEFAULT_WEIGHT = "defaultWeight";
@@ -91,7 +91,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	private Map<Character, Map<Character, Float>> substitutionMap;
 	private Map<Character, Map<Character, Float>> transpositionMap;
 
-	// To keep track of missing weights and alert user only once
+	// To keep track of missing weights and alert user only once in case something is missing
 	private Set<String> missingWeights = new HashSet<String>();
 
 	@Override
@@ -343,9 +343,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 
 	private float getInsertionWeight(char a) {
 
-		if (insertionMap == null
-//				|| !StringUtils.isAlpha(a + "")
-		) {
+		if (insertionMap == null) {
 			return defaultWeight;
 		} else {
 			try {
@@ -365,9 +363,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	}
 
 	private float getDeletionWeight(char a) {
-		if (deletionMap == null
-//				|| !StringUtils.isAlpha(a + "")
-		) {
+		if (deletionMap == null) {
 			return defaultWeight;
 		} else {
 			try {
@@ -391,9 +387,7 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 		if (a == b || (lowercase && lowercasedCharsAreEqual(a, b))) {
 			return 0.0f;
 		}
-		if (substitutionMap == null
-//				|| !StringUtils.isAlpha(a + "") || !StringUtils.isAlpha(b + "")
-		) {
+		if (substitutionMap == null) {
 			// Did not provide weights, could still have said to punish upper
 			float result = 0.0f;
 			if (!lowercasedCharsAreEqual(a, b)) {
@@ -430,14 +424,12 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 		}
 	}
 
-	// Comparing whether cases are matching not necessary
+	// Comparison whether cases are matching not necessary
 	private float getTranspositionWeight(char a, char b) {
 		if (a == b || (lowercase && lowercasedCharsAreEqual(a, b))) {
 			return 0.0f;
 		}
-		if (transpositionMap == null
-//				|| !StringUtils.isAlpha(a + "") || !StringUtils.isAlpha(b + "")
-		) {
+		if (transpositionMap == null) {
 			return defaultWeight;
 		} else {
 			try {
@@ -475,5 +467,4 @@ public class GenerateAndRank_LevenshteinGrapheme extends CandidateGeneratorAndRa
 	private boolean lowercasedCharsAreEqual(char a, char b) {
 		return Character.toLowerCase(a) == Character.toLowerCase(b);
 	}
-
 }

@@ -12,8 +12,7 @@ import de.unidue.ltl.spelling.types.Numeric;
 import eu.openminted.share.annotations.api.DocumentationResource;
 
 /**
- * Annotator matching and marking all tokens consisting of nothing but
- * numbers.
+ * Annotator marking all tokens consisting of numbers.
  */
 
 @ResourceMetaData(name = "")

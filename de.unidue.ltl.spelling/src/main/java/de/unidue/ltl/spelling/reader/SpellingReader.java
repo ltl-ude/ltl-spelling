@@ -47,7 +47,7 @@ public class SpellingReader extends JCasResourceCollectionReader_ImplBase {
 
 	/**
 	 * If the aim is to detect errors, they will not be annotated to the JCas as
-	 * SpellingAnomalies.
+	 * SpellingAnomalies but as SpellingErrors
 	 */
 	public static final String PARAM_FOR_ERROR_DETECTION = "forErrorDetection";
 	@ConfigurationParameter(name = PARAM_FOR_ERROR_DETECTION, mandatory = true, defaultValue = "false")
@@ -81,55 +81,86 @@ public class SpellingReader extends JCasResourceCollectionReader_ImplBase {
 
 				int endIndex = 0;
 				Map<String, String> correctionMap = new HashMap<String, String>();
+				Map<String, String> correctionErrorTypeMap = new HashMap<String, String>();
 				Map<String, String> grammarCorrectionMap = new HashMap<String, String>();
 
 				Node node = nodes.item(i);
 
 				if (node instanceof Element) {
 
-					Element child = (Element) node;
-					String id = child.getAttribute("id");
+					Element spellingText = (Element) node;
+					String id = spellingText.getAttribute("id");
 //					System.out.println("Text ID: " + id);
-					String text = child.getTextContent();
-//					System.out.println("Text: " + text);
 
-					NodeList children = child.getChildNodes();
+					String lang = spellingText.getAttribute("lang");
+//					System.out.println("Language : " + lang);
 
-					for (int e = 0; e < children.getLength(); e++) {
-
-						Node childNode = children.item(e);
-						if (childNode.getNodeName().equals("error")) {
-							nrOfErrors++;
-							String misspelling = childNode.getTextContent();
-							String correction = ((Element) childNode).getAttribute("correct");
-
-							int startIndex = endIndex;
-							endIndex += misspelling.length();
-							correctionMap.put(startIndex + "-" + endIndex, correction);
-//							System.out.println(startIndex + "\tto\t" + endIndex + ":\t" + correction + "\t(was "
-//									+ text.substring(startIndex, endIndex) + ")");
-						} else if (childNode.getNodeName().equals("grammar_error")) {
-							nrOfGrammarErrors++;
-							String misspelling = childNode.getTextContent();
-							String correction = ((Element) childNode).getAttribute("correct");
-
-							int startIndex = endIndex;
-							endIndex += misspelling.length();
-							grammarCorrectionMap.put(startIndex + "-" + endIndex, correction);
-//							System.out.println("Grammar: "+startIndex + "\tto\t" + endIndex + ":\t" + correction + "\t(was "
-//									+ text.substring(startIndex, endIndex) + ")");
-						}
-						// Is text content
-						else {
-							endIndex += childNode.getTextContent().length();
+					// Workaround in case of missing lang attribute (Merlin corpus)
+					if (lang.equals("")) {
+						if (id.startsWith("german")) {
+							lang = "de";
+						} else if (id.startsWith("italian")) {
+							lang = "it";
+						} else if (id.startsWith("czech")) {
+							lang = "cz";
+						} else {
+							System.out.println("Unknown language");
+							System.exit(0);
 						}
 					}
 
-					items.add(new SpellingItem(corpusName, id, text, correctionMap, grammarCorrectionMap));
+					// Only read in text the required language
+					if (lang.equals(language)) {
+
+						String text = spellingText.getTextContent();
+//						System.out.println("Text: " + text);
+
+						NodeList children = spellingText.getChildNodes();
+
+						for (int e = 0; e < children.getLength(); e++) {
+
+							Node childNode = children.item(e);
+							if (childNode.getNodeName().equals("error")) {
+								nrOfErrors++;
+								String misspelling = childNode.getTextContent();
+								String correction = ((Element) childNode).getAttribute("correct");
+								String type = ((Element) childNode).getAttribute("type");
+
+								int startIndex = endIndex;
+								endIndex += misspelling.length();
+								correctionMap.put(startIndex + "-" + endIndex, correction);
+								correctionErrorTypeMap.put(startIndex + "-" + endIndex, type);
+//								System.out.println(startIndex + "\tto\t" + endIndex + ":\t" + correction + "\t(was "
+//									+ text.substring(startIndex, endIndex) + ")");
+							} else if (childNode.getNodeName().equals("grammar_error")) {
+								nrOfGrammarErrors++;
+								String misspelling = childNode.getTextContent();
+								String correction = ((Element) childNode).getAttribute("correct");
+
+								int startIndex = endIndex;
+								endIndex += misspelling.length();
+								grammarCorrectionMap.put(startIndex + "-" + endIndex, correction);
+//								System.out.println("Grammar: "+startIndex + "\tto\t" + endIndex + ":\t" + correction + "\t(was "
+//									+ text.substring(startIndex, endIndex) + ")");
+							}
+							// Is text content
+							else if (childNode.getNodeName().equals("#text")) {
+								endIndex += childNode.getTextContent().length();
+							} else {
+								System.out.println(
+										"Only expected texts in .xml to contain grammar_error and error tags, but found: "
+												+ childNode.getNodeName());
+								System.exit(0);
+							}
+						}
+
+						items.add(new SpellingItem(corpusName, id, text, correctionMap, correctionErrorTypeMap,
+								grammarCorrectionMap));
+					}
 				}
 			}
-			System.out.println("Number of spelling errors: " + nrOfErrors);
-			System.out.println("Number of grammar errors: " + nrOfGrammarErrors);
+			System.out.println("Number of spelling errors:\t" + nrOfErrors);
+			System.out.println("Number of grammar errors:\t" + nrOfGrammarErrors);
 		} catch (ParserConfigurationException e) {
 			e.printStackTrace();
 		} catch (SAXException e) {
@@ -155,14 +186,17 @@ public class SpellingReader extends JCasResourceCollectionReader_ImplBase {
 		dmd.setCollectionId(item.getCorpusName());
 
 		Map<String, String> corrections = item.getCorrections();
+		Map<String, String> correctionErrorTypes = item.getCorrectionErrorTypes();
 
 		for (String element : corrections.keySet()) {
+//			If the pipeline aims to detect errors, do not annotate them as SpellingAnomalies, but as SpellingErrors
 			if (errorDetection) {
 				SpellingError spellingError = new SpellingError(jcas);
 				String[] range = element.split("-");
 				spellingError.setBegin(Integer.parseInt(range[0]));
 				spellingError.setEnd(Integer.parseInt(range[1]));
 				spellingError.setCorrection(corrections.get(element));
+				spellingError.setErrorType(correctionErrorTypes.get(element));
 				spellingError.addToIndexes();
 			} else {
 				ExtendedSpellingAnomaly anomaly = new ExtendedSpellingAnomaly(jcas);
@@ -170,10 +204,11 @@ public class SpellingReader extends JCasResourceCollectionReader_ImplBase {
 				anomaly.setBegin(Integer.parseInt(range[0]));
 				anomaly.setEnd(Integer.parseInt(range[1]));
 				anomaly.setGoldStandardCorrection(corrections.get(element));
+				anomaly.setMisspelledTokenText(anomaly.getCoveredText());
 				anomaly.addToIndexes();
 			}
 		}
-
+//		In case of error detection also annotate GrammarErrors
 		if (errorDetection) {
 
 			Map<String, String> grammarCorrections = item.getGrammarCorrections();

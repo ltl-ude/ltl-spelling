@@ -14,6 +14,7 @@ import org.apache.uima.resource.ExternalResourceDescription;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.dkpro.core.frequency.resources.Web1TFrequencyCountResource;
 
+import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
 import de.unidue.ltl.spelling.candidateReranking.LanguageModelReranker;
 import de.unidue.ltl.spelling.evaluation.EvaluateErrorCorrection;
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_FindMissingSpace;
@@ -22,8 +23,9 @@ import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinGraphem
 import de.unidue.ltl.spelling.generateAndRank.GenerateAndRank_LevenshteinPhoneme;
 import de.unidue.ltl.spelling.normalization.ApplyChanges;
 import de.unidue.ltl.spelling.normalization.SpellingAnomalyReplacer;
-import de.unidue.ltl.spelling.normalization.TextPrinter;
+import de.unidue.ltl.spelling.preprocessing.MarkSentenceBeginnings;
 import de.unidue.ltl.spelling.reader.SpellingReader;
+import de.unidue.ltl.spelling.resources.DummyFrequencyCountProvider;
 
 public class ErrorCorrectionExperiments{
 
@@ -32,7 +34,7 @@ public class ErrorCorrectionExperiments{
 //		int num_candidates_per_method = 10;
 		int n_gram_size = 3;
 		
-		runCItA(num_candidates_per_method, n_gram_size);
+//		runCItA(num_candidates_per_method, n_gram_size);
 		runLitkey(num_candidates_per_method, n_gram_size);
 		
 		// Merlin
@@ -61,12 +63,12 @@ public class ErrorCorrectionExperiments{
 		String hunspell_de = "src/main/resources/dictionaries/hunspell_DE.txt";
 		String phonetic_hunspell_de = "src/main/resources/dictionaries/hunspell_DE_phoneme_map.txt";
 		String keyboard_distances_de = "src/main/resources/matrixes/keyboardDistance_DE-manual.txt";
-		String web1t_path_de = System.getenv("DKPRO_HOME") + "web1t_de_fixed/data";
-		runErrorCorrection("Litkey_full_hunspell_web1t_", "full", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
-		runErrorCorrection("Litkey_grapheme_hunspell_web1t_", "grapheme", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
-		runErrorCorrection("Litkey_phoneme_hunspell_web1t_", "phoneme", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
-		runErrorCorrection("Litkey_keyboard_hunspell_web1t_", "keyboard", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
-		runErrorCorrection("Litkey_missingSpaces_hunspell_web1t_", "missing_spaces", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
+		String web1t_path_de = System.getenv("DKPRO_HOME") + "/web1t_de/data";
+//		runErrorCorrection("Litkey_full_hunspell_web1t_"+num_candidates_per_method+"_"+n_gram_size, "full", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
+//		runErrorCorrection("Litkey_grapheme_hunspell_web1t_"+num_candidates_per_method+"_"+n_gram_size, "grapheme", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
+//		runErrorCorrection("Litkey_phoneme_hunspell_web1t_"+num_candidates_per_method+"_"+n_gram_size, "phoneme", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
+//		runErrorCorrection("Litkey_keyboard_hunspell_web1t_"+num_candidates_per_method+"_"+n_gram_size, "keyboard", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
+		runErrorCorrection("Litkey_missingSpaces_hunspell_web1t_"+num_candidates_per_method+"_"+n_gram_size, "missing_spaces", litkey_lang, litkey_path, hunspell_de, phonetic_hunspell_de, keyboard_distances_de, web1t_path_de, num_candidates_per_method, n_gram_size);
 	}
 
 	private static void runErrorCorrection(String config_name, String setting, String lang, String corpus_path, String dict_path, String phonetic_dict_path,
@@ -78,8 +80,18 @@ public class ErrorCorrectionExperiments{
 				Web1TFrequencyCountResource.PARAM_MIN_NGRAM_LEVEL, "1",
 				Web1TFrequencyCountResource.PARAM_MAX_NGRAM_LEVEL, "5",
 				Web1TFrequencyCountResource.PARAM_INDEX_PATH, web1t_path);
+		
+		ExternalResourceDescription dummy = createExternalResourceDescription(DummyFrequencyCountProvider.class);
 
 		CollectionReader reader = getReader(corpus_path, lang);
+		AnalysisEngineDescription segmenter;
+			if(lang.equals("it")){
+				segmenter = createEngineDescription(CoreNlpSegmenter.class, CoreNlpSegmenter.PARAM_LANGUAGE, "en");
+			}
+			else {
+				segmenter = createEngineDescription(CoreNlpSegmenter.class);			
+			}
+		AnalysisEngineDescription markSentenceBeginnings = createEngineDescription(MarkSentenceBeginnings.class);
 		AnalysisEngineDescription generateRankGrapheme = createEngineDescription(
 				GenerateAndRank_LevenshteinGrapheme.class,
 				GenerateAndRank_LevenshteinGrapheme.PARAM_DICTIONARIES, dict_path,
@@ -121,11 +133,12 @@ public class ErrorCorrectionExperiments{
 		AnalysisEngineDescription lmReranker = createEngineDescription(
 				LanguageModelReranker.class,
 				LanguageModelReranker.RES_LANGUAGE_MODEL, web1t,
-				LanguageModelReranker.RES_LANGUAGE_MODEL_PROMPT_SPECIFIC, web1t,
+				LanguageModelReranker.RES_LANGUAGE_MODEL_PROMPT_SPECIFIC, dummy,
+				LanguageModelReranker.PARAM_SPECIFIC_LM_WEIGHT, 0.0f,
 				LanguageModelReranker.PARAM_NGRAM_SIZE, n_gram_size);
 		AnalysisEngineDescription anomalyReplacer = createEngineDescription(
 				SpellingAnomalyReplacer.class,
-				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY, new String[] { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SpellingAnomaly" });
+				SpellingAnomalyReplacer.PARAM_TYPES_TO_COPY, new String[] { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" });
 		AnalysisEngineDescription changeApplier = createEngineDescription(ApplyChanges.class);
 		AnalysisEngineDescription correctionEvaluator = createEngineDescription(
 				EvaluateErrorCorrection.class,
@@ -134,6 +147,8 @@ public class ErrorCorrectionExperiments{
 		if(setting.equals("full")) {
 			SimplePipeline.runPipeline(
 					reader,
+					segmenter,
+					markSentenceBeginnings,
 					generateRankGrapheme,
 					generateRankPhoneme,
 					generateRankKeyboard,
@@ -146,6 +161,8 @@ public class ErrorCorrectionExperiments{
 		else if(setting.equals("grapheme")) {
 			SimplePipeline.runPipeline(
 					reader,
+					segmenter,
+					markSentenceBeginnings,
 					generateRankGrapheme,
 					lmReranker,
 					anomalyReplacer,
@@ -156,6 +173,8 @@ public class ErrorCorrectionExperiments{
 		else if(setting.equals("phoneme")) {
 			SimplePipeline.runPipeline(
 					reader,
+					segmenter,
+					markSentenceBeginnings,
 					generateRankPhoneme,
 					lmReranker,
 					anomalyReplacer,
@@ -166,6 +185,8 @@ public class ErrorCorrectionExperiments{
 		else if(setting.equals("keyboard")) {
 			SimplePipeline.runPipeline(
 					reader,
+					segmenter,
+					markSentenceBeginnings,
 					generateRankKeyboard,
 					lmReranker,
 					anomalyReplacer,
@@ -176,6 +197,8 @@ public class ErrorCorrectionExperiments{
 		else if(setting.equals("missing_spaces")) {
 			SimplePipeline.runPipeline(
 					reader,
+					segmenter,
+					markSentenceBeginnings,
 					generateRankMissingSpaces,
 					lmReranker,
 					anomalyReplacer,

@@ -11,7 +11,7 @@ import org.apache.uima.cas.Feature;
 import org.apache.uima.jcas.tcas.Annotation_Type;
 
 /** 
- * Updated by JCasGen Wed Oct 14 16:47:11 CEST 2020
+ * Updated by JCasGen Thu Oct 22 15:32:28 CEST 2020
  * @generated */
 public class SpellingError_Type extends Annotation_Type {
   /** @generated */
@@ -47,6 +47,30 @@ public class SpellingError_Type extends Annotation_Type {
     ll_cas.ll_setStringValue(addr, casFeatCode_correction, v);}
     
   
+ 
+  /** @generated */
+  final Feature casFeat_errorType;
+  /** @generated */
+  final int     casFeatCode_errorType;
+  /** @generated
+   * @param addr low level Feature Structure reference
+   * @return the feature value 
+   */ 
+  public String getErrorType(int addr) {
+        if (featOkTst && casFeat_errorType == null)
+      jcas.throwFeatMissing("errorType", "de.unidue.ltl.spelling.types.SpellingError");
+    return ll_cas.ll_getStringValue(addr, casFeatCode_errorType);
+  }
+  /** @generated
+   * @param addr low level Feature Structure reference
+   * @param v value to set 
+   */    
+  public void setErrorType(int addr, String v) {
+        if (featOkTst && casFeat_errorType == null)
+      jcas.throwFeatMissing("errorType", "de.unidue.ltl.spelling.types.SpellingError");
+    ll_cas.ll_setStringValue(addr, casFeatCode_errorType, v);}
+    
+  
 
 
 
@@ -62,6 +86,10 @@ public class SpellingError_Type extends Annotation_Type {
  
     casFeat_correction = jcas.getRequiredFeatureDE(casType, "correction", "uima.cas.String", featOkTst);
     casFeatCode_correction  = (null == casFeat_correction) ? JCas.INVALID_FEATURE_CODE : ((FeatureImpl)casFeat_correction).getCode();
+
+ 
+    casFeat_errorType = jcas.getRequiredFeatureDE(casType, "errorType", "uima.cas.String", featOkTst);
+    casFeatCode_errorType  = (null == casFeat_errorType) ? JCas.INVALID_FEATURE_CODE : ((FeatureImpl)casFeat_errorType).getCode();
 
   }
 }

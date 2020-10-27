@@ -31,7 +31,7 @@ public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanke
 	public static final String PARAM_MIN_WORD_LENGTH = "minWordLength";
 	@ConfigurationParameter(name = PARAM_MIN_WORD_LENGTH, mandatory = true, defaultValue = "3")
 	protected int minWordLength;
-	
+
 	/**
 	 * The dictionaries based on which to generate the correction candidates.
 	 */
@@ -84,13 +84,15 @@ public class GenerateAndRank_FindMissingSpace extends CandidateGeneratorAndRanke
 			}
 
 			for (String solution : solutionSet) {
-				float cost = spaceInsertionCost * StringUtils.countMatches(solution, " ");
-				List<String> entriesForThisCost = rankedCandidates.get(cost);
-				if (entriesForThisCost == null) {
-					rankedCandidates.put(cost * 1.0f, new ArrayList<String>());
-					entriesForThisCost = rankedCandidates.get(cost);
+				if (solution.contains(" ")) {
+					float cost = spaceInsertionCost * StringUtils.countMatches(solution, " ");
+					List<String> entriesForThisCost = rankedCandidates.get(cost);
+					if (entriesForThisCost == null) {
+						rankedCandidates.put(cost, new ArrayList<String>());
+						entriesForThisCost = rankedCandidates.get(cost);
+					}
+					entriesForThisCost.add(solution);
 				}
-				entriesForThisCost.add(solution);
 			}
 			SuggestionCostTuples tuples = getSuggestionCostTuples(rankedCandidates.entrySet().iterator());
 			addSuggestedActions(aJCas, anomaly, tuples);

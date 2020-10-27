@@ -25,9 +25,8 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 
 @ResourceMetaData(name = "")
 @DocumentationResource("")
-@TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" },
-		// No real outputs, just SuggestedActions as entries to the SpellingAnomalies?
-		outputs = { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
+@TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" }, outputs = {
+		"de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
 public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanker_LevenshteinBased {
 
 	/**
@@ -44,14 +43,14 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 	 * applied for all insertions needed to turn the supposed wrong word into one
 	 * present in the dictionary, as well as for the distance of a character to
 	 * itself and when no distance information was provided via the distance file.
-	 * The default value corresponds to the average distance on a QWERTZ/Y keyboard.
 	 */
 	public static final String PARAM_DEFAULT_DISTANCE = "defaultDistance";
-	@ConfigurationParameter(name = PARAM_DEFAULT_DISTANCE, mandatory = true, defaultValue = "3.6")
+	@ConfigurationParameter(name = PARAM_DEFAULT_DISTANCE, mandatory = true, defaultValue = "4.0")
 	protected float defaultDistance;
 
 	/**
-	 * Distance cost to add if cases do not match, e.g. 'A' to 's' is 1.0 + penalty.
+	 * Distance cost to add if cases do not match, e.g. 'A' to 's' is 1.0 + penalty
+	 * on a German keyboard.
 	 */
 	public static final String PARAM_CAPITALIZATION_PENALTY = "capitalizationPenalty";
 	@ConfigurationParameter(name = PARAM_CAPITALIZATION_PENALTY, mandatory = true, defaultValue = "0.5")
@@ -134,7 +133,7 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 		}
 		if (hasUpper) {
 			getContext().getLogger().log(Level.INFO,
-					"You provided two at least one distance for an uppercased character. These distances will never be used.");
+					"You provided at least one distance for an uppercased character. These distances will never be used.");
 		}
 	}
 
@@ -144,7 +143,8 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 		} else {
 			getContext().getLogger().log(Level.WARNING,
 					"You provided two different distances for '" + from + "' and '" + to + "' (" + map.get(to) + " and "
-							+ distance + "), but distances are assumed to be symmetric. The former will be used.");
+							+ distance
+							+ "), but distances are assumed to be symmetric. The former distance will be used.");
 		}
 	}
 
@@ -183,12 +183,17 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 						+ Math.min(compareToCharBefore, compareToCharAfter);
 
 				// SUBSTITUTION
-				int charsAreDifferent = 1;
-				if (wrong.charAt(wrongIndex - 1) == (right.charAt(rightIndex - 1))) {
-					charsAreDifferent = 0;
+				float substitution = 0;
+				if (lowercasedCharsAreEqual(wrong.charAt(wrongIndex - 1), right.charAt(rightIndex - 1))) {
+					substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1] + capitalizationPenalty;
+				} else {
+					int charsAreDifferent = 1;
+					if (wrong.charAt(wrongIndex - 1) == (right.charAt(rightIndex - 1))) {
+						charsAreDifferent = 0;
+					}
+					substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1] + charsAreDifferent
+							* getDistance(wrong.charAt(wrongIndex - 1), right.charAt(rightIndex - 1));
 				}
-				float substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1]
-						+ charsAreDifferent * getDistance(wrong.charAt(wrongIndex - 1), right.charAt(rightIndex - 1));
 
 				// TRANSPOSITION
 				if (includeTransposition && wrongIndex > 1 && rightIndex > 1
