@@ -10,6 +10,8 @@ import java.util.List;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.config.RequestConfig.Builder;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -27,9 +29,9 @@ import org.jsoup.select.Elements;
  */
 
 public class PhonemeUtils {
-	
+
 	public static void main(String[] args) {
-		System.out.println(getPhoneticTranscription("anerziehend","de"));
+		System.out.println(getPhoneticTranscription("WOLTE", "de"));
 	}
 
 	/**
@@ -86,8 +88,8 @@ public class PhonemeUtils {
 
 		StringBody sb_tgitem = new StringBody("ort", ContentType.TEXT_PLAIN);
 		entity.addPart("tgitem", sb_tgitem);
-		
-		StringBody sb_outsym = new StringBody("x-sampa", ContentType.TEXT_PLAIN);
+
+		StringBody sb_outsym = new StringBody("sampa", ContentType.TEXT_PLAIN);
 		entity.addPart("outsym", sb_outsym);
 
 		httppost.setEntity(entity.build());
@@ -118,12 +120,32 @@ public class PhonemeUtils {
 
 		return phonemes;
 	}
+	
+	public static String getPhoneticTranscription(String grapheme, String language) {
+		language = getG2PLanguageCode(language);
+		
+		String result = G2P_PhonemeMap.getInstance().lookupPhonemesInMaps(grapheme, language);
+		
+//		System.out.println("For "+grapheme+ " retrieved "+result);
+		
+		if(result == null) {
+			System.out.println("did not find phonetic description for: "+grapheme);
+			System.exit(0);
+			return getPhoneticTranscriptionFromService(grapheme, language);
+		}
+	
+		return result;
+	}
 
 	/**
 	 * To process a single word.
 	 */
-	public static String getPhoneticTranscription(String grapheme, String language){
+	public static String getPhoneticTranscriptionFromService(String grapheme, String language) {
 
+		if(grapheme.equals("")) {
+			return "";
+		}
+		
 		language = getG2PLanguageCode(language);
 		if (language.equals("")) {
 			System.out.println("Language " + language
@@ -141,8 +163,16 @@ public class PhonemeUtils {
 		}
 		File file = new File(tempLocation);
 
+		Builder requestConfigBuilder = RequestConfig.custom().setConnectTimeout(0);
+		RequestConfig requestConfig = requestConfigBuilder.setConnectionRequestTimeout(0).build();
+		
+//		System.out.println("TIMEOUTS");
+//		System.out.println(requestConfig.getConnectionRequestTimeout());
+//		System.out.println(requestConfig.getConnectTimeout());
+//		System.out.println(requestConfig.getSocketTimeout());
+
 		// Setup for request to process the file
-		HttpClient httpclient = HttpClientBuilder.create().build();
+		HttpClient httpclient = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
 		HttpPost httppost = new HttpPost("http://clarin.phonetik.uni-muenchen.de/BASWebServices/services/runG2P");
 
 		MultipartEntityBuilder entity = MultipartEntityBuilder.create();
@@ -175,9 +205,9 @@ public class PhonemeUtils {
 
 		StringBody sb_tgitem = new StringBody("ort", ContentType.TEXT_PLAIN);
 		entity.addPart("tgitem", sb_tgitem);
-		
+
 		// Before: sampa
-		StringBody sb_outsym = new StringBody("x-sampa", ContentType.TEXT_PLAIN);
+		StringBody sb_outsym = new StringBody("sampa", ContentType.TEXT_PLAIN);
 		entity.addPart("outsym", sb_outsym);
 
 		httppost.setEntity(entity.build());
@@ -219,14 +249,13 @@ public class PhonemeUtils {
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		phoneticTranscription = phoneticTranscription.substring(phoneticTranscription.indexOf(";") + 1);
-		phoneticTranscription = phoneticTranscription.replaceAll("\n","");
-		
+		phoneticTranscription = phoneticTranscription.replaceAll("\n", "");
+
 		// Delete temp file containing graphemes
 		file.delete();
 

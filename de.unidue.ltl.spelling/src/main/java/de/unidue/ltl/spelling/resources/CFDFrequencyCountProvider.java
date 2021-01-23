@@ -56,7 +56,7 @@ public class CFDFrequencyCountProvider extends FrequencyCountProviderBase implem
 	@Override
 	protected long getFrequencyFromProvider(String phrase) throws IOException {
 		try {
-			return cfd.getFrequencyDistribution(StringUtils.countMatches(phrase, " ")).getCount(phrase);
+			return cfd.getFrequencyDistribution(StringUtils.countMatches(phrase, " ")+1).getCount(phrase);
 		} catch (NullPointerException e) {
 			return -1;
 		}

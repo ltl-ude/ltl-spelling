@@ -111,7 +111,9 @@ public abstract class CandidateGeneratorAndRanker extends JCasAnnotator_ImplBase
 				action.setMethodThatGeneratedThisSuggestion(this.getClass().getSimpleName());
 				actions.set(i, action);
 				i++;
-				System.out.println("Added new correction candidate ("+this.getClass().getSimpleName()+"):\t" + anomaly.getCoveredText() + "\t"
+//				System.out.println("Added new correction candidate "+this.getClass().getSimpleName()+"\t" + anomaly.getCoveredText() + "\t"
+//						+ action.getReplacement() + "\t" + action.getCertainty());
+				System.out.println(this.getClass().getSimpleName()+"\t" + anomaly.getCoveredText() + "\t"
 						+ action.getReplacement() + "\t" + action.getCertainty());
 			}
 			anomaly.setSuggestions(actions);

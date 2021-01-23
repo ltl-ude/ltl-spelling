@@ -28,14 +28,14 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 
 @ResourceMetaData(name = "")
 @DocumentationResource("")
-@TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" },
-		outputs = { "de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
+@TypeCapability(inputs = { "de.unidue.ltl.spelling.types.ExtendedSpellingAnomaly" }, outputs = {
+		"de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.SuggestedAction" })
 public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRanker_LevenshteinBased {
 
 	public static final String PARAM_LANGUAGE = "language";
 	@ConfigurationParameter(name = PARAM_LANGUAGE, mandatory = true)
 	protected String language;
-	
+
 	/**
 	 * File containing tab-separated line-by-line entries of deletion costs for
 	 * SAMPA symbols, e.g. "a\t 5".
@@ -92,7 +92,8 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 
 	private Map<String, String> graphemeToPhonemeMap;
 
-	// To keep track of missing weights and alert user only once in case something is missing
+	// To keep track of missing weights and alert user only once in case something
+	// is missing
 	private Set<String> missingWeights = new HashSet<String>();
 
 	@Override
@@ -143,7 +144,9 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 				while (br.ready()) {
 					String line = br.readLine();
 					String[] entry = line.split("\t");
-					g2pMap.put(entry[0], entry[1]);
+					if (entry.length == 2) {
+						g2pMap.put(entry[0], entry[1]);
+					}
 				}
 				br.close();
 			} catch (IOException e) {
@@ -253,6 +256,7 @@ public class GenerateAndRank_LevenshteinPhoneme extends CandidateGeneratorAndRan
 
 	@Override
 	protected String getStringToCorrectFromAnomaly(SpellingAnomaly anomaly) {
+		System.out.println("ANOMALY: "+anomaly.getCoveredText());
 		return PhonemeUtils.getPhoneticTranscription(anomaly.getCoveredText(), language);
 	}
 

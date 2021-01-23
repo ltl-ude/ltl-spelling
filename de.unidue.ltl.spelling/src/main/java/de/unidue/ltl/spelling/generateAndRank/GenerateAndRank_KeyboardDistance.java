@@ -185,7 +185,12 @@ public class GenerateAndRank_KeyboardDistance extends CandidateGeneratorAndRanke
 				// SUBSTITUTION
 				float substitution = 0;
 				if (lowercasedCharsAreEqual(wrong.charAt(wrongIndex - 1), right.charAt(rightIndex - 1))) {
-					substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1] + capitalizationPenalty;
+					if(wrong.charAt(wrongIndex - 1) != right.charAt(rightIndex - 1)) {
+						substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1] + capitalizationPenalty;
+					}
+					else {
+						substitution = distanceMatrix[wrongIndex - 1][rightIndex - 1];
+					}
 				} else {
 					int charsAreDifferent = 1;
 					if (wrong.charAt(wrongIndex - 1) == (right.charAt(rightIndex - 1))) {

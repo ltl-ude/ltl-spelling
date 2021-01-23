@@ -1,4 +1,4 @@
-package de.unidue.ltl.spelling.normalization;
+package de.unidue.ltl.spelling.utils;
 
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -43,7 +43,7 @@ public class ErrorRatePrinter extends JCasAnnotator_ImplBase {
 				+ numTokensTotal + " including punctuation)");
 		System.out.println("Number or errors (not counting merge middle and merge right):\t"
 				+ numErrorsWithoutMergeMiddleRight + " (" + numErrorsTotal + " counting merge middle and merge right)");
-		System.out.println("Error rate (tokens w/o punctuation, w/o merge middle and merge right):\t"
-				+ (numErrorsWithoutMergeMiddleRight * 1.0) / (numTokensWithoutPunctuation * 1.0));
+		System.out.println("Error rate (tokens w/o punctuation, but with merge middle and merge right):\t"
+				+ (numErrorsTotal * 1.0) / (numTokensWithoutPunctuation * 1.0));
 	}
 }

@@ -8,12 +8,12 @@ import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.unidue.ltl.spelling.types.Punctuation;
+import de.unidue.ltl.spelling.types.StartOfSentence;
 import eu.openminted.share.annotations.api.DocumentationResource;
 
 /**
- * Annotator matching and marking all tokens that are made up of nothing but
- * punctuation.
+ * Annotator marking the first token after a line break as the beginning of a
+ * sentence
  */
 
 @ResourceMetaData(name = "")
@@ -21,19 +21,25 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 @TypeCapability(inputs = { "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token" }, outputs = {
 		"de.unidue.ltl.spelling.types.Punctuation" })
 
-public class PunctuationAnnotator extends JCasAnnotator_ImplBase {
+public class LineBreakAnnotator extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 
+		String text = aJCas.getDocumentText();
+
 		for (Token token : JCasUtil.select(aJCas, Token.class)) {
 
-			if (token.getCoveredText().matches("^[\\[\\];:!?\\.,=\\*\"„“_'\\-´`'()<>\\+/\\\\]+$")) {
-//				System.out.println("Found punctuation:\t" + token.getCoveredText());
-				Punctuation punct = new Punctuation(aJCas);
-				punct.setBegin(token.getBegin());
-				punct.setEnd(token.getEnd());
-				punct.addToIndexes();
+			if (JCasUtil.selectCovered(StartOfSentence.class, token).isEmpty()) {
+
+				if (token.getBegin() > 0 && text.substring(token.getBegin() - 1, token.getBegin()).matches("\\n")) {
+//					System.out.println(token.getCoveredText() + " Is the beginning of a new line");
+					
+					StartOfSentence sos = new StartOfSentence(aJCas);
+					sos.setBegin(token.getBegin());
+					sos.setEnd(token.getEnd());
+					sos.addToIndexes();
+				}
 			}
 		}
 	}

@@ -21,6 +21,8 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.dkpro.core.api.frequency.provider.FrequencyCountProvider;
 
+import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.Dictionary;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.LinkingMorphemes;
 import de.tudarmstadt.ukp.dkpro.core.decompounding.dictionary.SimpleDictionary;
@@ -126,12 +128,24 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
-
+		
 		for (TokenToConsider consider : JCasUtil.select(aJCas, TokenToConsider.class)) {
+			
+			boolean dall = false;
+			
+//			if(consider.getCoveredText().contentEquals("Ich")) {
+//				dall = true;
+//				System.out.println("SENT: "+JCasUtil.selectCovering(Sentence.class, consider).get(0).getCoveredText());
+//			}
 
 //			If token is beginning of a new sentence: process lowercased as well
 			if (!JCasUtil.selectCovered(StartOfSentence.class, consider).isEmpty()) {
+				if(dall) {
 //				System.out.println("Also checking in lowercase, because\t" + consider.getCoveredText() + "\t is BOS");
+//				System.out.println(consider.getCoveredText().toLowerCase());
+//				System.out.println(dictionaryWords.contains(consider.getCoveredText().toLowerCase()));
+//			    System.out.println("IS OK");
+				}
 				checkIfWordIsKnown(aJCas, consider, true);
 			} else {
 				checkIfWordIsKnown(aJCas, consider, false);
@@ -141,6 +155,7 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 
 	private void checkIfWordIsKnown(JCas aJCas, TokenToConsider token, boolean isBeginningOfSentence) {
 		String currentWord = token.getCoveredText();
+		boolean isKnown = false;
 		if (lowercase) {
 			currentWord = currentWord.toLowerCase();
 		}
@@ -151,8 +166,10 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 			word.setBegin(token.getBegin());
 			word.setEnd(token.getEnd());
 			word.addToIndexes();
+			isKnown = true;
 //			System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
-		} else if (language.equals("it") && currentWord.contains("'")) {
+		}
+		if (!isKnown && language.equals("it") && currentWord.contains("'")) {
 
 			String[] wordParts = currentWord.split("'");
 			if (wordParts.length == 2) {
@@ -164,13 +181,15 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 					word.setBegin(token.getBegin());
 					word.setEnd(token.getEnd());
 					word.addToIndexes();
+					isKnown = true;
 //					System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + ")");
 				}
 			}
 //		Strip punctuation from beginning and end of token
-		} else if (currentWord.matches("^([\\W\\s]+?)([\\w\\u0080-\\uFFFF]+)([\\W\\s]*?)$")
-				|| currentWord.matches("^([\\W\\s]*?)([\\w\\u0080-\\uFFFF]+)([\\W\\s]+?)$")) {
-			String stripNonAlpha = currentWord.replaceAll("^([\\W\\s]*?)([\\w\\u0080-\\uFFFF]+)([\\W\\s]*?)$", "$2");
+		} 
+		if (!isKnown && currentWord.matches("^([\\W\\s]+?)([\\w\\u0080-\\uFFFF]+'?)([\\W\\s]*?)$")
+				|| currentWord.matches("^([\\W\\s]*?)([\\w\\u0080-\\uFFFF]+'?)([\\W\\s]+?)$")) {
+			String stripNonAlpha = currentWord.replaceAll("^([\\W\\s]*?)([\\w\\u0080-\\uFFFF]+'?)([\\W\\s]*?)$", "$2");
 			if (dictionaryWords.contains(stripNonAlpha)
 					|| isBeginningOfSentence && dictionaryWords.contains(stripNonAlpha.toLowerCase())) {
 				KnownWord word = new KnownWord(aJCas);
@@ -178,11 +197,12 @@ public class DictionaryChecker extends JCasAnnotator_ImplBase {
 				word.setBegin(token.getBegin());
 				word.setEnd(token.getEnd());
 				word.addToIndexes();
+				isKnown = true;
 //				System.out.println("Marked as known:\t" + token.getCoveredText() + "\t(found in " + dictionaryPath + "as "+ stripNonAlpha+")");
 			}
 		}
 		// Only for German: if splitter finds a compound: is also a KnownWord.
-		else if (language.equals("de") && checkForCompounds) {
+	    if (!isKnown && language.equals("de") && checkForCompounds) {
 
 			// errors where a space was omitted ("heuteAbend") are returned
 			// as compounds, therefore include LM probability check: only accept compound if

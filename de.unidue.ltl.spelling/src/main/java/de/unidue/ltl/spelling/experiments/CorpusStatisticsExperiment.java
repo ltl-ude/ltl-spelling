@@ -14,7 +14,7 @@ import org.uimafit.pipeline.SimplePipeline;
 import de.tudarmstadt.ukp.dkpro.core.corenlp.CoreNlpSegmenter;
 import de.tudarmstadt.ukp.dkpro.core.opennlp.OpenNlpSegmenter;
 import de.unidue.ltl.spelling.evaluation.OverlapOfCorrectionsWithDictionary;
-import de.unidue.ltl.spelling.normalization.ErrorRatePrinter;
+import de.unidue.ltl.spelling.utils.ErrorRatePrinter;
 import de.unidue.ltl.spelling.preprocessing.PunctuationAnnotator;
 import de.unidue.ltl.spelling.reader.SpellingReader;
 
@@ -29,13 +29,13 @@ public class CorpusStatisticsExperiment {
 //		evalLitkey();
 //		System.out.println();
 //		System.out.println("Merlin DE");
-//		evalMerlinDE();
+		evalMerlinDE();
 //		System.out.println();
 //		System.out.println("Merlin IT");
 //		evalMerlinIT();
 //		System.out.println();
 //		System.out.println("Merlin CZ");
-		evalMerlinCZ();
+//		evalMerlinCZ();
 	}
 
 	public static void evalCItA() throws UIMAException, IOException {
@@ -50,14 +50,16 @@ public class CorpusStatisticsExperiment {
 		String litkey_lang = "de";
 		String litkey_corpus = "src/main/resources/corpora/litkey_spelling.xml";
 		String litkey_dict = "src/main/resources/dictionaries/hunspell_DE.txt";
+//		String litkey_dict = "src/main/resources/dictionaries/childlex_all.txt";
 		getErrorRate(litkey_lang, litkey_corpus);
 		getOverlapBetweenCorrectionsAndDict(litkey_lang, litkey_corpus, litkey_dict);
 	}
 	
 	public static void evalMerlinDE() throws UIMAException, IOException {
 		String merlin_lang = "de";
-		String merlin_corpus = "src/main/resources/corpora/merlin_spelling.xml";
-		String merlin_dict = "src/main/resources/dictionaries/hunspell_DE.txt";
+		String merlin_corpus = "src/main/resources/corpora/Merlin_spelling_german.xml";
+//		String merlin_dict = "src/main/resources/dictionaries/hunspell_DE.txt";
+		String merlin_dict = "src/main/resources/dictionaries/childlex_litkey.txt";
 		getErrorRate(merlin_lang, merlin_corpus);
 		getOverlapBetweenCorrectionsAndDict(merlin_lang, merlin_corpus, merlin_dict);
 	}
@@ -65,7 +67,7 @@ public class CorpusStatisticsExperiment {
 	//TODO: include aux dict?
 	public static void evalMerlinIT() throws UIMAException, IOException {
 		String merlin_lang = "it";
-		String merlin_corpus = "src/main/resources/corpora/merlin_spelling.xml";
+		String merlin_corpus = "src/main/resources/corpora/Merlin_spelling_italian.xml";
 		String merlin_dict = "src/main/resources/dictionaries/hunspell_Italian_dict.txt";
 		getErrorRate(merlin_lang, merlin_corpus);
 		getOverlapBetweenCorrectionsAndDict(merlin_lang, merlin_corpus, merlin_dict);
@@ -73,7 +75,7 @@ public class CorpusStatisticsExperiment {
 	
 	public static void evalMerlinCZ() throws UIMAException, IOException {
 		String merlin_lang = "cz";
-		String merlin_corpus = "src/main/resources/corpora/merlin_spelling.xml";
+		String merlin_corpus = "src/main/resources/corpora/Merlin_spelling_czech.xml";
 		String merlin_dict = "src/main/resources/dictionaries/hunspell_Czech_dict.txt";
 		getErrorRate(merlin_lang, merlin_corpus);
 		getOverlapBetweenCorrectionsAndDict(merlin_lang, merlin_corpus, merlin_dict);

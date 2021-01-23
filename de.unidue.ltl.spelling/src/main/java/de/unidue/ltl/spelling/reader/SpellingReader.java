@@ -223,9 +223,11 @@ public class SpellingReader extends JCasResourceCollectionReader_ImplBase {
 		}
 
 		SpellingText text = new SpellingText(jcas, 0, jcas.getDocumentText().length());
-		text.setId(item.getCorpusName() + "_" + item.getId());
+		text.setId(item.getId());
 		text.addToIndexes();
 		currentIndex++;
+		
+//		System.out.println(item.getText());
 	}
 
 	@Override

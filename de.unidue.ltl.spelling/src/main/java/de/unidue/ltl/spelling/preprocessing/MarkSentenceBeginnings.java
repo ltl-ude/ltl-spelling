@@ -2,6 +2,7 @@ package de.unidue.ltl.spelling.preprocessing;
 
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
+import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.descriptor.ResourceMetaData;
 import org.apache.uima.fit.descriptor.TypeCapability;
 import org.apache.uima.jcas.JCas;
@@ -25,9 +26,14 @@ import eu.openminted.share.annotations.api.DocumentationResource;
 
 public class MarkSentenceBeginnings extends JCasAnnotator_ImplBase {
 
+	public static final String PARAM_INCLUDE_PERIOD = "includePeriod";
+	@ConfigurationParameter(name = PARAM_INCLUDE_PERIOD, mandatory = true)
+	private boolean includePeriod;
+
 	@Override
 	public void process(JCas aJCas) throws AnalysisEngineProcessException {
 		for (Sentence sentence : JCasUtil.select(aJCas, Sentence.class)) {
+//			System.out.println("Sentence:" + sentence.getCoveredText()+"END");
 			Token first = JCasUtil.selectCovered(Token.class, sentence).get(0);
 			StartOfSentence startOfSentence = new StartOfSentence(aJCas);
 			startOfSentence.setBegin(first.getBegin());
@@ -35,7 +41,7 @@ public class MarkSentenceBeginnings extends JCasAnnotator_ImplBase {
 			startOfSentence.addToIndexes();
 //			System.out.println("Marked\t"+first.getCoveredText()+"\t as sentence beginning, because it is the first token of a sentence.");
 		}
-
+		
 		boolean previousTokenWasPunctuation = false;
 		boolean foundClosingPunctuation = true;
 		for (Token token : JCasUtil.select(aJCas, Token.class)) {
@@ -47,26 +53,37 @@ public class MarkSentenceBeginnings extends JCasAnnotator_ImplBase {
 					foundClosingPunctuation = true;
 				}
 			} else if (previousTokenWasPunctuation) {
-				StartOfSentence startOfSentence = new StartOfSentence(aJCas);
-				startOfSentence.setBegin(token.getBegin());
-				startOfSentence.setEnd(token.getEnd());
-				startOfSentence.addToIndexes();
-				previousTokenWasPunctuation = false;
-//				System.out.println("Marked\t"+token.getCoveredText()+"\t as sentence beginning, because of the previous token.");
+				if (JCasUtil.selectCovered(StartOfSentence.class, token).isEmpty()) {
+					StartOfSentence startOfSentence = new StartOfSentence(aJCas);
+					startOfSentence.setBegin(token.getBegin());
+					startOfSentence.setEnd(token.getEnd());
+					startOfSentence.addToIndexes();
+					previousTokenWasPunctuation = false;
+//				    System.out.println("Marked\t"+token.getCoveredText()+"\t as sentence beginning, because of the previous token.");
+				}
 			}
+		}
+
+		String regex = "";
+		if (includePeriod) {
+			regex = "[\\.?!:„]+";
+		} else {
+			regex = "[?!:„]+";
 		}
 
 		previousTokenWasPunctuation = false;
 		for (Token token : JCasUtil.select(aJCas, Token.class)) {
-			if (token.getCoveredText().matches("[:„]")) {
+			if (token.getCoveredText().matches(regex)) {
 				previousTokenWasPunctuation = true;
 			} else if (previousTokenWasPunctuation) {
-				StartOfSentence startOfSentence = new StartOfSentence(aJCas);
-				startOfSentence.setBegin(token.getBegin());
-				startOfSentence.setEnd(token.getEnd());
-				startOfSentence.addToIndexes();
-				previousTokenWasPunctuation = false;
-//				System.out.println("*** Marked\t"+token.getCoveredText()+"\t as sentence beginning, because of the previous token.");
+				if (JCasUtil.selectCovered(StartOfSentence.class, token).isEmpty()) {
+					StartOfSentence startOfSentence = new StartOfSentence(aJCas);
+					startOfSentence.setBegin(token.getBegin());
+					startOfSentence.setEnd(token.getEnd());
+					startOfSentence.addToIndexes();
+					previousTokenWasPunctuation = false;
+//				    System.out.println("*** Marked\t"+token.getCoveredText()+"\t as sentence beginning, because of the previous token.");
+				}
 			}
 		}
 	}
